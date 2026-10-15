@@ -1,0 +1,55 @@
+[
+  {
+    "v": "7.42", "date": "2026-10-15", "level": "minime",
+    "notes": [
+      "Le numéro de version s’affiche sous le nom de l’atelier ; un clic dessus montre les nouveautés de chaque version, et une pastille signale une version pas encore vue."
+    ]
+  },
+  {
+    "v": "7.41", "date": "2026-10-15", "level": "grande",
+    "notes": [
+      "Téléphones et tablettes : l’atelier tient dans l’écran, l’aperçu se réduit quand on descend dans les réglages, les 9 outils restent visibles ; aperçu et réglages côte à côte en paysage.",
+      "Aperçu : repères (axes, tiers, marges), vignette de navigation au zoom avant, zoom animé ; ce qui dépasse du format reste visible en dézoomant.",
+      "Format fixe : la taille s’ajuste toute seule après un changement de forme (le panneau hilye ne déborde plus).",
+      "Légende en lettres latines sous la calligraphie : prénom, traduction.",
+      "Variations : six mises en page de votre phrase tirées au sort.",
+      "Partage : un lien qui ouvre la création sur n’importe quel appareil."
+    ]
+  },
+  {
+    "v": "6.41", "date": "2026-10-15", "level": "minime",
+    "notes": [
+      "Tashkīl : un seul bouton pour le retirer, le remettre ou l’ajouter ; les textes de la bibliothèque et des modèles sont vocalisés."
+    ]
+  },
+  {
+    "v": "6.4", "date": "2026-10-15", "level": "moyenne",
+    "notes": [
+      "Nouvelles compositions : tughra, médaillon ailé et panneau hilye ; effet « lettres semées » ; 4 modèles (86 en tout)."
+    ]
+  },
+  {
+    "v": "6.3", "date": "2026-10-15", "level": "moyenne",
+    "notes": [
+      "Section « Apprendre à écrire » : les lettres dans sept écritures, l’étude d’une lettre avec un tracé noté, les genres de composition, la feuille d’exercice."
+    ]
+  },
+  {
+    "v": "6.2", "date": "2026-10-15", "level": "moyenne",
+    "notes": [
+      "Compositions par lignes : remplir une forme, anneaux, mosaïque, kaléidoscope ; 18 modèles."
+    ]
+  },
+  {
+    "v": "6.1", "date": "2026-10-15", "level": "grande",
+    "notes": [
+      "Nouvelle interface : barre d’outils, un panneau à la fois, aperçu toujours visible ; fenêtre « Télécharger »."
+    ]
+  },
+  {
+    "v": "5.1", "date": "2026-10-15", "level": "",
+    "notes": [
+      "Première mise en ligne : 195 styles d’écriture, 64 modèles, tashkīl, exports vectoriels (SVG, PDF, EPS, DXF)."
+    ]
+  }
+]

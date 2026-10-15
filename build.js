@@ -33,6 +33,14 @@ app += '\n})();\n';
 if (!html.includes('/*@APP@*/')) throw new Error('emplacement absent dans src/app.html : /*@APP@*/');
 if (!app.includes('/*@COPYRIGHTS@*/{}')) throw new Error('emplacement des copyrights absent');
 app = app.split('/*@COPYRIGHTS@*/{}').join(rd('copyrights.json').trim());
+
+// versions : la plus récente en premier ; le numéro avance de 0,01 (minime), 0,1 (moyenne) ou 1 (grande) — tools/versions.js
+const V = require('./tools/versions.js');
+const versions = V.check(JSON.parse(rd('versions.json')));
+const pkg = JSON.parse(rd('package.json'));
+if (pkg.version !== V.semver(versions[0].v)) throw new Error('package.json : version ' + pkg.version + ', attendue ' + V.semver(versions[0].v) + ' (versions.json : ' + versions[0].v + ')');
+if (!app.includes('/*@VERSIONS@*/[]')) throw new Error('emplacement des versions absent');
+app = app.split('/*@VERSIONS@*/[]').join(JSON.stringify(versions));
 scripts.push(['src/app/*.js', app]);
 html = html.split('/*@APP@*/').join(app);
 
@@ -54,4 +62,4 @@ const head = '<!doctype html><html lang="fr"><head><meta charset="utf-8">' +
 fs.writeFileSync(path.join(ROOT, 'site/index.html'), head + html + '</body></html>\n');
 fs.mkdirSync(path.join(ROOT, 'artifact'), { recursive: true });
 fs.writeFileSync(path.join(ROOT, 'artifact/index.html'), html);
-console.log('site/index.html et artifact/index.html : ' + Math.round(html.length / 1024) + ' Ko');
+console.log('version ' + versions[0].v + ' — site/index.html et artifact/index.html : ' + Math.round(html.length / 1024) + ' Ko');

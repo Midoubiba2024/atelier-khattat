@@ -1,13 +1,14 @@
 {
   "name": "atelier-khattat",
-  "version": "5.1.0",
+  "version": "7.42.0",
   "private": true,
   "description": "Atelier Khattat : une phrase en arabe, près de 200 styles calligraphiques, des modèles de tableaux et des exports vectoriels (SVG, PDF, EPS, DXF).",
   "scripts": {
     "build": "node build.js",
     "start": "node tools/serve.js",
     "test": "node tests/run.js",
-    "test:tout": "node tests/run.js --tout"
+    "test:tout": "node tests/run.js --tout",
+    "nouvelle-version": "node tools/versions.js"
   },
   "devDependencies": {
     "clipper-lib": "^6.4.2",

@@ -1,5 +1,5 @@
 // Nouveautés : ajustement au format après un changement de forme, dézoom sur un débordement, légende latine,
-// variations, repères, vignette de navigation, lien de partage
+// variations, repères, vignette de navigation, lien de partage, numéro de version et nouveautés
 const { launch, BASE } = require('./env');
 (async () => {
   const browser = await launch();
@@ -79,6 +79,22 @@ const { launch, BASE } = require('./env');
   await p2.waitForSelector('#stage svg', { timeout: 20000 });
   await p2.waitForTimeout(1500);
   ok((await p2.$eval('#txt', t => t.value)) === 'وقل رب زدني علما' && !p2.url().includes('#'), 'lien ouvert : création importée, adresse nettoyée');
+
+  // 7. numéro de version sous le nom, nouveautés au clic, pastille quand une version plus récente arrive
+  const versions = require('../versions.json');
+  ok((await page.$eval('#verNum', e => e.textContent)) === 'Version ' + versions[0].v && await page.$eval('#verBtn', e => e.getBoundingClientRect().width > 30),
+    'version affichée : ' + versions[0].v);
+  ok(await page.$eval('#verDot', e => e.hidden), 'première visite : pas de pastille');
+  await page.click('#verBtn'); await settle(300);
+  const vd = await page.$eval('#verDlg', d => ({ open: d.open, n: d.querySelectorAll('.vlist > li').length, first: d.querySelector('.vlist > li h3').textContent }));
+  ok(vd.open && vd.n === versions.length && vd.first.startsWith('Version ' + versions[0].v), 'nouveautés : ' + vd.n + ' versions, la plus récente en tête');
+  await page.click('#verClose'); await settle(200);
+  ok(!(await page.$eval('#verDlg', d => d.open)), 'nouveautés refermées');
+  await page.evaluate(() => localStorage.setItem('khattat:version', '5.1'));
+  await page.reload(); await page.waitForSelector('#stage svg', { timeout: 20000 });
+  ok(!(await page.$eval('#verDot', e => e.hidden)), 'pastille quand la version vue est plus ancienne');
+  await page.click('#verBtn'); await settle(300);
+  ok(await page.$eval('#verDot', e => e.hidden) && (await page.evaluate(() => localStorage.getItem('khattat:version'))) === versions[0].v, 'pastille retirée une fois les nouveautés vues');
   await browser.close();
   console.log(errors.length ? '\n' + errors.join('\n') : '\naucune erreur');
   process.exitCode = errors.length ? 1 : 0;

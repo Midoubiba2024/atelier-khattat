@@ -52,7 +52,21 @@ button{cursor:pointer}
 .brand-mark .fallback{font:700 1.4rem/1 var(--ar)}
 .brand-t{min-width:0}
 h1{font:700 1.28rem/1.1 var(--display);margin:0;letter-spacing:.005em;white-space:nowrap}
-.tagline{margin:1px 0 0;color:var(--muted);font-size:.82rem;white-space:nowrap}
+.brand-sub{display:flex;align-items:center;gap:8px;margin:1px 0 0;min-width:0}
+.tagline{color:var(--muted);font-size:.82rem;white-space:nowrap}
+.ver{position:relative;display:inline-flex;align-items:center;gap:5px;flex:none;background:none;border:0;padding:0;font:700 .76rem/1.25 var(--ui);color:var(--gold);letter-spacing:.02em;white-space:nowrap}
+.ver:hover{text-decoration:underline;text-underline-offset:2px}
+.ver-dot{width:7px;height:7px;border-radius:50%;background:var(--alert)}
+.tagline::before{content:"·";margin-inline-end:8px;color:var(--rule)}
+.vlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px;flex:0 1 auto;min-height:0;max-height:540px;overflow:auto;overscroll-behavior:contain}
+/* fenêtre des nouveautés : titre et bouton toujours visibles, seule la liste défile */
+#verDlg[open]{display:flex;flex-direction:column;overflow:hidden}
+#verDlg .dlg{flex:0 1 auto;min-height:0}
+.vlist>li{border-inline-start:3px solid var(--rule);padding:2px 0 2px 12px}
+.vlist>li.cur{border-color:var(--gold)}
+.vlist h3{margin:0 0 4px;font:700 1rem/1.3 var(--display);display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+.vlist h3 small{font:500 .8rem/1.3 var(--ui);color:var(--muted)}
+.vlist ul{margin:0;padding-inline-start:18px;display:flex;flex-direction:column;gap:3px;font-size:.92rem}
 .spaces{display:flex;gap:2px;margin-inline-start:10px;min-width:0}
 .space{background:none;border:0;border-radius:999px;padding:7px 13px;font-weight:700;font-size:.92rem;color:var(--muted);white-space:nowrap}
 .space:hover{color:var(--ink);background:var(--field)}
@@ -595,8 +609,11 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
      l'atelier tient dans la hauteur de l'écran et l'aperçu se réduit quand on descend dans les réglages */
   .app{height:100vh;height:100dvh;min-height:0;overflow:hidden}
   .top{padding:6px 12px;gap:6px 10px;min-height:0}
-  .brand-mark{width:48px;height:30px}
-  .brand-t{display:none}
+  .brand{flex-direction:column;align-items:center;gap:0}
+  .brand-mark{width:48px;height:28px}
+  .brand-t h1,.brand-t .tagline{display:none}
+  .brand-sub{margin:0}
+  .ver{font-size:.64rem}
   .spaces{margin:0;min-width:0;overflow-x:auto;scrollbar-width:none}
   .spaces::-webkit-scrollbar{display:none}
   .space{padding:6px 11px;font-size:.88rem}
@@ -629,8 +646,11 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
 @media (max-height:520px) and (orientation:landscape) and (min-width:640px){
   :root{--top-h:46px}
   .top{min-height:var(--top-h);padding:3px 10px;gap:6px 10px}
-  .brand-mark{width:44px;height:26px}
-  .brand-t{display:none}
+  .brand{flex-direction:column;align-items:center;gap:0}
+  .brand-mark{width:42px;height:24px}
+  .brand-t h1,.brand-t .tagline{display:none}
+  .brand-sub{margin:0}
+  .ver{font-size:.62rem}
   .space{padding:4px 10px;font-size:.84rem}
   .tb{height:34px;min-width:34px;padding:0 8px}
   .tb span{display:none}
@@ -680,7 +700,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
       <div class="brand-mark" id="brandMark" aria-hidden="true"><span class="fallback" lang="ar">خطّاط</span></div>
       <div class="brand-t">
         <h1>Atelier Khattat</h1>
-        <p class="tagline">La calligraphie arabe, de votre phrase au fichier vectoriel</p>
+        <p class="brand-sub"><button class="ver" id="verBtn" type="button" title="Nouveautés de chaque version"><span id="verNum">Version</span><span class="ver-dot" id="verDot" hidden></span></button><span class="tagline">La calligraphie arabe, de votre phrase au fichier vectoriel</span></p>
       </div>
     </div>
     <nav class="spaces" aria-label="Espaces de l’atelier">
@@ -1058,6 +1078,15 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
 </div>
 
 <div class="toast" id="toast" aria-hidden="true"></div>
+
+<dialog id="verDlg" aria-labelledby="verTitle">
+  <div class="dlg">
+    <h2 id="verTitle">Nouveautés</h2>
+    <p class="note-line">Le numéro de version avance de 0.01 pour une petite mise à jour, de 0.1 pour une mise à jour moyenne et de 1 pour une grande.</p>
+    <ol class="vlist" id="verList"></ol>
+    <button class="close" type="button" id="verClose">Fermer</button>
+  </div>
+</dialog>
 
 <dialog id="about" aria-labelledby="aboutTitle">
   <div class="dlg">

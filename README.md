@@ -43,7 +43,8 @@ Une phrase en arabe, près de 200 styles calligraphiques, 86 modèles de tableau
   - code de création pour passer d'un appareil à l'autre ;
   - lien de partage : il ouvre la création dans l'atelier en ligne, sur n'importe quel appareil ; partage natif sur téléphone ;
   - annuler / rétablir ;
-  - plein écran avec maquettes.
+  - plein écran avec maquettes ;
+  - le numéro de version sous le nom de l'atelier : un clic montre les nouveautés de chaque version, une pastille signale une version que l'on n'a pas encore vue.
 
 ## Lancer l'atelier sur son ordinateur
 
@@ -67,15 +68,34 @@ Un double-clic sur `site/index.html` ne suffit pas : l'atelier charge ses police
 | `site/` | Le site prêt à publier : `index.html`, généré par `npm run build`, les polices et leurs licences, HarfBuzz (`harfbuzz.wasm`, avec un repli en JavaScript `hb-fallback.js`) et Clipper (`clipper.js`). |
 | `build.js` | Assemble `src/` en `site/index.html`. Produit aussi `artifact/index.html`, la version à publier dans Claude. |
 | `copyrights.json` | Les auteurs des polices, affichés dans « Polices et licences ». |
+| `versions.json` | Les versions de l'atelier, la plus récente en premier, avec leurs nouveautés. Le numéro affiché sous le nom de l'atelier vient d'ici. |
 | `tests/` | Les tests du moteur et de l'atelier. |
 | `tools/serve.js` | Le petit serveur local. |
+| `tools/versions.js` | La règle des numéros de version et l'outil qui crée une nouvelle version. |
+| `CLAUDE.md` | Les consignes de travail suivies par Claude pour chaque mise à jour. |
 | `.github/workflows/pages.yml` | La publication sur GitHub Pages. |
 
 ## Modifier l'atelier
 
 1. Modifier les fichiers de `src/`. Ne pas modifier `site/index.html` à la main : il est régénéré.
-2. Lancer `npm run build`.
-3. Vérifier avec `npm start`, puis avec `npm test`.
+2. Donner un numéro à la mise à jour (voir « Numéros de version »).
+3. Lancer `npm run build`.
+4. Vérifier avec `npm start`, puis avec `npm test`.
+
+## Numéros de version
+
+Le numéro avance de **0,01** pour une petite mise à jour, de **0,1** pour une mise à jour moyenne et de **1** pour une grande : après 7.42, une petite mise à jour donne 7.43, une moyenne 7.52, une grande 8.42.
+
+```
+npm run nouvelle-version -- minime "Ce qui change, en une phrase."
+npm run nouvelle-version -- moyenne "Première nouveauté." "Deuxième nouveauté."
+```
+
+L'outil calcule le numéro, ajoute la version datée du jour en tête de `versions.json` et met `package.json` au même numéro. `npm run build` refuse un numéro qui ne suit pas la règle.
+
+- **minime** : une correction, un réglage, un texte, une petite fonction.
+- **moyenne** : une nouvelle fonction ou une nouvelle série de modèles, de formes ou d'effets.
+- **grande** : une refonte de l'interface ou plusieurs nouveautés importantes à la fois.
 
 ## Tests
 
@@ -89,11 +109,9 @@ Un double-clic sur `site/index.html` ne suffit pas : l'atelier charge ses police
 
 ### Sur GitHub Pages
 
-Le dépôt est privé. Sur un compte GitHub gratuit, GitHub Pages n'est pas disponible pour un dépôt privé. Sur un compte payant, le site publié reste visible par tous, même si le dépôt est privé. La publication est prête et s'active ainsi :
+Le dépôt est public et la publication est active : chaque modification de `site/` sur `main` republie le site automatiquement, par l'action « Publier le site ».
 
-1. Rendre le dépôt public : *Settings → General → Change repository visibility*. Avec GitHub Pro, on peut aussi garder le dépôt privé et créer la variable `PAGES_ENABLED` = `true` (*Settings → Secrets and variables → Actions → Variables*).
-2. *Settings → Pages → Source* : choisir **GitHub Actions**.
-3. *Actions → Publier le site → Run workflow*. Ensuite, chaque modification de `site/` sur `main` republie le site automatiquement.
+Pour la réactiver ailleurs : *Settings → Pages → Source* : choisir **GitHub Actions**, puis *Actions → Publier le site → Run workflow*. Un dépôt privé demande un compte payant et la variable `PAGES_ENABLED` = `true` (*Settings → Secrets and variables → Actions → Variables*) ; le site publié reste alors visible par tous.
 
 Adresse du site : https://midoubiba2024.github.io/atelier-khattat/
 

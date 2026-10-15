@@ -12,6 +12,28 @@
       ul.appendChild(li);
     }
   }
+  // ------------------------------------------------------------------ version et nouveautés
+  // un point signale une version plus récente que la dernière vue dans ce navigateur (rien à la première visite)
+  const verDlg = $('#verDlg');
+  function buildVersion() {
+    $('#verNum').textContent = 'Version ' + APP_VERSION;
+    $('#verBtn').setAttribute('aria-label', 'Version ' + APP_VERSION + ' : voir les nouveautés');
+    const LVL = { minime: 'petite mise à jour', moyenne: 'mise à jour moyenne', grande: 'grande mise à jour' };
+    const fmtDate = d => { try { return new Date(d + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }); } catch (e) { return d; } };
+    $('#verList').innerHTML = VERSIONS.map((x, i) => '<li' + (i ? '' : ' class="cur"') + '><h3>Version ' + esc(x.v) + '<small>' + esc(fmtDate(x.date)) + (LVL[x.level] ? ' · ' + LVL[x.level] : ' · première version') + '</small></h3><ul>' +
+      x.notes.map(n => '<li>' + esc(n) + '</li>').join('') + '</ul></li>').join('');
+    let seen = '';
+    try { seen = localStorage.getItem('khattat:version') || ''; } catch (e) { seen = ''; }
+    const newer = (a, b) => Math.round(parseFloat(a) * 100) > Math.round(parseFloat(b) * 100);
+    if (!seen) { try { localStorage.setItem('khattat:version', APP_VERSION); } catch (e) { /* stockage indisponible */ } }
+    else if (newer(APP_VERSION, seen)) $('#verDot').hidden = false;
+    $('#verBtn').addEventListener('click', () => {
+      openDialog(verDlg);
+      $('#verDot').hidden = true;
+      try { localStorage.setItem('khattat:version', APP_VERSION); } catch (e) { /* stockage indisponible */ }
+    });
+    $('#verClose').addEventListener('click', () => closeDialog(verDlg));
+  }
   const aboutDlg = $('#about');
   $('#aboutBtn').addEventListener('click', () => openDialog(aboutDlg));
   $('#aboutClose').addEventListener('click', () => closeDialog(aboutDlg));
@@ -46,6 +68,7 @@
   buildShare();
   buildDownloads();
   buildLicences();
+  buildVersion();
   updateTextUI();
   syncTabDots();
   $('#q').addEventListener('input', () => { query = fold($('#q').value.trim()); applyGridFilter(); });

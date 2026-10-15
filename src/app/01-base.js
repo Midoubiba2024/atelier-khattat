@@ -12,6 +12,9 @@
 
   // ------------------------------------------------------------------ catalogue des styles
   const COPYRIGHTS = /*@COPYRIGHTS@*/{};
+  // versions de l'atelier (versions.json, la plus récente en premier)
+  const VERSIONS = /*@VERSIONS@*/[];
+  const APP_VERSION = VERSIONS.length ? VERSIONS[0].v : '';
   // licences autres que la SIL Open Font License
   const LICNAME = {
     tanha: 'licences Bitstream Vera et Apache 2.0, modifications dans le domaine public',

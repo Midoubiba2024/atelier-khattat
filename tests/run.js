@@ -7,7 +7,7 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 const { ROOT, PORT, out } = require('./env');
 
-const NODE_TESTS = ['exports.node.js', 'formes.node.js', 'kashida.node.js', 'decoupe.node.js', 'tatweel.node.js', 'compositions.node.js', 'tashkil.node.js'];
+const NODE_TESTS = ['exports.node.js', 'formes.node.js', 'kashida.node.js', 'decoupe.node.js', 'tatweel.node.js', 'compositions.node.js', 'tashkil.node.js', 'versions.node.js'];
 const BROWSER_TESTS = ['fumee.test.js', 'atelier.test.js', 'interface.test.js', 'csp-et-polices.test.js', 'formes-interface.test.js',
   'couleurs-interface.test.js', 'telechargements.test.js', 'claude-simule.test.js', 'apprendre.test.js', 'ecrans.test.js', 'nouveautes.test.js'];
 const EXTRA = process.argv.includes('--tout') ? ['rendu-moteurs.node.js'] : [];
