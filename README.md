@@ -8,7 +8,7 @@ Une phrase en arabe, près de 200 styles calligraphiques, 86 modèles de tableau
 - **86 modèles de tableaux** en 10 thèmes : shamsa, levha, musanna, mihrab, sceaux, compositions (pyramide, œuf, goutte, médaillon en anneaux, mosaïque, tughra, médaillon ailé, hilye, lettres semées), prénoms, fêtes, mariage, motifs géométriques, découpe…
 - **Tashkīl** : éditeur lettre par lettre, retrait du tashkīl, harakat en couleur, et vocalisation automatique dans Claude.
 - **Mise en forme** :
-  - 23 formes : arc, cercle, sceau, cœur, vague, spirale, loupe… ;
+  - 26 formes : arc, cercle, sceau, cœur, vague, spirale, loupe, tughra… ;
   - compositions par lignes : remplir une forme (pyramide, ovale, œuf, goutte, mihrab…), anneaux concentriques, mosaïque de tuiles colorées, tughra, médaillon ailé, panneau hilye ;
   - répétitions en miroir, en rosace et en kaléidoscope ;
   - une couleur par ligne, contre-formes colorées, lettres semées autour du texte ;
