@@ -261,7 +261,7 @@
 
   // ------------------------------------------------------------------ formes
   let drawing = null;
-  let showTabRef = null;
+  let showTabRef = null, showToolRef = null;
   const thumbEls = {}, compEls = {};
   let shapeGroup = (SHAPES.find(x => x.id === S.shape.type) || SHAPES[0]).g;
   function buildShapeThumbs() {
@@ -378,7 +378,7 @@
     const box = $('#shapeParams');
     box.innerHTML = '';
     const d = SHAPES.find(x => x.id === S.shape.type) || SHAPES[0];
-    $('#shapeTitle').textContent = d.id === 'straight' ? 'Choisissez une forme dans les aperçus sous l’image. Ici : largeur, inclinaison et composition.' : 'Réglages de la forme : ' + d.name;
+    $('#shapeTitle').textContent = d.id === 'straight' ? 'Écriture droite : choisissez une forme ci-dessus, ou réglez ici la largeur, l’inclinaison et la composition.' : 'Réglages de la forme : ' + d.name;
     paramRows(box, d.params, () => S.shape, buildShapeParams);
     if (d.id === 'free') {
       const wrap = document.createElement('div');
@@ -697,7 +697,6 @@
     if (tkOpen()) buildTashkilPanel();
     syncPreviewBg();
     $('#dimsBtn').setAttribute('aria-pressed', String(S.dims));
-    updateMobileBar();
     scheduleBench();
   }
   // après un changement d'état global (annuler, création ouverte, modèle appliqué)
@@ -723,29 +722,53 @@
       b.addEventListener('click', () => applyMood(m));
       moods.appendChild(b);
     }
-    // onglets
-    const tabs = $$('.bench .tab');
-    function showTab(id, focus) {
-      S.tab = id;
-      for (const t of tabs) {
-        const on = t.id === 'tab-' + id;
+    // outils : un seul panneau ouvert à la fois, l'aperçu reste visible
+    const rail = $$('#rail .rt');
+    const OLD_TABS = { ecr: 'texte', forme: 'forme', col: 'couleurs', fx: 'effets', cadre: 'cadre', bg: 'fond', fmt: 'format' };
+    function showTool(id, focus) {
+      if (!TOOLS.includes(id)) id = OLD_TABS[id] || 'texte';
+      const changedTool = S.tool !== id;
+      S.tool = id;
+      for (const t of rail) {
+        const on = t.id === 'tool-' + id;
         t.setAttribute('aria-selected', String(on)); t.tabIndex = on ? 0 : -1;
         $('#' + t.getAttribute('aria-controls')).hidden = !on;
         if (on && focus) t.focus();
       }
+      showGTab(id === 'modeles' ? 'models' : 'styles');
+      if (changedTool) {
+        const pn = $('#panels');
+        if (window.innerWidth >= 1040) pn.scrollTop = 0;
+        else {
+          // téléphone : le panneau commence juste sous l'aperçu collé en haut
+          const y = pn.getBoundingClientRect().top + window.scrollY - $('#bench').offsetHeight - 6;
+          if (window.scrollY > y) window.scrollTo({ top: Math.max(0, y) });
+        }
+      }
       saveSoon();
     }
-    tabs.forEach((t, i) => {
-      t.addEventListener('click', () => showTab(t.id.slice(4)));
+    rail.forEach((t, i) => {
+      t.addEventListener('click', () => showTool(t.id.slice(5)));
       t.addEventListener('keydown', e => {
-        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-        const n = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
-        showTab(n.id.slice(4), true);
+        const k = e.key;
+        let n = -1;
+        if (k === 'ArrowDown' || k === 'ArrowRight') n = (i + 1) % rail.length;
+        else if (k === 'ArrowUp' || k === 'ArrowLeft') n = (i + rail.length - 1) % rail.length;
+        else if (k === 'Home') n = 0;
+        else if (k === 'End') n = rail.length - 1;
+        if (n < 0) return;
+        e.preventDefault();
+        showTool(rail[n].id.slice(5), true);
       });
     });
-    showTab(S.tab);
-    showTabRef = showTab;
-    $('#shapeTune').addEventListener('click', () => { showTab('forme'); const t = $('#tab-forme'); if (t.scrollIntoView) t.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); });
+    showTabRef = showTool;
+    showToolRef = showTool;
+    // téléphone : la barre d'outils défile ; le fondu à droite disparaît quand on arrive au bout
+    const railEl = $('#rail');
+    const railEnd = () => railEl.classList.toggle('at-end', railEl.scrollLeft + railEl.clientWidth >= railEl.scrollWidth - 4);
+    railEl.addEventListener('scroll', railEnd, { passive: true });
+    window.addEventListener('resize', railEnd);
+    railEnd();
 
     // forme
     buildShapeThumbs(); buildShapeParams(); buildCompParams();
@@ -852,7 +875,13 @@
     // export
     seg($('#scale'), [[1, '×1'], [2, '×2'], [4, '×4'], [8, '×8']], () => S.scale, v => { S.scale = v; saveSoon(); renderBench(); });
     $$('button[data-x]').forEach(b => b.addEventListener('click', () => doExport(b.dataset.x, b)));
-    $('#qdlMore').addEventListener('click', () => { const x = $('#exportBox'); if (x.scrollIntoView) x.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+    // tiroir « Télécharger »
+    const xdlg = $('#exportDlg');
+    const openExport = () => openDialog(xdlg);
+    $('#dlOpen').addEventListener('click', openExport);
+    $('#pvDl').addEventListener('click', openExport);
+    $('#qdlMore').addEventListener('click', openExport);
+    $('#exportClose').addEventListener('click', () => closeDialog(xdlg));
   }
   // photo de fond (fichier ou Blob enregistré)
   function setBgImage(blob, name) {

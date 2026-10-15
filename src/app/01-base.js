@@ -218,6 +218,23 @@
   const SPIRAL_ICON = (() => { let d = ''; for (let i = 0; i <= 60; i++) { const t = i / 60 * Math.PI * 5, r = 1 + 1.6 * t / Math.PI; d += (i ? 'L' : 'M') + (12 + r * Math.cos(t)).toFixed(1) + ' ' + (12 + r * Math.sin(t)).toFixed(1); } return '<path d="' + d + '"/>'; })();
   const RING_OPTS = [['none', 'Aucune'], ['single', 'Simple'], ['double', 'Double']];
   const ringW = st => st.ring !== 'none';
+  // chargement à l'approche : sur ordinateur, les galeries défilent dans leur panneau (racine = le panneau),
+  // sur téléphone, dans la page ; l'observateur est refait quand la fenêtre passe d'une mise en page à l'autre
+  function lazyObserver(cb, margin) {
+    if (!('IntersectionObserver' in window)) return null;
+    const targets = new Set();
+    let io = null, wide = null;
+    const make = () => {
+      wide = window.innerWidth >= 1040;
+      io = new IntersectionObserver(cb, { root: wide ? document.getElementById('panels') : null, rootMargin: margin + ' 0px' });
+      for (const t of targets) io.observe(t);
+    };
+    make();
+    window.addEventListener('resize', () => { if ((window.innerWidth >= 1040) !== wide) { io.disconnect(); make(); } });
+    return { observe: t => { targets.add(t); io.observe(t); }, unobserve: t => { targets.delete(t); io.unobserve(t); } };
+  }
+  // outils de l'atelier (barre verticale sur ordinateur, barre du bas sur téléphone)
+  const TOOLS = ['texte', 'styles', 'modeles', 'forme', 'couleurs', 'effets', 'cadre', 'fond', 'format'];
   const SHAPE_GROUPS = [['line', 'Lignes'], ['closed', 'Formes fermées'], ['warp', 'Déformations']];
   const SHAPES = [
     { id: 'straight', g: 'line', name: 'Droite', params: [] },

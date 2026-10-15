@@ -12,5 +12,5 @@ const K = globalThis.Khatt, X = globalThis.KhattExport;
     const sc = X.buildScene(font, K.checkSupport(font, txt).text, { size: 70, lineHeight: 1, align: 'center', fill: { type: 'solid', color: '#111' }, stroke: { on: false }, shadow: { on: false }, bg: { type: 'solid', color: '#fff' }, format: { id: 'auto', margin: 10 } });
     rows.push(`<div style="display:flex;gap:12px;align-items:center;border-bottom:1px solid #ccc"><code style="width:220px">${f} k=${k}</code>${X.sceneToSVG(sc, { inline: true }).replace('<svg ', `<svg width="${sc.W}" height="${sc.H}" `)}</div>`);
   }
-  fs.writeFileSync('kashida.html', '<html><body style="margin:0;font:13px sans-serif">' + rows.join('') + '</body></html>');
+  fs.writeFileSync('out/kashida.html', '<html><body style="margin:0;font:13px sans-serif">' + rows.join('') + '</body></html>');
 })();

@@ -41,7 +41,7 @@ const K = globalThis.Khatt, X = globalThis.KhattExport, SH = globalThis.KhattSha
       fs.writeFileSync('out/shape_circle.dxf', X.sceneToDXF(sc));
     }
   }
-  fs.writeFileSync('shapes.html', html + '</body></html>');
+  fs.writeFileSync('out/shapes.html', html + '</body></html>');
   // physical width test
   const sc2 = X.buildScene(ruqaa, 'الخط العربي', { size: 80, lineHeight: 1, align: 'center', shape: { type: 'arc', bend: 100 }, fill: { type: 'solid', color: '#000' }, stroke: { on: false }, shadow: { on: false }, bg: { type: 'none' }, format: { id: 'auto', margin: 0 }, phys: { on: true, widthMm: 1200 } });
   fs.writeFileSync('out/phys.pdf', await X.sceneToPDF(sc2, {}));

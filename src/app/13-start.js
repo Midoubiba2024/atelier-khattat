@@ -1,14 +1,5 @@
   // ------------------------------------------------------------------ divers
-  function updateMobileBar() {
-    const f = currentFont();
-    $('#mbarText').textContent = f ? 'Style : ' + f.name : '';
-  }
-  const mbar = $('#mbar');
-  if ('IntersectionObserver' in window) {
-    new IntersectionObserver(es => { for (const e of es) mbar.hidden = e.isIntersecting || window.innerWidth >= 1040; }, { threshold: 0.05 }).observe($('#bench'));
-  }
   $('#removeFontBtn').addEventListener('click', () => { const f = currentFont(); if (f && f.user) { removeUserFont(f.id); status('Police retirée de la galerie et de ce navigateur.'); } });
-  $('#mbarBtn').addEventListener('click', () => $('#bench').scrollIntoView({ behavior: 'smooth', block: 'start' }));
 
   function buildLicences() {
     const ul = $('#licList');
@@ -48,12 +39,12 @@
   buildControls();
   buildViewer();
   buildModels();
+  showToolRef(S.tool);
   buildImitate();
   buildDesigns();
   buildDownloads();
   buildLicences();
   updateTextUI();
-  updateMobileBar();
   syncTabDots();
   $('#q').addEventListener('input', () => { query = fold($('#q').value.trim()); applyGridFilter(); });
   $('#cardColors').checked = S.cardColors;

@@ -45,7 +45,7 @@ const ok = (c, m) => { console.log((c ? 'OK   ' : 'FAIL ') + m); if (!c) fails++
       ok(await page.$eval('#txt', t => t.value) === 'بسم الله الرحمن الرحيم', mode + ' : « Annuler » retire la vocalisation');
     }
     // --- imiter un tableau
-    await page.click('#gt-models'); await page.waitForTimeout(500);
+    await page.click('#tool-modeles'); await page.waitForTimeout(500);
     const n0 = await page.$$eval('#mgrid .mc[data-id]', c => c.length);
     await page.setInputFiles('#mgrid .mc-import input[type=file]', REF);
     await page.waitForFunction(() => document.querySelector('#imitate').open, null, { timeout: 5000 });

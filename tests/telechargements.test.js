@@ -60,7 +60,7 @@ const mockCap = mode => {
     await ctx.addInitScript(() => { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.setItem('khattat:v1', JSON.stringify({ text: 'نور على نور', fontId: 'gulzar', shape: { type: 'arc', bend: 120 } })); } });
     const page = await ctx.newPage(); watch(page, 'unavailable');
     await page.goto(URL0 + 'index.html'); await ready(page);
-    await page.click('#qdl button[data-x="png"]').catch(() => page.click('button[data-x="png"]'));
+    await page.click('#dlOpen'); await page.click('#exportBox button[data-x="png"]');
     await page.waitForFunction(() => document.querySelector('#dlfb').open, null, { timeout: 15000 });
     await page.waitForFunction(() => /^KHATTAT[01]:/.test(document.querySelector('#dlfbCode').value), null, { timeout: 5000 });
     const d = await page.evaluate(() => ({ name: document.querySelector('#dlfbName').textContent, size: document.querySelector('#dlfbSize').textContent, tech: document.querySelector('#dlfbTech').textContent, copy: !document.querySelector('#dlfbCopyWay').hidden, btn: document.querySelector('#dlfbCopy').textContent, open: document.querySelector('#dlfbOpen').href, code: document.querySelector('#dlfbCode').value }));

@@ -16,6 +16,10 @@ Une phrase en arabe, près de 200 styles calligraphiques, 64 modèles de tableau
   - SVG, PDF, EPS, DXF (découpe laser ou vinyle) ;
   - PNG jusqu'à ×8 ;
   - planche PDF de comparaison et lot .zip de plusieurs styles.
+- **Interface** :
+  - sur ordinateur, une barre d'outils verticale (Texte, Styles, Modèles, Forme, Couleurs, Effets, Cadre, Fond, Format), un seul panneau ouvert à la fois et l'aperçu toujours visible ;
+  - sur téléphone, l'aperçu reste en haut de l'écran et les outils passent dans une barre en bas ;
+  - un bouton « Télécharger » toujours à portée de main.
 - **Organisation** :
   - « Mes créations » ;
   - code de création pour passer d'un appareil à l'autre ;
@@ -31,7 +35,7 @@ npm install
 npm start
 ```
 
-Puis ouvrir http://localhost:8766 dans le navigateur.
+Puis ouvrir http://localhost:8766 dans le navigateur. Sous Windows, un double-clic sur `lancer-atelier.cmd` fait les deux : il lance le serveur et ouvre le navigateur (fermer sa fenêtre arrête l'atelier).
 
 Un double-clic sur `site/index.html` ne suffit pas : l'atelier charge ses polices et son moteur de texte, il lui faut un serveur, même local.
 
@@ -40,6 +44,7 @@ Un double-clic sur `site/index.html` ne suffit pas : l'atelier charge ses police
 | Élément | Rôle |
 | --- | --- |
 | `src/` | Les sources. Le moteur (`engine.js` texte, `shape.js` formes, `fx.js` effets, `ornament.js` cadres et motifs, `export.js` fichiers, `mockup.js` maquettes), puis l'interface (`app.html` et les 13 parties de `app/`). |
+| `lancer-atelier.cmd` | Windows : lance le serveur local et ouvre l'atelier dans le navigateur. |
 | `site/` | Le site prêt à publier : `index.html`, généré par `npm run build`, les polices et leurs licences, HarfBuzz (`harfbuzz.wasm`, avec un repli en JavaScript `hb-fallback.js`) et Clipper (`clipper.js`). |
 | `build.js` | Assemble `src/` en `site/index.html`. Produit aussi `artifact/index.html`, la version à publier dans Claude. |
 | `copyrights.json` | Les auteurs des polices, affichés dans « Polices et licences ». |

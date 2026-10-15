@@ -1,13 +1,8 @@
   // ------------------------------------------------------------------ galerie : onglets Styles / Modèles
+  // les modèles ne se dessinent que si leur panneau est ouvert
   function showGTab(id) {
     S.gtab = id;
-    for (const t of $$('.gtab')) {
-      const on = t.id === 'gt-' + id;
-      t.setAttribute('aria-selected', String(on)); t.tabIndex = on ? 0 : -1;
-      $('#' + t.getAttribute('aria-controls')).hidden = !on;
-    }
     if (id === 'models') renderModels();
-    saveSoon();
   }
 
   // ------------------------------------------------------------------ modèles
@@ -51,7 +46,6 @@
     // format fixe : la taille s'ajuste au cadre une fois la police chargée
     const f = currentFont();
     if (S.format.id !== 'auto' && f) ensureFont(f, true).then(() => { fitToFormat(); }).catch(() => {});
-    if (S.gtab === 'models' && window.innerWidth < 1040) { const b = $('#bench'); if (b.scrollIntoView) b.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     status('Modèle « ' + m.name + ' » appliqué' + (withExample ? ' avec son exemple' : ' à votre phrase') + '. Tout reste réglable ; « Annuler » revient en arrière.');
   }
   // scène d'aperçu d'un modèle (format réduit)
@@ -76,9 +70,9 @@
   }
   const previewText = m => (S.mdSrc === 'ex' || !S.text.trim()) ? (m.ex || S.text || 'الخط العربي') : S.text;
   let mdKey = '', mdSeq = 0;
-  const mio = 'IntersectionObserver' in window ? new IntersectionObserver(es => {
+  const mio = lazyObserver(es => {
     for (const e of es) { const c = e.target; c._vis = e.isIntersecting; if (e.isIntersecting && c._dirty) queueModel(c); }
-  }, { rootMargin: '300px 0px' }) : null;
+  }, '600px');
   const mQueue = [];
   let mBusy = false;
   function queueModel(card) { if (!mQueue.includes(card)) mQueue.push(card); pumpModels(); }
@@ -205,13 +199,6 @@
     status('Modèle supprimé.');
   }
   function buildModels() {
-    $$('.gtab').forEach((t, i, all) => {
-      t.addEventListener('click', () => showGTab(t.id.slice(3)));
-      t.addEventListener('keydown', e => {
-        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-        const n = all[(i + 1) % all.length]; showGTab(n.id.slice(3)); n.focus();
-      });
-    });
     seg($('#mdSrc'), [['mine', 'Votre phrase'], ['ex', 'L’exemple de chaque modèle']], () => S.mdSrc, v => { S.mdSrc = v; saveSoon(); renderModels(false); }, true);
     $('#saveModelBtn').addEventListener('click', async () => {
       const f = currentFont();
@@ -220,7 +207,6 @@
       if (ok) { S.mdTheme = 'mine'; buildModelFilters(); renderModels(true); status('Style enregistré dans « Mes modèles » : appliquez-le à n’importe quelle phrase.'); }
     });
     buildModelFilters();
-    showGTab(S.gtab);
     IDB.all('models').then(recs => {
       for (const r of (recs || []).sort((a, b) => (a.date || 0) - (b.date || 0))) addUserModel(r);
       buildModelFilters();
@@ -451,7 +437,7 @@
     $('#imSave').addEventListener('click', async () => {
       if (!im || !im.look) return;
       const ok = await saveUserModel({ id: 'u' + Date.now(), name: im.name || 'D’après votre image', note: im.note || 'Style imité d’après votre image.', ex: im.text || S.text, look: im.look }, im.thumbBlob);
-      if (ok) { S.mdTheme = 'mine'; buildModelFilters(); showGTab('models'); renderModels(true); status('Modèle enregistré dans « Mes modèles ».'); closeDialog(imDlg); }
+      if (ok) { S.mdTheme = 'mine'; buildModelFilters(); showToolRef('modeles'); renderModels(true); status('Modèle enregistré dans « Mes modèles ».'); closeDialog(imDlg); }
     });
     $('#imRetry').addEventListener('click', imAnalyze);
     $('#imStop').addEventListener('click', () => { if (im && im.ctl) im.ctl.abort(); });

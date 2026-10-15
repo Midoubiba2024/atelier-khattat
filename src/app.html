@@ -7,17 +7,18 @@
 :root{
   /* Un établi en deux colonnes : à gauche, sur papier, la phrase puis la galerie (styles et modèles) ;
      à droite, l'atelier bleu lapis (aperçu, réglages, export) qui reste à portée de main. Une colonne sur téléphone. */
-  --paper:#F7F6F2; --sheet:#FFFFFF; --ink:#1D1B18; --muted:#67635A; --rule:#E2DED4;
+  --paper:#F7F6F2; --sheet:#FFFFFF; --ink:#1D1B18; --muted:#67635A; --rule:#E2DED4; --field:#F0EDE5;
   --lapis:#233F8C; --lapis-wash:#E9EEF9; --gold:#94701C; --alert:#A23F2B; --ok:#2F6B3A;
   --bench:#101B3D; --bench-2:#18264F; --bench-ink:#F1EBDC; --bench-muted:#AFB6CC; --bench-rule:#2D3B6A; --bench-gold:#E3C06A; --bench-alert:#F2A08C;
   --check-a:#DADADA; --check-b:#F4F4F4; --draw-veil:rgba(11,20,49,.42); --skeleton:#ECE8DF; --veil:rgba(12,16,28,.48); --lift:rgba(8,12,24,.22);
   --display:"Alegreya",Georgia,"Times New Roman",serif;
   --ui:"Alegreya Sans","Segoe UI",system-ui,-apple-system,sans-serif;
   --ar:"Amiri","Noto Naskh Arabic","Geeza Pro","Arabic Typesetting",serif;
+  --top-h:60px;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --paper:#0F1218; --sheet:#171B23; --ink:#ECE6DA; --muted:#A39D91; --rule:#2B303B;
+    --paper:#0F1218; --sheet:#171B23; --ink:#ECE6DA; --muted:#A39D91; --rule:#2B303B; --field:#1E2430;
     --lapis:#A9BBF3; --lapis-wash:#1B2440; --gold:#DDB75E; --alert:#EB937D; --ok:#8FD19E;
     --bench:#0B1431; --bench-2:#13204A; --bench-ink:#F1EBDC; --bench-muted:#A8AFC5; --bench-rule:#293868; --bench-gold:#E3C06A; --bench-alert:#F2A08C;
     --skeleton:#212631; --veil:rgba(0,0,0,.6); --lift:rgba(0,0,0,.45);
@@ -25,45 +26,81 @@
   }
 }
 :root[data-theme="dark"]{
-  --paper:#0F1218; --sheet:#171B23; --ink:#ECE6DA; --muted:#A39D91; --rule:#2B303B;
+  --paper:#0F1218; --sheet:#171B23; --ink:#ECE6DA; --muted:#A39D91; --rule:#2B303B; --field:#1E2430;
   --lapis:#A9BBF3; --lapis-wash:#1B2440; --gold:#DDB75E; --alert:#EB937D; --ok:#8FD19E;
   --bench:#0B1431; --bench-2:#13204A; --bench-ink:#F1EBDC; --bench-muted:#A8AFC5; --bench-rule:#293868; --bench-gold:#E3C06A; --bench-alert:#F2A08C;
   --skeleton:#212631; --veil:rgba(0,0,0,.6); --lift:rgba(0,0,0,.45);
   color-scheme:dark;
 }
 *{box-sizing:border-box}
+html,body{margin:0}
 body{background:var(--paper);color:var(--ink);font:400 15px/1.5 var(--ui);-webkit-font-smoothing:antialiased}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--lapis);outline-offset:2px}
-.bench :focus-visible,.mbar :focus-visible,.vw :focus-visible{outline-color:var(--bench-gold)}
+.bench :focus-visible,.rail :focus-visible,.vw :focus-visible,.xdlg :focus-visible{outline-color:var(--bench-gold)}
 [lang="ar"]{font-family:var(--ar)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
-.app{max-width:1440px;margin:0 auto;padding-inline:clamp(16px,3vw,32px);padding-block:18px 56px;display:flex;flex-direction:column;gap:22px}
-.top{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap}
-.brand{display:flex;align-items:center;gap:14px;min-width:0}
-.brand-mark{width:96px;height:56px;flex:none;color:var(--gold);display:grid;place-items:center}
+/* Coquille : barre du haut, puis l'atelier en trois zones (outils, panneau, aperçu) ; sur téléphone,
+   l'aperçu reste collé en haut et les outils passent dans une barre en bas de l'écran. */
+.app{min-height:100vh;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;gap:8px 16px;min-height:var(--top-h);padding:6px clamp(12px,1.6vw,22px);background:var(--paper);border-bottom:1px solid var(--rule);position:relative;z-index:6}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand-mark{width:62px;height:36px;flex:none;color:var(--gold);display:grid;place-items:center}
 .brand-mark svg{width:100%;height:100%;fill:currentColor}
-.brand-mark .fallback{font:700 2rem/1 var(--ar)}
-h1{font:700 1.7rem/1.1 var(--display);margin:0;letter-spacing:.005em;text-wrap:balance}
-.tagline{margin:3px 0 0;color:var(--muted);max-width:62ch}
-.top-actions{display:flex;gap:8px;flex-wrap:wrap}
-.linkbtn{background:none;border:1px solid var(--rule);border-radius:999px;padding:6px 14px;color:var(--ink);font-weight:500}
-.linkbtn:hover{border-color:var(--lapis);color:var(--lapis)}
-.linkbtn .n{font-variant-numeric:tabular-nums;opacity:.65;font-size:.82rem}
+.brand-mark .fallback{font:700 1.4rem/1 var(--ar)}
+.brand-t{min-width:0}
+h1{font:700 1.28rem/1.1 var(--display);margin:0;letter-spacing:.005em;white-space:nowrap}
+.tagline{margin:1px 0 0;color:var(--muted);font-size:.82rem;white-space:nowrap}
+.spaces{display:flex;gap:2px;margin-inline-start:10px;min-width:0}
+.space{background:none;border:0;border-radius:999px;padding:7px 13px;font-weight:700;font-size:.92rem;color:var(--muted);white-space:nowrap}
+.space:hover{color:var(--ink);background:var(--field)}
+.space[aria-current="page"]{color:var(--ink);background:var(--field)}
+.space .n{font-variant-numeric:tabular-nums;font-weight:500;opacity:.7;font-size:.8rem}
+.top-acts{display:flex;align-items:center;gap:6px;margin-inline-start:auto}
+.tb{height:38px;min-width:38px;padding:0 11px;border:1px solid var(--rule);background:var(--sheet);color:var(--ink);border-radius:10px;font-weight:700;font-size:.9rem;display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap}
+.tb:hover{border-color:var(--gold)}
+.tb:disabled{opacity:.38;cursor:not-allowed}
+.tb svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.tb.primary{background:var(--bench);color:var(--bench-gold);border-color:var(--bench);padding:0 16px}
+.tb.primary:hover{filter:brightness(1.18)}
+@media (max-width:1349px){.tagline{display:none}}
+@media (max-width:1219px){#saveBtn span{display:none}}
 
-.layout{display:grid;grid-template-columns:minmax(0,1fr);gap:22px;align-items:start}
-@media (min-width:1040px){
-  .layout{grid-template-columns:minmax(0,1.08fr) minmax(400px,.92fr)}
-  .bench{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);max-height:calc(100vh - 24px);overflow:auto;scrollbar-width:thin}
-}
-.left{display:flex;flex-direction:column;gap:26px;min-width:0}
-.panel{display:flex;flex-direction:column;gap:12px;min-width:0}
-.step{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.step h2{font:700 1.2rem/1.2 var(--display);margin:0}
-.step-n{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:var(--paper);font:700 .85rem/1 var(--ui);flex:none}
-.step .sub{color:var(--muted);font-size:.9rem}
+.studio{flex:1 1 auto;display:grid;grid-template-columns:82px minmax(330px,410px) minmax(0,1fr);height:calc(100vh - var(--top-h));height:calc(100dvh - var(--top-h));min-height:540px}
+@media (min-width:1500px){.studio{grid-template-columns:86px 440px minmax(0,1fr)}}
+.rail{background:var(--bench);display:flex;flex-direction:column;gap:3px;padding:10px 7px;overflow-y:auto;scrollbar-width:none}
+.rail::-webkit-scrollbar{display:none}
+.rt{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 2px 8px;border:0;border-radius:12px;background:none;color:var(--bench-muted);font:600 .74rem/1.1 var(--ui);transition:background .15s,color .15s}
+.rt svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.rt:hover{color:var(--bench-ink);background:var(--bench-2)}
+.rt[aria-selected="true"]{color:var(--bench);background:var(--bench-gold)}
+.rt .dot-on{position:absolute;top:7px;inset-inline-end:14px;width:7px;height:7px;border-radius:50%;background:var(--bench-gold);box-shadow:0 0 0 2px var(--bench)}
+.rt[aria-selected="true"] .dot-on{background:var(--bench);box-shadow:0 0 0 2px var(--bench-gold)}
+/* les réglages gardent leurs composants, sur papier : les couleurs de l'établi y deviennent claires */
+.panels{--bench:var(--sheet);--bench-2:var(--field);--bench-ink:var(--ink);--bench-muted:var(--muted);--bench-rule:var(--rule);--bench-gold:var(--gold);--bench-alert:var(--alert);
+  min-width:0;overflow-y:auto;overscroll-behavior:contain;background:var(--paper);border-inline-end:1px solid var(--rule);padding:18px 18px 48px;scrollbar-width:thin}
+.pn{display:flex;flex-direction:column;gap:14px;min-width:0}
+.pn[hidden]{display:none}
+.pn-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.pn-head h2{font:700 1.3rem/1.2 var(--display);margin:0}
+.pn-head .sub{color:var(--muted);font-size:.88rem}
+.pn-head .n{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.9rem}
+.pn-sub{margin:4px 0 0;padding-top:14px;border-top:1px solid var(--rule);font:700 1rem/1.2 var(--display)}
+.pn-sub.first{border-top:0;padding-top:0;margin-top:0}
+.panels .mini{background:none;border:1px solid var(--rule);color:var(--ink);border-radius:999px;padding:2px 10px;font-size:.8rem}
+.panels .mini:hover{border-color:var(--gold);color:var(--gold)}
+.panels .mini:disabled{opacity:.4;cursor:not-allowed}
+.bench.stagearea{min-width:0;border-radius:0;padding:12px 16px 14px;overflow:auto}
+.stagearea > .preview{flex:1 1 0;min-height:220px}
+/* galerie et formes dans un panneau étroit : puces plus compactes, compositions sur une ligne */
+.panels .filters .chip{font-size:.84rem;padding:3px 10px}
+.panels .comp > .lbl{flex-basis:100%;min-width:0}
+.panels .comp .sthumb{flex:1 1 0;width:auto;min-width:0}
+.pvfont{min-width:0;flex:1 1 auto}
+.pvf{font:700 .95rem/1.2 var(--display);color:var(--bench-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.pvdl{display:none}
 
 /* Saisie */
 .field{position:relative}
@@ -115,13 +152,7 @@ h1{font:700 1.7rem/1.1 var(--display);margin:0;letter-spacing:.005em;text-wrap:b
 .tkm.txt{font:500 .85rem/1 var(--ui);color:var(--ink);padding:0 10px}
 .tkm:disabled{opacity:.4;cursor:not-allowed}
 
-/* Galerie : onglets Styles / Modèles */
-.gtabs{display:flex;gap:4px;border-bottom:1px solid var(--rule);overflow-x:auto;scrollbar-width:none}
-.gtab{background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;color:var(--muted);padding:8px 12px;font:700 1rem/1.2 var(--display);white-space:nowrap}
-.gtab:hover{color:var(--ink)}
-.gtab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--gold)}
-.gtab .n{font:500 .8rem/1 var(--ui);color:var(--muted);margin-inline-start:4px}
-.gpanel{display:flex;flex-direction:column;gap:12px;min-width:0}
+/* Galerie des styles et des modèles */
 .gtools{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
 .search{flex:1 1 240px;min-width:0;position:relative}
 .search input{width:100%;border:1px solid var(--rule);border-radius:999px;background:var(--sheet);padding:7px 14px 7px 34px}
@@ -134,7 +165,7 @@ h1{font:700 1.7rem/1.1 var(--display);margin:0;letter-spacing:.005em;text-wrap:b
 .lseg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
 .filters{display:flex;flex-wrap:wrap;gap:6px}
 .famnote{margin:-2px 0 0;color:var(--muted);font-size:.92rem;min-height:1.4em}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
 .cw{position:relative;display:flex;min-width:0}
 .cw > .card{flex:1 1 auto;min-width:0}
 .card{position:relative;display:flex;flex-direction:column;gap:6px;min-width:0;padding:10px 12px 11px;text-align:start;border:1px solid var(--rule);border-radius:12px;background:var(--sheet);color:var(--ink);transition:border-color .15s}
@@ -165,7 +196,7 @@ h1{font:700 1.7rem/1.1 var(--display);margin:0;letter-spacing:.005em;text-wrap:b
 .note-line{color:var(--muted);font-size:.86rem;margin:0}
 
 /* Modèles */
-.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:12px}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
 .mc{position:relative;display:flex;flex-direction:column;min-width:0;border:1px solid var(--rule);border-radius:14px;background:var(--sheet);overflow:hidden}
 .mc:hover{border-color:var(--lapis)}
 .mc-apply{display:flex;flex-direction:column;gap:6px;padding:0 0 10px;background:none;border:0;text-align:start;color:var(--ink);min-width:0}
@@ -190,8 +221,6 @@ h1{font:700 1.7rem/1.1 var(--display);margin:0;letter-spacing:.005em;text-wrap:b
 /* Atelier */
 .bench{background:var(--bench);color:var(--bench-ink);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
 .bench > *{flex-shrink:0}
-.bench .step-n{background:var(--bench-gold);color:var(--bench)}
-.bench .step .sub{color:var(--bench-muted)}
 .bench .chip,.vw .chip{background:var(--bench-2);color:var(--bench-ink);border-color:var(--bench-rule)}
 .bench .chip:hover,.vw .chip:hover{border-color:var(--bench-gold)}
 .bench .chip[aria-pressed="true"],.vw .chip[aria-pressed="true"]{background:var(--bench-gold);color:var(--bench);border-color:var(--bench-gold)}
@@ -301,7 +330,7 @@ input[type=color]{width:38px;height:30px;padding:0 2px;border:1px solid var(--be
 .gtools2 .gbtns{display:flex;gap:6px;flex-wrap:wrap}
 .gsel{font-size:.84rem;color:var(--bench-muted);font-variant-numeric:tabular-nums}
 .bench .mini:disabled{opacity:.4;cursor:not-allowed}
-.bench .mini.add:hover,.bench .mini.rev:hover,.bench .mini.tune:hover{border-color:var(--bench-gold);color:var(--bench-gold)}
+.bench .mini.add:hover,.bench .mini.rev:hover{border-color:var(--bench-gold);color:var(--bench-gold)}
 .garrow{display:inline-grid;place-items:center;width:26px;height:26px;border:1px solid var(--bench-rule);border-radius:50%;font-weight:700;line-height:1;color:var(--bench-gold)}
 .check{display:inline-flex;align-items:center;gap:8px;font-size:.9rem;color:var(--bench-ink)}
 .check:has(input:disabled){opacity:.55}
@@ -345,8 +374,7 @@ input[type=color]{width:38px;height:30px;padding:0 2px;border:1px solid var(--be
 .fmt[aria-pressed="true"]{border-color:var(--bench-gold);box-shadow:inset 0 0 0 1px var(--bench-gold)}
 
 /* Export */
-.export{display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--bench-rule);padding-top:14px}
-.export h3{margin:0;font:700 1.05rem/1.2 var(--display)}
+.export{display:flex;flex-direction:column;gap:12px}
 .export h4{margin:0;font:700 .95rem/1.2 var(--ui);color:var(--bench-ink)}
 .export section{display:flex;flex-direction:column;gap:8px}
 .vec{border:1px solid var(--bench-gold);border-radius:12px;padding:12px;background:rgba(227,192,106,.07)}
@@ -364,15 +392,10 @@ input[type=color]{width:38px;height:30px;padding:0 2px;border:1px solid var(--be
 .dl4{grid-template-columns:repeat(2,minmax(0,1fr))}
 .status{min-height:1.4em;font-size:.88rem;color:var(--bench-muted);margin:0}
 .status.err{color:var(--bench-alert)}
-.foot{color:var(--muted);font-size:.85rem;display:flex;flex-wrap:wrap;gap:6px 18px;border-top:1px solid var(--rule);padding-top:14px}
-.mbar{position:fixed;inset-inline:0;bottom:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:var(--bench);color:var(--bench-ink);box-shadow:0 -6px 18px var(--lift)}
-.mbar span{font-size:.9rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mbar button{background:var(--bench-gold);color:var(--bench);border:0;border-radius:9px;padding:8px 14px;font-weight:700;white-space:nowrap}
-@media (min-width:1040px){.mbar{display:none!important}}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);z-index:20;max-width:min(560px,calc(100vw - 32px));background:var(--bench);color:var(--bench-ink);border:1px solid var(--bench-rule);border-radius:12px;padding:10px 16px;font-size:.92rem;box-shadow:0 10px 30px var(--lift);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .toast.err{border-color:var(--bench-alert);color:var(--bench-alert)}
-@media (max-width:1039px){.toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}}
+@media (max-width:1039px){.toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}}
 
 /* Boîtes de dialogue */
 dialog{border:1px solid var(--rule);border-radius:16px;background:var(--sheet);color:var(--ink);width:min(760px,calc(100vw - 32px));max-height:calc(100vh - 48px);padding:0}
@@ -426,6 +449,13 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
 .im-facts .swc{display:inline-block;width:14px;height:14px;border-radius:4px;border:1px solid var(--rule);vertical-align:-2px;margin-inline-end:3px}
 @media (max-width:640px){.im-body{grid-template-columns:minmax(0,1fr)}.im-body img{max-height:220px;object-fit:contain}}
 
+/* Tiroir « Télécharger » */
+dialog.xdlg{background:var(--bench);color:var(--bench-ink);border-color:var(--bench-rule);width:min(640px,calc(100vw - 24px))}
+.xdlg .dlg{gap:14px}
+.xhead{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.xdlg .close{align-self:auto;background:var(--bench-2);color:var(--bench-ink);border-color:var(--bench-rule)}
+.xdlg .close:hover{border-color:var(--bench-gold)}
+
 /* Plein écran */
 dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max-height:none;max-width:none;background:var(--bench);color:var(--bench-ink);border-color:var(--bench-rule)}
 .vw{display:flex;flex-direction:column;height:100%;padding:12px 14px;gap:10px}
@@ -450,16 +480,39 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
 .cmpcell b{font-size:.88rem}
 .cmpcell small{color:var(--bench-muted);font-size:.78rem}
 .vw .hint{color:var(--bench-muted)}
+@media (max-width:1039px){
+  .top{flex-wrap:wrap;padding:8px 12px;gap:6px 10px}
+  .brand-mark{width:50px;height:30px}
+  h1{font-size:1.12rem}
+  .spaces{order:3;flex:1 1 100%;margin:0;overflow-x:auto;scrollbar-width:none}
+  .spaces::-webkit-scrollbar{display:none}
+  .space{padding:5px 11px;font-size:.86rem}
+  .tb{height:36px;min-width:36px;padding:0 9px}
+  .tb span{display:none}
+  .tb.primary span{display:inline}
+  .top-acts #saveBtn{display:none}
+  .studio{display:flex;flex-direction:column;height:auto;min-height:0}
+  .bench.stagearea{order:1;position:sticky;top:0;z-index:5;padding:8px 10px 10px;gap:6px;overflow:visible;box-shadow:0 8px 18px var(--lift)}
+  .stagearea > .preview{flex:none;height:min(38vh,340px);height:min(38svh,340px);min-height:170px}
+  .panels{order:2;overflow:visible;border:0;padding:14px 14px calc(100px + env(safe-area-inset-bottom,0px))}
+  .rail{position:fixed;left:0;right:0;bottom:0;z-index:7;flex-direction:row;gap:2px;overflow-x:auto;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 18px var(--lift)}
+  .rail{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent)}
+  .rail.at-end{-webkit-mask-image:none;mask-image:none}
+  .rt{flex:1 0 58px;padding:7px 2px 6px;font-size:.7rem}
+  .rt svg{width:21px;height:21px}
+  .rt .dot-on{inset-inline-end:10px;top:5px}
+  .pvfont,.pvview .sseg,#dimsBtn,.qdl,.meta{display:none}
+  #fullBtn{font-size:0;gap:0}
+  .pvdl{display:inline-flex}
+}
 @media (max-width:640px){
-  h1{font-size:1.4rem}.brand-mark{width:72px;height:44px}
+  .brand-t .tagline{display:none}
   #txt{font-size:1.6rem}
   .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-  .mgrid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+  .mgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .card{padding:8px 9px 9px}.card-art{height:70px}
-  .bench{padding:14px;border-radius:14px}
   .row{grid-template-columns:minmax(0,1fr)}
   .dl{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .app{padding-bottom:96px}
   dialog.viewer{width:100vw;height:100vh;border-radius:0}
   .comp .sthumb{flex:1 1 0;width:auto}
   .comp > .lbl{flex-basis:100%}
@@ -468,24 +521,43 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
 </style>
 
 <div class="app">
-  <header class="top">
+  <header class="top" id="top">
     <div class="brand">
       <div class="brand-mark" id="brandMark" aria-hidden="true"><span class="fallback" lang="ar">خطّاط</span></div>
-      <div>
+      <div class="brand-t">
         <h1>Atelier Khattat</h1>
-        <p class="tagline">Votre phrase en calligraphie arabe : près de 200 styles, des dizaines de modèles de tableaux, et des fichiers vectoriels nets à toutes les tailles.</p>
+        <p class="tagline">La calligraphie arabe, de votre phrase au fichier vectoriel</p>
       </div>
     </div>
-    <div class="top-actions">
-      <button class="linkbtn" id="designsBtn" type="button">Mes créations <span class="n" id="designsCount"></span></button>
-      <button class="linkbtn" id="aboutBtn" type="button">Polices et licences</button>
+    <nav class="spaces" aria-label="Espaces de l’atelier">
+      <button class="space" type="button" id="spStudio" aria-current="page">Atelier</button>
+      <button class="space" type="button" id="designsBtn">Mes créations <span class="n" id="designsCount"></span></button>
+      <button class="space" type="button" id="aboutBtn">Polices et licences</button>
+    </nav>
+    <div class="top-acts">
+      <button class="tb" id="undoBtn" type="button" title="Annuler (Ctrl+Z)" aria-label="Annuler" disabled><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
+      <button class="tb" id="redoBtn" type="button" title="Rétablir (Ctrl+Y)" aria-label="Rétablir" disabled><svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></button>
+      <button class="tb" id="saveBtn" type="button" title="Enregistrer dans Mes créations"><svg viewBox="0 0 24 24"><path d="M6 3h10l4 4v14H4V3z"/><path d="M8 3v6h8V3M8 21v-7h8v7"/></svg><span>Enregistrer</span></button>
+      <button class="tb primary" id="dlOpen" type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4v11"/><path d="M7 10.5l5 5 5-5"/><path d="M5 20h14"/></svg><span>Télécharger</span></button>
     </div>
   </header>
 
-  <main class="layout">
-    <div class="left">
-      <section class="panel" aria-labelledby="h1-text">
-        <div class="step"><span class="step-n">1</span><h2 id="h1-text">Votre phrase en arabe</h2><span class="sub">Entrée pour aller à la ligne</span></div>
+  <main class="studio" id="studio">
+    <nav class="rail" id="rail" role="tablist" aria-label="Outils" aria-orientation="vertical">
+      <button class="rt" role="tab" type="button" id="tool-texte" aria-controls="pn-texte" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 19c7-1 12-6 14-14-8 3-12 7-14 14z"/><path d="M5 19l6-6"/></svg><span>Texte</span></button>
+      <button class="rt" role="tab" type="button" id="tool-styles" aria-controls="pn-styles" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 19L8.5 5l5.5 14M5.3 14h6.4"/><path d="M15.5 12.5c.6-1 1.6-1.5 2.8-1.5 1.7 0 2.7 1 2.7 2.6V19M21 15.6c-1-.4-2-.5-3-.3-1.6.3-2.6 1.1-2.6 2.2 0 1 .8 1.7 2 1.7 1.6 0 2.9-.9 3.6-2"/></svg><span>Styles</span></button>
+      <button class="rt" role="tab" type="button" id="tool-modeles" aria-controls="pn-modeles" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="8" height="10" rx="1.6"/><rect x="13" y="3" width="8" height="6" rx="1.6"/><rect x="13" y="11" width="8" height="10" rx="1.6"/><rect x="3" y="15" width="8" height="6" rx="1.6"/></svg><span>Modèles</span></button>
+      <button class="rt" role="tab" type="button" id="tool-forme" aria-controls="pn-forme" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 18.5C5.5 9.5 18.5 9.5 20.5 18.5"/><path d="M7.5 9.2L6.4 6.6M12 7.6V4.8M16.5 9.2l1.1-2.6"/></svg><span>Forme</span></button>
+      <button class="rt" role="tab" type="button" id="tool-couleurs" aria-controls="pn-couleurs" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.5c3.8 4.6 6 7.8 6 10.7a6 6 0 0 1-12 0c0-2.9 2.2-6.1 6-10.7z"/><path d="M9.2 14.6a2.9 2.9 0 0 0 2.6 2.8"/></svg><span>Couleurs</span></button>
+      <button class="rt" role="tab" type="button" id="tool-effets" aria-controls="pn-effets" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg><span>Effets</span><span class="dot-on" id="fxDot" hidden></span></button>
+      <button class="rt" role="tab" type="button" id="tool-cadre" aria-controls="pn-cadre" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><rect x="7.5" y="7.5" width="9" height="9" rx="1.2"/></svg><span>Cadre</span><span class="dot-on" id="frDot" hidden></span></button>
+      <button class="rt" role="tab" type="button" id="tool-fond" aria-controls="pn-fond" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="16" rx="2.2"/><path d="M3.5 16.5l5-5 4 4 3-3 5 5"/><circle cx="16" cy="8.8" r="1.6"/></svg><span>Fond</span></button>
+      <button class="rt" role="tab" type="button" id="tool-format" aria-controls="pn-format" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 3v13.5a.5.5 0 0 0 .5.5H21"/><path d="M3 7h13.5a.5.5 0 0 1 .5.5V21"/></svg><span>Format</span></button>
+    </nav>
+
+    <section class="panels" id="panels" aria-label="Réglages">
+      <div class="pn" role="tabpanel" id="pn-texte" aria-labelledby="tool-texte">
+        <div class="pn-head"><h2>Votre phrase en arabe</h2><span class="sub">Entrée pour aller à la ligne</span></div>
         <div class="field">
           <label class="sr" for="txt">Phrase en arabe</label>
           <textarea id="txt" dir="rtl" lang="ar" rows="2" spellcheck="false" autocomplete="off">الخط العربي</textarea>
@@ -510,58 +582,180 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
           <div class="tk-marks" id="tkMarks" role="group" aria-label="Signes de la lettre choisie"></div>
           <p class="note-line">Touchez une lettre puis un signe : la sélection passe à la lettre suivante. Les flèches du clavier déplacent la sélection, Suppr efface les signes.</p>
         </div>
-      </section>
-
-      <section class="panel" aria-labelledby="h2-styles">
-        <div class="step"><span class="step-n">2</span><h2 id="h2-styles">Choisissez un style ou un modèle</h2></div>
-        <div class="gtabs" role="tablist" aria-label="Galerie">
-          <button class="gtab" role="tab" id="gt-styles" aria-controls="gp-styles" aria-selected="true" type="button">Styles d’écriture<span class="n" id="styleCount"></span></button>
-          <button class="gtab" role="tab" id="gt-models" aria-controls="gp-models" aria-selected="false" tabindex="-1" type="button">Modèles de tableaux<span class="n" id="modelCount"></span></button>
+        <h3 class="pn-sub">Mise en page</h3>
+        <div class="tp" id="tp-ecr">
+          <div class="row"><label for="size">Taille</label>
+            <div class="ctl"><input type="range" id="size" min="24" max="480" step="1"><input class="num" type="number" id="sizeNum" min="8" max="2000" step="1" aria-label="Taille en pixels"><span class="val" id="sizePt"></span></div></div>
+          <div class="row" id="rowWeight" hidden><span class="lbl" id="lblWeight">Graisse</span>
+            <div class="ctl" id="weightCtl"></div></div>
+          <div class="row"><span class="lbl" id="lblKashida">Étirement</span>
+            <div class="ctl"><div class="seg" id="kashida" role="group" aria-labelledby="lblKashida"></div><span class="hint" id="kashidaHint">Kashida : allonge la liaison avant la dernière lettre de chaque mot</span></div></div>
+          <div class="row"><label for="ws">Espace des mots</label>
+            <div class="ctl"><input type="range" id="ws" min="0.2" max="4" step="0.05"><span class="val" id="wsVal"></span></div></div>
+          <div class="row"><span class="lbl">Tashkīl</span>
+            <div class="ctl"><label class="check"><input type="checkbox" id="harakat"> Afficher les voyelles et la chadda</label></div></div>
+          <div class="row" id="rowColorFont" hidden><span class="lbl">Police en couleur</span>
+            <div class="ctl"><label class="check"><input type="checkbox" id="colorFont"> Garder les couleurs propres à la police</label></div></div>
+          <div class="row" id="rowAlign" hidden><span class="lbl" id="lblAlign">Alignement</span>
+            <div class="ctl"><div class="seg" id="align" role="group" aria-labelledby="lblAlign"></div></div></div>
+          <div class="row" id="rowLh" hidden><label for="lh">Interligne</label>
+            <div class="ctl"><input type="range" id="lh" min="0.6" max="2.2" step="0.05"><span class="val" id="lhVal"></span></div></div>
         </div>
-        <div role="tabpanel" id="gp-styles" aria-labelledby="gt-styles" class="gpanel">
-          <div class="gtools">
-            <div class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg><input type="search" id="q" placeholder="Rechercher : kufi, thuluth, gras, Amiri…" aria-label="Rechercher un style" autocomplete="off"></div>
-            <label class="check-l"><input type="checkbox" id="cardColors"> Aperçus en couleurs</label>
+      </div>
+      <div class="pn" role="tabpanel" id="pn-styles" aria-labelledby="tool-styles" hidden>
+        <div class="pn-head"><h2>Styles d’écriture</h2><span class="n" id="styleCount"></span></div>
+        <div class="gtools">
+          <div class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg><input type="search" id="q" placeholder="Rechercher : kufi, thuluth, gras, Amiri…" aria-label="Rechercher un style" autocomplete="off"></div>
+          <label class="check-l"><input type="checkbox" id="cardColors"> Aperçus en couleurs</label>
+        </div>
+        <div class="filters" id="filters" role="group" aria-label="Familles d'écriture"></div>
+        <p class="famnote" id="famNote"></p>
+        <div class="grid" id="grid"></div>
+        <p class="note-line" id="gridEmpty" hidden>Aucun style ne correspond. Essayez un autre mot ou la famille « Tous ».</p>
+        <p class="note-line">Thuluth et Diwani libres restent simples : pour le rendu d’un maître calligraphe, importez votre propre police (.ttf ou .otf), elle rejoint la galerie.</p>
+      </div>
+      <div class="pn" role="tabpanel" id="pn-modeles" aria-labelledby="tool-modeles" hidden>
+        <div class="pn-head"><h2>Modèles de tableaux</h2><span class="n" id="modelCount"></span></div>
+        <div class="gtools">
+          <span class="note-line">Aperçus avec :</span>
+          <div class="lseg" id="mdSrc" role="group" aria-label="Texte des aperçus"></div>
+          <button class="chip" id="saveModelBtn" type="button">Enregistrer le style actuel comme modèle</button>
+        </div>
+        <div class="filters" id="mdFilters" role="group" aria-label="Thèmes des modèles"></div>
+        <p class="famnote" id="mdNote"></p>
+        <div class="mgrid" id="mgrid"></div>
+        <p class="note-line">Chaque modèle est une composition originale dessinée par l’atelier, inspirée des genres classiques de la calligraphie : elle s’applique à votre phrase en un clic, puis tout reste réglable.</p>
+      </div>
+      <div class="pn" role="tabpanel" id="pn-forme" aria-labelledby="tool-forme" hidden>
+        <div class="pn-head"><h2>Forme et composition</h2></div>
+        <div class="strip">
+          <div class="strip-head"><h3 id="hShapes">Forme de l’écriture</h3><div class="sgroups" id="shapeGroups" role="group" aria-label="Familles de formes"></div></div>
+          <div class="shape-thumbs" id="shapeThumbs" role="group" aria-labelledby="hShapes"></div>
+          <div class="comp" id="compThumbs" role="group" aria-label="Composition"><span class="lbl">Composition</span></div>
+        </div>
+        <div class="tp" id="tp-forme">
+          <p class="shape-title" id="shapeTitle"></p>
+          <div class="tp-inner" id="shapeParams"></div>
+          <div class="row"><label for="shWidth">Largeur</label>
+            <div class="ctl"><input type="range" id="shWidth" min="40" max="250" step="1"><span class="val" id="shWidthVal"></span></div></div>
+          <div class="row"><label for="shRot">Inclinaison</label>
+            <div class="ctl"><input type="range" id="shRot" min="-180" max="180" step="1"><span class="val" id="shRotVal"></span></div></div>
+          <div class="tp-inner" id="compParams"></div>
+          <p class="hint" id="shapeHint">Largeur : resserre ou étale les lettres sans changer leur hauteur.</p>
+        </div>
+      </div>
+      <div class="pn" role="tabpanel" id="pn-couleurs" aria-labelledby="tool-couleurs" hidden>
+        <div class="pn-head"><h2>Couleurs</h2></div>
+        <h3 class="pn-sub first">Ambiances</h3>
+        <div class="moods" id="moods" role="group" aria-label="Ambiances"></div>
+        <h3 class="pn-sub">Encre, contour et ombre</h3>
+        <div class="tp" id="tp-col">
+          <div class="row"><span class="lbl" id="lblInk">Encre</span>
+            <div class="ctl"><div class="seg" id="inkType" role="group" aria-labelledby="lblInk"></div></div></div>
+          <div class="row top" id="rowInkSolid"><span class="lbl">Couleur</span>
+            <div class="ctl" id="inkPick"></div></div>
+          <div id="rowInkGrad" class="sub-ctl gedit" hidden></div>
+          <div class="row"><span class="lbl">Contour</span>
+            <div class="ctl"><label class="check"><input type="checkbox" id="strokeOn"> Ajouter un contour</label></div></div>
+          <div id="strokeCtl" class="sub-ctl" hidden>
+            <div class="ctl"><input type="color" id="strokeColor" aria-label="Couleur du contour"><input type="range" id="strokeW" min="1" max="40" step="1" aria-label="Épaisseur du contour"><span class="val" id="strokeWVal"></span></div>
           </div>
-          <div class="filters" id="filters" role="group" aria-label="Familles d'écriture"></div>
-          <p class="famnote" id="famNote"></p>
-          <div class="grid" id="grid"></div>
-          <p class="note-line" id="gridEmpty" hidden>Aucun style ne correspond. Essayez un autre mot ou la famille « Tous ».</p>
-          <p class="note-line">Thuluth et Diwani libres restent simples : pour le rendu d’un maître calligraphe, importez votre propre police (.ttf ou .otf), elle rejoint la galerie.</p>
-        </div>
-        <div role="tabpanel" id="gp-models" aria-labelledby="gt-models" class="gpanel" hidden>
-          <div class="gtools">
-            <span class="note-line">Aperçus avec :</span>
-            <div class="lseg" id="mdSrc" role="group" aria-label="Texte des aperçus"></div>
-            <button class="chip" id="saveModelBtn" type="button">Enregistrer le style actuel comme modèle</button>
+          <div class="row"><span class="lbl">Ombre</span>
+            <div class="ctl"><label class="check"><input type="checkbox" id="shadowOn"> Ombre portée</label></div></div>
+          <div id="shadowCtl" class="sub-ctl" hidden>
+            <div class="ctl"><input type="color" id="shadowColor" aria-label="Couleur de l'ombre"><span class="hint">Opacité</span><input type="range" id="shadowOp" min="0.05" max="1" step="0.05" aria-label="Opacité de l'ombre"><span class="val" id="shadowOpVal"></span></div>
+            <div class="ctl"><span class="hint">Décalage</span><input type="range" id="shadowDist" min="0" max="60" step="1" aria-label="Décalage de l'ombre"><span class="val" id="shadowDistVal"></span></div>
+            <div class="ctl"><span class="hint">Flou</span><input type="range" id="shadowBlur" min="0" max="40" step="1" aria-label="Flou de l'ombre"><span class="val" id="shadowBlurVal"></span></div>
+            <p class="hint">Le flou est conservé en PNG, JPG, WEBP et SVG ; en PDF et EPS l'ombre reste nette.</p>
           </div>
-          <div class="filters" id="mdFilters" role="group" aria-label="Thèmes des modèles"></div>
-          <p class="famnote" id="mdNote"></p>
-          <div class="mgrid" id="mgrid"></div>
-          <p class="note-line">Chaque modèle est une composition originale dessinée par l’atelier, inspirée des genres classiques de la calligraphie : elle s’applique à votre phrase en un clic, puis tout reste réglable.</p>
         </div>
-      </section>
-    </div>
+      </div>
+      <div class="pn" role="tabpanel" id="pn-effets" aria-labelledby="tool-effets" hidden>
+        <div class="pn-head"><h2>Effets</h2></div>
+        <div class="tp" id="tp-fx">
+          <p class="hint" id="fxWait" hidden>Chargement de la bibliothèque d’effets…</p>
+          <div class="row"><label for="fxWeight">Épaisseur des lettres</label>
+            <div class="ctl"><input type="range" id="fxWeight" min="-4" max="8" step="0.25"><span class="val" id="fxWeightVal"></span></div></div>
+          <div id="fxList"></div>
+          <p class="hint">Tous ces effets sont vectoriels : ils restent nets en SVG, PDF et EPS. Le halo néon devient des anneaux translucides en PDF et EPS.</p>
+        </div>
+      </div>
+      <div class="pn" role="tabpanel" id="pn-cadre" aria-labelledby="tool-cadre" hidden>
+        <div class="pn-head"><h2>Cadre</h2></div>
+        <div class="tp" id="tp-cadre">
+          <div class="othumbs" id="frameThumbs" role="group" aria-label="Forme du cadre"></div>
+          <div class="tp-inner" id="frameCtl">
+            <div class="row"><label for="frW">Épaisseur</label>
+              <div class="ctl"><input type="range" id="frW" min="0.5" max="10" step="0.1"><span class="val" id="frWVal"></span></div></div>
+            <div class="row"><label for="frPad">Marge intérieure</label>
+              <div class="ctl"><input type="range" id="frPad" min="0" max="60" step="1"><span class="val" id="frPadVal"></span></div></div>
+            <div class="row"><span class="lbl">Filet</span>
+              <div class="ctl"><label class="check"><input type="checkbox" id="frDouble"> Double filet</label></div></div>
+            <div class="row"><span class="lbl" id="lblFrInk">Couleur</span>
+              <div class="ctl"><div class="seg" id="frInk" role="group" aria-labelledby="lblFrInk"></div><input type="color" id="frColor" aria-label="Couleur du cadre"></div></div>
+            <div class="row"><span class="lbl">Fond du cadre</span>
+              <div class="ctl"><label class="check"><input type="checkbox" id="frPanelOn"> Remplir</label><input type="color" id="frPanel" aria-label="Couleur de remplissage du cadre"></div></div>
+            <div class="row"><span class="lbl" id="lblFrFit">Placement</span>
+              <div class="ctl"><div class="seg" id="frFit" role="group" aria-labelledby="lblFrFit"></div></div></div>
+            <p class="hint" id="frHint"></p>
+          </div>
+          <p class="hint">Le cadre fait partie du dessin vectoriel : il sort en SVG, PDF, EPS et dans les fichiers de découpe.</p>
+        </div>
+      </div>
+      <div class="pn" role="tabpanel" id="pn-fond" aria-labelledby="tool-fond" hidden>
+        <div class="pn-head"><h2>Fond et motif</h2></div>
+        <div class="tp" id="tp-bg">
+          <div class="row"><span class="lbl" id="lblBg">Fond</span>
+            <div class="ctl"><div class="seg" id="bgType" role="group" aria-labelledby="lblBg"></div></div></div>
+          <div class="row top" id="rowBgSolid"><span class="lbl">Couleur</span>
+            <div class="ctl" id="bgPick"></div></div>
+          <div id="rowBgGrad" class="sub-ctl gedit" hidden></div>
+          <div id="rowBgImg" class="sub-ctl" hidden>
+            <label class="filebtn"><input type="file" id="bgFile" accept="image/png,image/jpeg,image/webp" class="sr">Choisir une photo…</label>
+            <span class="hint" id="bgFileName">Aucune image choisie. La photo remplit le format, recadrée au centre.</span>
+            <div class="ctl"><span class="hint">Voile</span><input type="range" id="veil" min="0" max="0.85" step="0.05" aria-label="Voile sur la photo"><span class="val" id="veilVal"></span><div class="seg" id="veilColor" role="group" aria-label="Couleur du voile"></div></div>
+          </div>
+          <p class="hint" id="bgHint">Transparent : idéal pour un logo, un tampon ou une découpe. Le JPG reçoit alors un fond blanc.</p>
+          <div class="row top"><span class="lbl">Motif</span>
+            <div class="ctl"><div class="othumbs" id="patThumbs" role="group" aria-label="Motif géométrique" style="flex:1 1 100%"></div></div></div>
+          <div id="patCtl" class="sub-ctl" hidden>
+            <div class="ctl"><input type="color" id="patColor" aria-label="Couleur du motif"><span class="hint">Opacité</span><input type="range" id="patOp" min="0.05" max="1" step="0.05" aria-label="Opacité du motif"><span class="val" id="patOpVal"></span></div>
+            <div class="ctl"><span class="hint">Taille</span><input type="range" id="patScale" min="4" max="40" step="1" aria-label="Taille du motif"><span class="val" id="patScaleVal"></span></div>
+            <div class="ctl"><span class="hint">Trait</span><input type="range" id="patW" min="30" max="400" step="10" aria-label="Épaisseur du trait du motif"><span class="val" id="patWVal"></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="pn" role="tabpanel" id="pn-format" aria-labelledby="tool-format" hidden>
+        <div class="pn-head"><h2>Format et taille réelle</h2></div>
+        <div class="tp" id="tp-fmt">
+          <div class="fmt-grid" id="formats" role="group" aria-label="Format de l'image"></div>
+          <div class="row" id="rowMargin"><label for="margin">Marge</label>
+            <div class="ctl"><input type="range" id="margin" min="0" max="240" step="2"><span class="val" id="marginVal"></span></div></div>
+          <div class="row" id="rowCustom" hidden><span class="lbl">Dimensions</span>
+            <div class="ctl"><input class="num" type="number" id="cw" min="50" max="12000" step="1" aria-label="Largeur en pixels"> × <input class="num" type="number" id="ch" min="50" max="12000" step="1" aria-label="Hauteur en pixels"> px</div></div>
+          <div class="row" id="rowFit" hidden><span class="lbl">Texte</span>
+            <div class="ctl"><button class="chip" type="button" id="fitBtn">Ajuster au format</button><span class="hint">Remplit environ 84 % du cadre</span></div></div>
+          <div class="row" id="rowPhys"><span class="lbl">Taille réelle</span>
+            <div class="ctl"><label class="check"><input type="checkbox" id="physOn"> Imposer la largeur</label><input class="num" type="number" id="physVal" min="0.1" max="100000" step="0.1" aria-label="Largeur réelle"><div class="seg" id="physUnit" role="group" aria-label="Unité de la largeur"></div></div></div>
+          <p class="hint" id="physHint">Pour une enseigne, une gravure ou une découpe : le PDF, l’EPS, le SVG et le DXF sortent à cette largeur exacte.</p>
+        </div>
+      </div>
+    </section>
 
-    <aside class="bench" id="bench" aria-labelledby="h3-bench">
-      <div class="step"><span class="step-n">3</span><h2 id="h3-bench">Réglez et téléchargez</h2><span class="sub" id="benchFont"></span><button class="mini" type="button" id="removeFontBtn" hidden>Retirer cette police</button></div>
-
+    <section class="bench stagearea" id="bench" aria-label="Aperçu">
       <div class="pvbar" role="toolbar" aria-label="Outils de l’aperçu">
-        <div class="pvgrp">
-          <button class="ib" id="undoBtn" type="button" title="Annuler (Ctrl+Z)" aria-label="Annuler" disabled><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
-          <button class="ib" id="redoBtn" type="button" title="Rétablir (Ctrl+Y)" aria-label="Rétablir" disabled><svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></button>
-          <button class="ib" id="saveBtn" type="button" title="Enregistrer dans Mes créations"><svg viewBox="0 0 24 24"><path d="M6 3h10l4 4v14H4V3z"/><path d="M8 3v6h8V3M8 21v-7h8v7"/></svg>Enregistrer</button>
-        </div>
-        <div class="pvgrp">
+        <div class="pvgrp pvfont"><span class="pvf" id="benchFont"></span><button class="mini" type="button" id="removeFontBtn" hidden>Retirer cette police</button></div>
+        <div class="pvgrp pvzoom">
           <button class="ib" id="zoomOut" type="button" aria-label="Zoom arrière" title="Zoom arrière (−)"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
           <button class="zval" id="zoomVal" type="button" title="Taille réelle (100 %)">100 %</button>
           <button class="ib" id="zoomIn" type="button" aria-label="Zoom avant" title="Zoom avant (+)"><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg></button>
           <button class="ib" id="zoomFit" type="button" title="Ajuster à la fenêtre (0)">Ajuster</button>
         </div>
-        <div class="pvgrp">
+        <div class="pvgrp pvview">
           <div class="sseg" id="pvBg" role="group" aria-label="Fond de l’aperçu derrière la transparence"></div>
           <button class="ib" id="dimsBtn" type="button" aria-pressed="false" title="Afficher les dimensions réelles">Cotes</button>
           <button class="ib" id="fullBtn" type="button" title="Plein écran, mise en situation, comparaison des styles"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Plein écran</button>
+          <button class="ib pvdl" id="pvDl" type="button" aria-label="Télécharger"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4v11"/><path d="M7 10.5l5 5 5-5"/><path d="M5 20h14"/></svg></button>
         </div>
       </div>
       <div class="preview pv-check" id="preview" tabindex="0" role="img" aria-label="Aperçu : Ctrl + molette ou deux doigts pour zoomer, glisser pour se déplacer">
@@ -582,183 +776,10 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
       <div class="meta" id="meta"></div>
       <div class="alert" id="overflow" hidden><span>Le texte dépasse du format choisi.</span><button type="button" id="fitBtn2">Ajuster la taille</button></div>
       <div class="alert" id="missing" hidden></div>
-
-      <div class="strip">
-        <div class="strip-head"><h3 id="hShapes">Forme de l’écriture</h3><div class="sgroups" id="shapeGroups" role="group" aria-label="Familles de formes"></div><button class="mini tune" type="button" id="shapeTune">Régler la forme</button></div>
-        <div class="shape-thumbs" id="shapeThumbs" role="group" aria-labelledby="hShapes"></div>
-        <div class="comp" id="compThumbs" role="group" aria-label="Composition"><span class="lbl">Composition</span></div>
-      </div>
-
-      <div class="moods" id="moods" role="group" aria-label="Ambiances"></div>
-
-      <div class="tabs" role="tablist" aria-label="Réglages">
-        <button class="tab" role="tab" id="tab-ecr" aria-controls="tp-ecr" aria-selected="true" type="button">Écriture</button>
-        <button class="tab" role="tab" id="tab-forme" aria-controls="tp-forme" aria-selected="false" type="button" tabindex="-1">Forme</button>
-        <button class="tab" role="tab" id="tab-col" aria-controls="tp-col" aria-selected="false" type="button" tabindex="-1">Couleurs</button>
-        <button class="tab" role="tab" id="tab-fx" aria-controls="tp-fx" aria-selected="false" type="button" tabindex="-1">Effets<span class="dot-on" id="fxDot" hidden></span></button>
-        <button class="tab" role="tab" id="tab-cadre" aria-controls="tp-cadre" aria-selected="false" type="button" tabindex="-1">Cadre<span class="dot-on" id="frDot" hidden></span></button>
-        <button class="tab" role="tab" id="tab-bg" aria-controls="tp-bg" aria-selected="false" type="button" tabindex="-1">Fond</button>
-        <button class="tab" role="tab" id="tab-fmt" aria-controls="tp-fmt" aria-selected="false" type="button" tabindex="-1">Format</button>
-      </div>
-
-      <div class="tp" role="tabpanel" id="tp-ecr" aria-labelledby="tab-ecr">
-        <div class="row"><label for="size">Taille</label>
-          <div class="ctl"><input type="range" id="size" min="24" max="480" step="1"><input class="num" type="number" id="sizeNum" min="8" max="2000" step="1" aria-label="Taille en pixels"><span class="val" id="sizePt"></span></div></div>
-        <div class="row" id="rowWeight" hidden><span class="lbl" id="lblWeight">Graisse</span>
-          <div class="ctl" id="weightCtl"></div></div>
-        <div class="row"><span class="lbl" id="lblKashida">Étirement</span>
-          <div class="ctl"><div class="seg" id="kashida" role="group" aria-labelledby="lblKashida"></div><span class="hint" id="kashidaHint">Kashida : allonge la liaison avant la dernière lettre de chaque mot</span></div></div>
-        <div class="row"><label for="ws">Espace des mots</label>
-          <div class="ctl"><input type="range" id="ws" min="0.2" max="4" step="0.05"><span class="val" id="wsVal"></span></div></div>
-        <div class="row"><span class="lbl">Tashkīl</span>
-          <div class="ctl"><label class="check"><input type="checkbox" id="harakat"> Afficher les voyelles et la chadda</label></div></div>
-        <div class="row" id="rowColorFont" hidden><span class="lbl">Police en couleur</span>
-          <div class="ctl"><label class="check"><input type="checkbox" id="colorFont"> Garder les couleurs propres à la police</label></div></div>
-        <div class="row" id="rowAlign" hidden><span class="lbl" id="lblAlign">Alignement</span>
-          <div class="ctl"><div class="seg" id="align" role="group" aria-labelledby="lblAlign"></div></div></div>
-        <div class="row" id="rowLh" hidden><label for="lh">Interligne</label>
-          <div class="ctl"><input type="range" id="lh" min="0.6" max="2.2" step="0.05"><span class="val" id="lhVal"></span></div></div>
-      </div>
-
-      <div class="tp" role="tabpanel" id="tp-forme" aria-labelledby="tab-forme" hidden>
-        <p class="shape-title" id="shapeTitle"></p>
-        <div class="tp-inner" id="shapeParams"></div>
-        <div class="row"><label for="shWidth">Largeur</label>
-          <div class="ctl"><input type="range" id="shWidth" min="40" max="250" step="1"><span class="val" id="shWidthVal"></span></div></div>
-        <div class="row"><label for="shRot">Inclinaison</label>
-          <div class="ctl"><input type="range" id="shRot" min="-180" max="180" step="1"><span class="val" id="shRotVal"></span></div></div>
-        <div class="tp-inner" id="compParams"></div>
-        <p class="hint" id="shapeHint">Largeur : resserre ou étale les lettres sans changer leur hauteur.</p>
-      </div>
-
-      <div class="tp" role="tabpanel" id="tp-col" aria-labelledby="tab-col" hidden>
-        <div class="row"><span class="lbl" id="lblInk">Encre</span>
-          <div class="ctl"><div class="seg" id="inkType" role="group" aria-labelledby="lblInk"></div></div></div>
-        <div class="row top" id="rowInkSolid"><span class="lbl">Couleur</span>
-          <div class="ctl" id="inkPick"></div></div>
-        <div id="rowInkGrad" class="sub-ctl gedit" hidden></div>
-        <div class="row"><span class="lbl">Contour</span>
-          <div class="ctl"><label class="check"><input type="checkbox" id="strokeOn"> Ajouter un contour</label></div></div>
-        <div id="strokeCtl" class="sub-ctl" hidden>
-          <div class="ctl"><input type="color" id="strokeColor" aria-label="Couleur du contour"><input type="range" id="strokeW" min="1" max="40" step="1" aria-label="Épaisseur du contour"><span class="val" id="strokeWVal"></span></div>
-        </div>
-        <div class="row"><span class="lbl">Ombre</span>
-          <div class="ctl"><label class="check"><input type="checkbox" id="shadowOn"> Ombre portée</label></div></div>
-        <div id="shadowCtl" class="sub-ctl" hidden>
-          <div class="ctl"><input type="color" id="shadowColor" aria-label="Couleur de l'ombre"><span class="hint">Opacité</span><input type="range" id="shadowOp" min="0.05" max="1" step="0.05" aria-label="Opacité de l'ombre"><span class="val" id="shadowOpVal"></span></div>
-          <div class="ctl"><span class="hint">Décalage</span><input type="range" id="shadowDist" min="0" max="60" step="1" aria-label="Décalage de l'ombre"><span class="val" id="shadowDistVal"></span></div>
-          <div class="ctl"><span class="hint">Flou</span><input type="range" id="shadowBlur" min="0" max="40" step="1" aria-label="Flou de l'ombre"><span class="val" id="shadowBlurVal"></span></div>
-          <p class="hint">Le flou est conservé en PNG, JPG, WEBP et SVG ; en PDF et EPS l'ombre reste nette.</p>
-        </div>
-      </div>
-
-      <div class="tp" role="tabpanel" id="tp-fx" aria-labelledby="tab-fx" hidden>
-        <p class="hint" id="fxWait" hidden>Chargement de la bibliothèque d’effets…</p>
-        <div class="row"><label for="fxWeight">Épaisseur des lettres</label>
-          <div class="ctl"><input type="range" id="fxWeight" min="-4" max="8" step="0.25"><span class="val" id="fxWeightVal"></span></div></div>
-        <div id="fxList"></div>
-        <p class="hint">Tous ces effets sont vectoriels : ils restent nets en SVG, PDF et EPS. Le halo néon devient des anneaux translucides en PDF et EPS.</p>
-      </div>
-
-      <div class="tp" role="tabpanel" id="tp-cadre" aria-labelledby="tab-cadre" hidden>
-        <div class="othumbs" id="frameThumbs" role="group" aria-label="Forme du cadre"></div>
-        <div class="tp-inner" id="frameCtl">
-          <div class="row"><label for="frW">Épaisseur</label>
-            <div class="ctl"><input type="range" id="frW" min="0.5" max="10" step="0.1"><span class="val" id="frWVal"></span></div></div>
-          <div class="row"><label for="frPad">Marge intérieure</label>
-            <div class="ctl"><input type="range" id="frPad" min="0" max="60" step="1"><span class="val" id="frPadVal"></span></div></div>
-          <div class="row"><span class="lbl">Filet</span>
-            <div class="ctl"><label class="check"><input type="checkbox" id="frDouble"> Double filet</label></div></div>
-          <div class="row"><span class="lbl" id="lblFrInk">Couleur</span>
-            <div class="ctl"><div class="seg" id="frInk" role="group" aria-labelledby="lblFrInk"></div><input type="color" id="frColor" aria-label="Couleur du cadre"></div></div>
-          <div class="row"><span class="lbl">Fond du cadre</span>
-            <div class="ctl"><label class="check"><input type="checkbox" id="frPanelOn"> Remplir</label><input type="color" id="frPanel" aria-label="Couleur de remplissage du cadre"></div></div>
-          <div class="row"><span class="lbl" id="lblFrFit">Placement</span>
-            <div class="ctl"><div class="seg" id="frFit" role="group" aria-labelledby="lblFrFit"></div></div></div>
-          <p class="hint" id="frHint"></p>
-        </div>
-        <p class="hint">Le cadre fait partie du dessin vectoriel : il sort en SVG, PDF, EPS et dans les fichiers de découpe.</p>
-      </div>
-
-      <div class="tp" role="tabpanel" id="tp-bg" aria-labelledby="tab-bg" hidden>
-        <div class="row"><span class="lbl" id="lblBg">Fond</span>
-          <div class="ctl"><div class="seg" id="bgType" role="group" aria-labelledby="lblBg"></div></div></div>
-        <div class="row top" id="rowBgSolid"><span class="lbl">Couleur</span>
-          <div class="ctl" id="bgPick"></div></div>
-        <div id="rowBgGrad" class="sub-ctl gedit" hidden></div>
-        <div id="rowBgImg" class="sub-ctl" hidden>
-          <label class="filebtn"><input type="file" id="bgFile" accept="image/png,image/jpeg,image/webp" class="sr">Choisir une photo…</label>
-          <span class="hint" id="bgFileName">Aucune image choisie. La photo remplit le format, recadrée au centre.</span>
-          <div class="ctl"><span class="hint">Voile</span><input type="range" id="veil" min="0" max="0.85" step="0.05" aria-label="Voile sur la photo"><span class="val" id="veilVal"></span><div class="seg" id="veilColor" role="group" aria-label="Couleur du voile"></div></div>
-        </div>
-        <p class="hint" id="bgHint">Transparent : idéal pour un logo, un tampon ou une découpe. Le JPG reçoit alors un fond blanc.</p>
-        <div class="row top"><span class="lbl">Motif</span>
-          <div class="ctl"><div class="othumbs" id="patThumbs" role="group" aria-label="Motif géométrique" style="flex:1 1 100%"></div></div></div>
-        <div id="patCtl" class="sub-ctl" hidden>
-          <div class="ctl"><input type="color" id="patColor" aria-label="Couleur du motif"><span class="hint">Opacité</span><input type="range" id="patOp" min="0.05" max="1" step="0.05" aria-label="Opacité du motif"><span class="val" id="patOpVal"></span></div>
-          <div class="ctl"><span class="hint">Taille</span><input type="range" id="patScale" min="4" max="40" step="1" aria-label="Taille du motif"><span class="val" id="patScaleVal"></span></div>
-          <div class="ctl"><span class="hint">Trait</span><input type="range" id="patW" min="30" max="400" step="10" aria-label="Épaisseur du trait du motif"><span class="val" id="patWVal"></span></div>
-        </div>
-      </div>
-
-      <div class="tp" role="tabpanel" id="tp-fmt" aria-labelledby="tab-fmt" hidden>
-        <div class="fmt-grid" id="formats" role="group" aria-label="Format de l'image"></div>
-        <div class="row" id="rowMargin"><label for="margin">Marge</label>
-          <div class="ctl"><input type="range" id="margin" min="0" max="240" step="2"><span class="val" id="marginVal"></span></div></div>
-        <div class="row" id="rowCustom" hidden><span class="lbl">Dimensions</span>
-          <div class="ctl"><input class="num" type="number" id="cw" min="50" max="12000" step="1" aria-label="Largeur en pixels"> × <input class="num" type="number" id="ch" min="50" max="12000" step="1" aria-label="Hauteur en pixels"> px</div></div>
-        <div class="row" id="rowFit" hidden><span class="lbl">Texte</span>
-          <div class="ctl"><button class="chip" type="button" id="fitBtn">Ajuster au format</button><span class="hint">Remplit environ 84 % du cadre</span></div></div>
-        <div class="row" id="rowPhys"><span class="lbl">Taille réelle</span>
-          <div class="ctl"><label class="check"><input type="checkbox" id="physOn"> Imposer la largeur</label><input class="num" type="number" id="physVal" min="0.1" max="100000" step="0.1" aria-label="Largeur réelle"><div class="seg" id="physUnit" role="group" aria-label="Unité de la largeur"></div></div></div>
-        <p class="hint" id="physHint">Pour une enseigne, une gravure ou une découpe : le PDF, l’EPS, le SVG et le DXF sortent à cette largeur exacte.</p>
-      </div>
-
-      <div class="export" id="exportBox">
-        <h3>Télécharger</h3>
-        <section class="vec" aria-labelledby="hVec">
-          <div class="vec-head"><span class="badge">Vectoriel</span><h4 id="hVec">Qualité parfaite à toutes les tailles</h4></div>
-          <p class="hint">Des contours mathématiques, sans pixels : agrandissez sans limite, de la carte de visite à l’enseigne ou à la façade, sans jamais de flou.</p>
-          <div class="dl dl-vec">
-            <button type="button" data-x="svg" class="big"><b>SVG</b><small>Illustrator, Inkscape, Figma, web</small></button>
-            <button type="button" data-x="pdf" class="big"><b>PDF</b><small>imprimeur, taille réelle</small></button>
-            <button type="button" data-x="zip" class="pack"><b>Pack vectoriel complet .zip</b><small>SVG · PDF · EPS · DXF · découpe · PNG</small></button>
-          </div>
-          <p class="hint">Le pack ajoute l’EPS (CorelDRAW, logiciels d’imprimerie) et le DXF en millimètres (laser, CNC, plasma).</p>
-        </section>
-        <section aria-labelledby="hRast">
-          <h4 id="hRast">Images en pixels</h4>
-          <div class="row"><span class="lbl" id="lblScale">Résolution</span>
-            <div class="ctl"><div class="seg" id="scale" role="group" aria-labelledby="lblScale"></div><span class="val" id="scaleVal"></span></div></div>
-          <div class="dl">
-            <button type="button" data-x="png">PNG<small>transparence</small></button>
-            <button type="button" data-x="jpg">JPG<small>photo légère</small></button>
-            <button type="button" data-x="webp">WEBP<small>web</small></button>
-          </div>
-          <p class="hint">Une image en pixels devient floue si on l’agrandit au-delà de sa résolution : pour l’impression grand format, prenez le SVG ou le PDF.</p>
-        </section>
-        <section aria-labelledby="hMore">
-          <h4 id="hMore">Découpe, comparaison et partage</h4>
-          <div class="dl dl4">
-            <button type="button" data-x="cut">SVG découpe<small>contours fusionnés</small></button>
-            <button type="button" data-x="copy" id="copyBtn">Copier l’image<small>presse-papiers</small></button>
-            <button type="button" data-x="sheet">Planche PDF<small id="sheetSub">styles favoris</small></button>
-            <button type="button" data-x="batch">Lot .zip<small id="batchSub">SVG + PNG par style</small></button>
-          </div>
-        </section>
-        <p class="status" id="status" role="status" aria-live="polite"></p>
-      </div>
-    </aside>
+    </section>
   </main>
-
-  <footer class="foot">
-    <span>Mise en forme des lettres : HarfBuzz, le moteur des navigateurs et d'Android.</span>
-    <span id="engineInfo"></span>
-    <span>Polices sous licences libres (SIL OFL, Apache, Bitstream Vera).</span>
-  </footer>
 </div>
 
-<div class="mbar" id="mbar" hidden><span id="mbarText"></span><button type="button" id="mbarBtn">Régler et télécharger</button></div>
 <div class="toast" id="toast" aria-hidden="true"></div>
 
 <dialog id="about" aria-labelledby="aboutTitle">
@@ -768,6 +789,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     <p>Pour une police importée, vérifiez sa propre licence avant un usage commercial. Les polices importées restent dans votre navigateur et ne sont envoyées nulle part.</p>
     <ul id="licList"></ul>
     <p class="note-line">Logiciels : HarfBuzz (licence MIT), harfbuzzjs (MIT), Clipper d'Angus Johnson (licence Boost) pour la fusion des contours et les effets.</p>
+    <p class="note-line">Mise en forme des lettres : HarfBuzz, le moteur des navigateurs et d'Android. · <span id="engineInfo"></span> · Polices sous licences libres (SIL OFL, Apache, Bitstream Vera).</p>
     <button class="close" type="button" id="aboutClose">Fermer</button>
   </div>
 </dialog>
@@ -781,7 +803,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     <p class="note-line" id="dempty">Aucune création enregistrée pour l’instant.</p>
     <section class="dtransfer" aria-labelledby="dtransferTitle">
       <h3 id="dtransferTitle">Passer à un autre appareil ou à une autre fenêtre</h3>
-      <p class="note-line">Le code d’une création reprend le texte et tous les réglages (sauf la photo de fond). Collez-le dans l’atelier ouvert ailleurs : dans la zone de texte de l’étape 1 ou dans le champ ci-dessous.</p>
+      <p class="note-line">Le code d’une création reprend le texte et tous les réglages (sauf la photo de fond). Collez-le dans l’atelier ouvert ailleurs : dans la zone de texte de l’outil « Texte » ou dans le champ ci-dessous.</p>
       <div class="dsave"><button class="btn" type="button" id="dcodeCopy">Copier le code de la création actuelle</button><input type="text" id="dcodeIn" placeholder="Coller un code ici (Ctrl+V)" aria-label="Coller le code d’une création" autocomplete="off" spellcheck="false"></div>
       <textarea class="codebox" id="dcodeOut" rows="2" readonly hidden aria-label="Code de la création actuelle"></textarea>
     </section>
@@ -789,6 +811,44 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
   </div>
 </dialog>
 
+<dialog id="exportDlg" class="xdlg" aria-labelledby="xTitle">
+  <div class="dlg">
+    <div class="xhead"><h2 id="xTitle">Télécharger</h2><button class="close" type="button" id="exportClose">Fermer</button></div>
+    <div class="export" id="exportBox">
+      <section class="vec" aria-labelledby="hVec">
+        <div class="vec-head"><span class="badge">Vectoriel</span><h4 id="hVec">Qualité parfaite à toutes les tailles</h4></div>
+        <p class="hint">Des contours mathématiques, sans pixels : agrandissez sans limite, de la carte de visite à l’enseigne ou à la façade, sans jamais de flou.</p>
+        <div class="dl dl-vec">
+          <button type="button" data-x="svg" class="big"><b>SVG</b><small>Illustrator, Inkscape, Figma, web</small></button>
+          <button type="button" data-x="pdf" class="big"><b>PDF</b><small>imprimeur, taille réelle</small></button>
+          <button type="button" data-x="zip" class="pack"><b>Pack vectoriel complet .zip</b><small>SVG · PDF · EPS · DXF · découpe · PNG</small></button>
+        </div>
+        <p class="hint">Le pack ajoute l’EPS (CorelDRAW, logiciels d’imprimerie) et le DXF en millimètres (laser, CNC, plasma).</p>
+      </section>
+      <section aria-labelledby="hRast">
+        <h4 id="hRast">Images en pixels</h4>
+        <div class="row"><span class="lbl" id="lblScale">Résolution</span>
+          <div class="ctl"><div class="seg" id="scale" role="group" aria-labelledby="lblScale"></div><span class="val" id="scaleVal"></span></div></div>
+        <div class="dl">
+          <button type="button" data-x="png">PNG<small>transparence</small></button>
+          <button type="button" data-x="jpg">JPG<small>photo légère</small></button>
+          <button type="button" data-x="webp">WEBP<small>web</small></button>
+        </div>
+        <p class="hint">Une image en pixels devient floue si on l’agrandit au-delà de sa résolution : pour l’impression grand format, prenez le SVG ou le PDF.</p>
+      </section>
+      <section aria-labelledby="hMore">
+        <h4 id="hMore">Découpe, comparaison et partage</h4>
+        <div class="dl dl4">
+          <button type="button" data-x="cut">SVG découpe<small>contours fusionnés</small></button>
+          <button type="button" data-x="copy" id="copyBtn">Copier l’image<small>presse-papiers</small></button>
+          <button type="button" data-x="sheet">Planche PDF<small id="sheetSub">styles favoris</small></button>
+          <button type="button" data-x="batch">Lot .zip<small id="batchSub">SVG + PNG par style</small></button>
+        </div>
+      </section>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+    </div>
+  </div>
+</dialog>
 <dialog id="dlfb" aria-labelledby="dlfbTitle">
   <div class="dlg">
     <h2 id="dlfbTitle">Votre fichier est prêt</h2>
@@ -797,7 +857,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     <p class="dlfb-warn" id="dlfbNote" hidden></p>
     <section class="dlfb-way" aria-labelledby="dlfbW1">
       <h3 id="dlfbW1">Le télécharger depuis votre navigateur</h3>
-      <p>Ouvrez l’atelier dans Chrome, Edge, Safari ou Firefox : le téléchargement y fonctionne. Votre création vous suit grâce à son code, copié en même temps : dans l’atelier ouvert, cliquez dans la zone de texte de l’étape 1 et collez (Ctrl+V).</p>
+      <p>Ouvrez l’atelier dans Chrome, Edge, Safari ou Firefox : le téléchargement y fonctionne. Votre création vous suit grâce à son code, copié en même temps : dans l’atelier ouvert, cliquez dans la zone de texte de l’outil « Texte » et collez (Ctrl+V).</p>
       <div class="btnrow"><a class="btn primary" id="dlfbOpen" href="#" target="_blank" rel="noopener">Copier le code et ouvrir le navigateur</a></div>
       <label class="dlfb-code"><span>Code de votre création (si la copie n’a pas marché : sélectionnez-le puis Ctrl+C)</span><textarea class="codebox" id="dlfbCode" rows="2" readonly spellcheck="false"></textarea></label>
       <p class="note-line">Adresse de l’atelier : <span id="dlfbUrl"></span></p>

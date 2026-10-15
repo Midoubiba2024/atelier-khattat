@@ -16,9 +16,10 @@ const CSP = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs
   const t0 = Date.now();
   await pa.goto(BASE + 'index.html');
   await pa.waitForSelector('#preview svg', { timeout: 30000 });
+  await pa.click('#tool-styles');
   await pa.waitForFunction(() => document.querySelectorAll('.card-art svg').length >= 8, null, { timeout: 30000 });
   console.log('[CSP] preview in', Date.now() - t0, 'ms ·', await pa.textContent('#engineInfo'), '· cards', await pa.$$eval('.card-art svg', a => a.length));
-  const [dl] = await Promise.all([pa.waitForEvent('download'), pa.click('.dl button[data-x="zip"]')]);
+  const [dl] = await Promise.all([pa.waitForEvent('download'), pa.click('#dlOpen').then(() => pa.click('.dl button[data-x="zip"]'))]);
   await dl.saveAs('out/dl/csp-pack.zip');
   console.log('[CSP] zip', fs.statSync('out/dl/csp-pack.zip').size, 'bytes ·', await pa.textContent('#status'));
   console.log('[CSP] console:', errsA.filter(e => !/favicon/.test(e)).join(' || ') || 'none');
@@ -40,6 +41,7 @@ const CSP = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs
   await pb.waitForSelector('#preview svg');
   await pb.waitForTimeout(1200);
   console.log('[B] after reload bench font:', await pb.textContent('#benchFont'), '· text:', JSON.stringify(await pb.inputValue('#txt')), '· user cards:', await pb.$$eval('.card[data-id^="user-"]', a => a.length));
+  await pb.click('#tool-couleurs');
   await pb.click('.mood:has-text("Autocollant")');
   await pb.waitForTimeout(400);
   await pb.screenshot({ path: 'out/ui_sticker.png', clip: { x: 760, y: 0, width: 520, height: 520 } });

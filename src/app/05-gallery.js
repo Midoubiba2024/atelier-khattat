@@ -82,7 +82,7 @@
     updateBatchLabels();
   }
   // les cartes se chargent et se redessinent quand elles approchent de l'écran
-  const io = 'IntersectionObserver' in window ? new IntersectionObserver(entries => {
+  const io = lazyObserver(entries => {
     for (const e of entries) {
       const f = fontById(e.target.dataset.id);
       if (!f) continue;
@@ -91,7 +91,7 @@
       if (f.state === 'ready') { if (f.dirty) renderCard(f); }
       else ensureFont(f).catch(() => {});
     }
-  }, { rootMargin: '400px 0px' }) : null;
+  }, '700px');
 
   function makeCard(f) {
     const w = document.createElement('div');
@@ -210,7 +210,7 @@
     if (S.fontId !== id) { S.fontId = id; if (!keepWeight) S.wght = null; }
     syncCardSelection();
     ensureFont(f, true).then(() => { updateWeightUI(); scheduleBench(); }).catch(() => scheduleBench());
-    updateWeightUI(); scheduleBench(); updateMobileBar(); changed();
+    updateWeightUI(); scheduleBench(); changed();
   }
   function syncCardSelection() { $$('#grid .card[data-id]').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.id === S.fontId))); }
   const currentFont = () => fontById(S.fontId);

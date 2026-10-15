@@ -12,23 +12,29 @@ const fs = require('fs');
   await page.goto(BASE + 'index.html');
   await page.waitForSelector('#preview svg', { timeout: 20000 });
   console.log('preview ready in', Date.now() - t0, 'ms');
+  await page.click('#tool-styles');
   await page.waitForFunction(() => document.querySelectorAll('.card-art svg').length >= 12, null, { timeout: 20000 });
   await page.waitForTimeout(1200);
   console.log('cards rendered:', await page.$$eval('.card-art svg', a => a.length), 'engine:', await page.textContent('#engineInfo'));
   await page.screenshot({ path: 'out/ui_desktop.png' });
   // exports
   fs.mkdirSync('out/dl', { recursive: true });
+  await page.click('#dlOpen');
   for (const x of ['png', 'jpg', 'webp', 'svg', 'pdf', 'cut', 'zip']) {
     const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 30000 }), page.click(`.dl button[data-x="${x}"]`)]);
     const p = 'out/dl/' + dl.suggestedFilename();
     await dl.saveAs(p);
     console.log('download', x, '->', dl.suggestedFilename(), fs.statSync(p).size, 'bytes', '| status:', await page.textContent('#status'));
   }
+  await page.click('#exportClose');
   // change text, style, format, mood
+  await page.click('#tool-texte');
   await page.fill('#txt', 'بسم الله الرحمن الرحيم\nالحمد لله');
+  await page.click('#tool-styles');
   await page.click('.card[data-id="gulzar"]');
-  await page.click('#tab-fmt');
+  await page.click('#tool-format');
   await page.click('.fmt[data-v="square"]');
+  await page.click('#tool-couleurs');
   await page.click('.mood:nth-child(2)');
   await page.waitForTimeout(800);
   await page.screenshot({ path: 'out/ui_desktop2.png' });

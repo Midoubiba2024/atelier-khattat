@@ -27,4 +27,9 @@ const server = http.createServer((req, res) => {
   });
 });
 server.listen(PORT, '127.0.0.1', () => console.log('Atelier Khattat : http://localhost:' + PORT + '  (Ctrl+C pour arrêter)'));
+// « localhost » peut désigner l'adresse IPv6 ::1 (Windows) : on répond aussi sur celle-ci quand elle existe
+const v6 = http.createServer(server.listeners('request')[0]);
+v6.on('error', () => {});
+v6.listen(PORT, '::1');
+server.on('close', () => v6.close());
 module.exports = server;

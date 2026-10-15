@@ -157,8 +157,8 @@
   const pv = $('#preview'), stage = $('#stage');
   const pvPad = () => (S.dims ? 36 : 12);
   const zoomer = makeZoomer(pv, stage, {
-    pad: pvPad, autoHeight: true,
-    maxH: () => Math.max(180, Math.min(window.innerHeight * 0.5, 600)),
+    // la hauteur de l'aperçu vient de la mise en page (scène de l'atelier, ou bandeau collé en haut sur téléphone)
+    pad: pvPad,
     blocked: () => !!drawing,
     onZoom: k => { $('#zoomVal').textContent = nf0.format(Math.round(k * 100)) + ' %'; }
   });

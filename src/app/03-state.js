@@ -22,9 +22,9 @@
     shape: { type: 'straight', bend: 90, cover: 60, side: 'top', spin: 0, ring: 'none', ringW: 8, height: 50, ratio: 60, amp: 30, waves: 1.5, intensity: 40, gap: 130, sides: 6, round: 35, sep: 'star', free: null, flip: false, width: 100, rotate: 0, repeat: 'none', copies: 6, spread: 110, mgap: 8 },
     phys: { on: false, value: 60, unit: 'cm' },
     // réglages d'interface (hors historique)
-    scale: 2, filter: 'all', tab: 'ecr', favs: [], cardColors: false, pvBg: 'check', dims: false, gtab: 'styles', mdTheme: 'all', mdSrc: 'mine'
+    scale: 2, filter: 'all', tab: 'ecr', tool: 'texte', favs: [], cardColors: false, pvBg: 'check', dims: false, gtab: 'styles', mdTheme: 'all', mdSrc: 'mine'
   };
-  const UI_KEYS = ['scale', 'filter', 'tab', 'favs', 'cardColors', 'pvBg', 'dims', 'gtab', 'mdTheme', 'mdSrc'];
+  const UI_KEYS = ['scale', 'filter', 'tab', 'tool', 'favs', 'cardColors', 'pvBg', 'dims', 'gtab', 'mdTheme', 'mdSrc'];
   const FX_OFF = clone(DEFAULT.fx);
 
   function normHex(v) {
@@ -111,6 +111,7 @@
     s.tab = oneOf(s.tab, ['ecr', 'forme', 'col', 'fx', 'cadre', 'bg', 'fmt'], 'ecr');
     s.pvBg = oneOf(s.pvBg, ['check', 'light', 'dark'], 'check');
     s.gtab = oneOf(s.gtab, ['styles', 'models'], 'styles');
+    s.tool = oneOf(s.tool, TOOLS, 'texte');
     s.mdTheme = oneOf(s.mdTheme, MTHEMES.map(t => t[0]), 'all');
     s.mdSrc = oneOf(s.mdSrc, ['mine', 'ex'], 'mine');
     s.favs = Array.isArray(s.favs) ? s.favs.filter(x => typeof x === 'string').slice(0, 400) : [];

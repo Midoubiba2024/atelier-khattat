@@ -13,6 +13,9 @@ const URL = BASE + 'index.html';
   await page.goto(URL);
   await page.waitForSelector('#preview svg', { timeout: 20000 });
   console.log('preview ready in', Date.now() - t0, 'ms');
+  // la galerie des styles est dans son panneau : on l'ouvre, et la molette fait défiler le panneau
+  await page.click('#tool-styles'); await page.waitForTimeout(300);
+  await page.mouse.move(280, 500);
   const nCards = await page.$$eval('#grid .card[data-id]', a => a.length);
   const chips = await page.$$eval('#filters .chip', a => a.map(c => c.textContent.replace(/\s+/g, ' ').trim()));
   console.log('cards:', nCards, '| filters:', chips.join(' / '), '| count label:', await page.textContent('#styleCount'));
@@ -42,7 +45,7 @@ const URL = BASE + 'index.html';
   await page.evaluate(() => window.scrollTo(0, 0));
 
   // ---------- Couleurs : dégradé de l'encre
-  await page.click('#tab-col');
+  await page.click('#tool-couleurs');
   await page.waitForTimeout(200);
   const visible = await page.isVisible('#rowInkGrad');
   console.log('ink gradient editor visible:', visible);
@@ -94,7 +97,7 @@ const URL = BASE + 'index.html';
   await benchShot.screenshot({ path: 'out/g_colors_bench.png' });
 
   // ---------- Fond : dégradé circulaire
-  await page.click('#tab-bg');
+  await page.click('#tool-fond');
   await page.click('#bgType button[data-v="grad"]');
   await page.click('#rowBgGrad .gp[title^="Halo"]');
   await page.waitForTimeout(200);
@@ -102,13 +105,16 @@ const URL = BASE + 'index.html';
   await benchShot.screenshot({ path: 'out/g_bg_bench.png' });
   // téléchargements PDF / SVG / ZIP
   fs.mkdirSync('out/dlg', { recursive: true });
+  await page.click('#dlOpen');
   for (const x of ['pdf', 'svg', 'png', 'zip']) {
     const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 30000 }), page.click(`.dl button[data-x="${x}"]`)]);
     const p = 'out/dlg/' + x + '-' + dl.suggestedFilename();
     await dl.saveAs(p);
     console.log('download', x, fs.statSync(p).size, 'bytes |', await page.textContent('#status'));
   }
+  await page.click('#exportClose');
   // ambiance « Néon »
+  await page.click('#tool-couleurs');
   await page.click('.mood:has-text("Néon")');
   await page.waitForTimeout(300);
   await page.screenshot({ path: 'out/g_neon.png' });
@@ -132,7 +138,7 @@ const URL = BASE + 'index.html';
   p3.on('pageerror', e => errors.push('mobile pageerror: ' + e.message));
   await p3.goto(URL);
   await p3.waitForSelector('#preview svg', { timeout: 20000 });
-  await p3.click('#tab-col');
+  await p3.click('#tool-couleurs');
   await p3.waitForTimeout(400);
   const ov = await p3.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   console.log('mobile overflow px:', ov);
