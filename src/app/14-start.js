@@ -40,6 +40,7 @@
   buildViewer();
   buildModels();
   showToolRef(S.tool);
+  buildLearn();
   buildImitate();
   buildDesigns();
   buildDownloads();

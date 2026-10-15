@@ -83,6 +83,7 @@ h1{font:700 1.28rem/1.1 var(--display);margin:0;letter-spacing:.005em;white-spac
   min-width:0;overflow-y:auto;overscroll-behavior:contain;background:var(--paper);border-inline-end:1px solid var(--rule);padding:18px 18px 48px;scrollbar-width:thin}
 .pn{display:flex;flex-direction:column;gap:14px;min-width:0}
 .pn[hidden]{display:none}
+.studio[hidden]{display:none!important}
 .pn-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .pn-head h2{font:700 1.3rem/1.2 var(--display);margin:0}
 .pn-head .sub{color:var(--muted);font-size:.88rem}
@@ -452,6 +453,94 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
 .im-facts .swc{display:inline-block;width:14px;height:14px;border-radius:4px;border:1px solid var(--rule);vertical-align:-2px;margin-inline-end:3px}
 @media (max-width:640px){.im-body{grid-template-columns:minmax(0,1fr)}.im-body img{max-height:220px;object-fit:contain}}
 
+/* Apprendre */
+.learn{flex:1 1 auto;overflow-y:auto;height:calc(100vh - var(--top-h));height:calc(100dvh - var(--top-h));background:var(--paper)}
+.learn[hidden]{display:none}
+.ln-wrap{max-width:1180px;margin:0 auto;padding:20px clamp(14px,3vw,32px) 64px;display:flex;flex-direction:column;gap:16px}
+.ln-head{display:flex;align-items:center;gap:8px 22px;flex-wrap:wrap}
+.ln-art{width:230px;height:104px;color:var(--ink);display:grid;place-items:center;flex:none}
+.ln-art svg{width:100%;height:100%;fill:currentColor}
+.ln-art span{font:700 1.8rem/1.2 var(--ar)}
+.ln-head-t{flex:1 1 320px;min-width:0}
+.ln-head h2{font:700 1.75rem/1.15 var(--display);margin:0}
+.ln-intro,.ln-lead{margin:6px 0 0;color:var(--muted);max-width:75ch}
+.ln-lead{margin:0}
+.ln-tabs{display:flex;gap:2px;border-bottom:1px solid var(--rule);overflow-x:auto;scrollbar-width:none;position:sticky;top:0;background:var(--paper);z-index:2}
+.ln-tabs::-webkit-scrollbar{display:none}
+.ln-tab{background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;color:var(--muted);padding:10px 14px;font:700 1rem/1.2 var(--display);white-space:nowrap}
+.ln-tab:hover{color:var(--ink)}
+.ln-tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--gold)}
+.ln-pane{display:flex;flex-direction:column;gap:16px;min-width:0}
+.ln-pane[hidden]{display:none}
+.ln-h3{margin:8px 0 0;font:700 1.15rem/1.2 var(--display)}
+.ln-table-wrap{overflow:auto;border:1px solid var(--rule);border-radius:14px;background:var(--sheet);max-height:calc(100vh - 230px)}
+.ln-table{border-collapse:separate;border-spacing:0;width:100%;min-width:820px}
+.ln-table th,.ln-table td{border-bottom:1px solid var(--rule);padding:3px;text-align:center}
+.ln-table thead th{position:sticky;top:0;z-index:1;background:var(--sheet);font:700 .9rem/1.2 var(--ui);padding:9px 4px}
+.ln-table thead th span{display:block;font:400 1.02rem/1.3 var(--ar);color:var(--muted)}
+.ln-table tbody th{text-align:start;padding:6px 12px;white-space:nowrap;position:sticky;inset-inline-start:0;background:var(--sheet);z-index:1}
+.ln-table tbody th b{font:400 1.45rem/1.3 var(--ar)}
+.ln-table tbody th small{display:block;color:var(--muted);font-size:.76rem;font-weight:500}
+.ln-cell{width:100%;min-width:76px;height:66px;border:1px solid transparent;border-radius:9px;background:none;color:var(--ink);display:grid;place-items:center;padding:3px}
+.ln-cell:hover{border-color:var(--gold);background:var(--field)}
+.ln-cell svg{height:56px;width:100%;fill:currentColor;display:block}
+.ln-cell .sk{width:50%;height:60%}
+.ln-pick{display:flex;flex-direction:column;gap:10px}
+.ln-letters{display:flex;flex-wrap:wrap;gap:4px;direction:rtl}
+.ln-l{min-width:42px;height:46px;padding:0 6px;border:1px solid var(--rule);border-radius:9px;background:var(--sheet);font:400 1.5rem/1 var(--ar);color:var(--ink)}
+.ln-l:hover{border-color:var(--gold)}
+.ln-l[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.ln-scripts,.ln-chips{display:flex;flex-wrap:wrap;gap:6px}
+.ln-study{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px}
+.ln-card{border:1px solid var(--rule);border-radius:14px;background:var(--sheet);padding:12px 16px 14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.ln-card h3{margin:0;font:700 1.05rem/1.2 var(--display)}
+.ln-wide{grid-column:1/-1}
+.ln-forms{display:flex;direction:rtl;justify-content:space-around;align-items:flex-end;gap:10px;flex-wrap:wrap}
+.ln-form{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:70px}
+.ln-form svg{height:118px;width:auto;max-width:170px;fill:currentColor;display:block}
+.ln-form small{color:var(--muted);font-size:.82rem;font-weight:600}
+.ln-hint{color:var(--muted)}
+.ln-facts{display:grid;grid-template-columns:auto minmax(0,1fr);gap:7px 14px;margin:0;font-size:.93rem}
+.ln-facts dt{color:var(--muted)}
+.ln-facts dd{margin:0;font-variant-numeric:lining-nums}
+.ln-facts .ar{font:400 1.25rem/1.2 var(--ar)}
+.ln-measure svg{width:100%;height:auto;max-height:380px;display:block}
+.ln-trace-head{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap}
+.ln-trace-head h3{margin-inline-end:auto}
+#lnCanvas{width:100%;height:300px;border-radius:12px;background:#FFFDF7;border:1px solid var(--rule);touch-action:none;cursor:crosshair;display:block}
+.ln-score{margin:0;font-size:.92rem;color:var(--muted);min-height:1.4em}
+.ln-score b{color:var(--ink)}
+.ln-scripts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.ln-sc{border:1px solid var(--rule);border-radius:14px;background:var(--sheet);overflow:hidden;display:flex;flex-direction:column}
+.ln-sc-art{height:120px;display:grid;place-items:center;background:var(--field);color:var(--ink);padding:10px}
+.ln-sc-art svg{width:100%;height:100%;fill:currentColor}
+.ln-sc-b{padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
+.ln-sc-b h4{margin:0;font:700 1.08rem/1.2 var(--display);display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.ln-sc-b h4 span{font:400 1.2rem/1 var(--ar);color:var(--muted)}
+.ln-sc-b p{margin:0;font-size:.9rem;line-height:1.5}
+.ln-sc-b .meta2{color:var(--muted);font-size:.82rem}
+.ln-sc-b .btnrow{margin-top:auto;padding-top:4px}
+.ln-genres{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.ln-g{border:1px solid var(--rule);border-radius:14px;background:var(--sheet);padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.ln-g h4{margin:0;font:700 1rem/1.2 var(--display)}
+.ln-g p{margin:0;font-size:.88rem;line-height:1.5;color:var(--ink)}
+.ln-g .btnrow{margin-top:auto;padding-top:4px}
+.ln-geo{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.ln-geo figure{margin:0;border:1px solid var(--rule);border-radius:14px;background:var(--sheet);padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px}
+.ln-geo svg{width:100%;height:190px;display:block}
+.ln-geo figcaption{font-size:.86rem;line-height:1.45}
+.ln-geo figcaption b{display:block;font:700 1rem/1.2 var(--display);margin-bottom:3px}
+.ln-geo ol{margin:4px 0 0;padding-inline-start:18px;display:flex;flex-direction:column;gap:2px}
+.ln-ex{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
+.ln-ex-ctl{display:flex;flex-direction:column;gap:14px}
+.ln-field{display:flex;flex-direction:column;gap:6px}
+.ln-field > span{font-weight:700;font-size:.92rem}
+.ln-field input{border:1px solid var(--rule);border-radius:10px;background:var(--sheet);color:var(--ink);padding:6px 12px;font:400 1.6rem/1.5 var(--ar);text-align:right}
+.ln-ex-prev{border:1px solid var(--rule);border-radius:10px;background:#FFFFFF;box-shadow:0 6px 18px var(--lift);aspect-ratio:210/297;overflow:hidden}
+.ln-ex-prev svg{width:100%;height:100%;display:block}
+@media (max-width:1039px){.learn{height:auto;overflow:visible}.ln-table-wrap{max-height:none}}
+@media (max-width:860px){.ln-study,.ln-ex{grid-template-columns:minmax(0,1fr)}.ln-art{width:180px;height:84px}}
+
 /* Tiroir « Télécharger » */
 dialog.xdlg{background:var(--bench);color:var(--bench-ink);border-color:var(--bench-rule);width:min(640px,calc(100vw - 24px))}
 .xdlg .dlg{gap:14px}
@@ -534,6 +623,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     </div>
     <nav class="spaces" aria-label="Espaces de l’atelier">
       <button class="space" type="button" id="spStudio" aria-current="page">Atelier</button>
+      <button class="space" type="button" id="spLearn">Apprendre</button>
       <button class="space" type="button" id="designsBtn">Mes créations <span class="n" id="designsCount"></span></button>
       <button class="space" type="button" id="aboutBtn">Polices et licences</button>
     </nav>
@@ -789,6 +879,90 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
       <div class="alert" id="missing" hidden></div>
     </section>
   </main>
+
+  <section class="learn" id="learn" hidden aria-labelledby="lnTitle">
+    <div class="ln-wrap">
+      <header class="ln-head">
+        <div class="ln-art" id="lnArt" aria-hidden="true"><span lang="ar">تعلّم الخطّ العربي</span></div>
+        <div class="ln-head-t">
+          <h2 id="lnTitle">Apprendre à écrire</h2>
+          <p class="ln-intro">Les lettres et leurs quatre formes, leurs mesures en points du calame, les grandes écritures et l’art de composer un tableau. Puis une feuille d’exercice à imprimer pour s’entraîner.</p>
+        </div>
+      </header>
+      <div class="ln-tabs" role="tablist" aria-label="Leçons">
+        <button class="ln-tab" role="tab" type="button" id="lt-lettres" aria-controls="lp-lettres" aria-selected="true">Les lettres</button>
+        <button class="ln-tab" role="tab" type="button" id="lt-etude" aria-controls="lp-etude" aria-selected="false" tabindex="-1">Étudier une lettre</button>
+        <button class="ln-tab" role="tab" type="button" id="lt-ecritures" aria-controls="lp-ecritures" aria-selected="false" tabindex="-1">Les écritures</button>
+        <button class="ln-tab" role="tab" type="button" id="lt-composer" aria-controls="lp-composer" aria-selected="false" tabindex="-1">Composer un tableau</button>
+        <button class="ln-tab" role="tab" type="button" id="lt-exercice" aria-controls="lp-exercice" aria-selected="false" tabindex="-1">S’exercer</button>
+      </div>
+
+      <div class="ln-pane" role="tabpanel" id="lp-lettres" aria-labelledby="lt-lettres">
+        <p class="ln-lead">Les 28 lettres se regroupent en 19 familles : les lettres d’une même famille ont le même squelette et ne diffèrent que par leurs points. Comparez chaque famille dans sept écritures, puis touchez une case pour l’étudier.</p>
+        <div class="ln-table-wrap"><table class="ln-table" id="lnTable"><caption class="sr">Les familles de lettres dans sept écritures</caption></table></div>
+      </div>
+
+      <div class="ln-pane" role="tabpanel" id="lp-etude" aria-labelledby="lt-etude" hidden>
+        <div class="ln-pick">
+          <div class="ln-letters" id="lnLetters" role="group" aria-label="Lettre étudiée"></div>
+          <div class="ln-scripts" id="lnScripts" role="group" aria-label="Écriture"></div>
+        </div>
+        <div class="ln-study">
+          <section class="ln-card" aria-labelledby="lnFormsT">
+            <h3 id="lnFormsT">Les formes de la lettre</h3>
+            <div class="ln-forms" id="lnForms"></div>
+            <p class="hint ln-hint" id="lnFormsNote"></p>
+          </section>
+          <section class="ln-card" aria-labelledby="lnFactsT">
+            <h3 id="lnFactsT">Fiche</h3>
+            <dl class="ln-facts" id="lnFacts"></dl>
+          </section>
+          <section class="ln-card ln-wide" aria-labelledby="lnMeasureT">
+            <h3 id="lnMeasureT">Mesurer en points du calame</h3>
+            <div class="ln-measure" id="lnMeasure"></div>
+            <p class="hint ln-hint">Le point est le losange que laisse la pointe du calame posée en biais. Ibn Muqla (mort en 940) a fondé l’écriture proportionnée : la hauteur de l’alif se compte en points, et elle donne le diamètre du cercle auquel les autres lettres se rapportent.</p>
+          </section>
+          <section class="ln-card ln-wide ln-trace" aria-labelledby="lnTraceT">
+            <div class="ln-trace-head">
+              <h3 id="lnTraceT">Tracer la lettre</h3>
+              <div class="ln-chips" id="lnNib" role="group" aria-label="Largeur du calame"></div>
+              <button class="chip" type="button" id="lnModel" aria-pressed="true">Modèle</button>
+              <button class="chip" type="button" id="lnClear">Effacer</button>
+            </div>
+            <canvas id="lnCanvas" aria-label="Zone de tracé : suivez le modèle à la souris ou au doigt"></canvas>
+            <p class="ln-score" id="lnScore" role="status" aria-live="polite">Suivez le modèle gris : le calame laisse un trait épais dans un sens, fin dans l’autre.</p>
+          </section>
+        </div>
+      </div>
+
+      <div class="ln-pane" role="tabpanel" id="lp-ecritures" aria-labelledby="lt-ecritures" hidden>
+        <p class="ln-lead">Sept grandes écritures, de la plus ancienne aux plus récentes. Chacune a sa plume, ses proportions et ses usages.</p>
+        <div class="ln-scripts-grid" id="lnScriptCards"></div>
+      </div>
+
+      <div class="ln-pane" role="tabpanel" id="lp-composer" aria-labelledby="lt-composer" hidden>
+        <p class="ln-lead">Un tableau naît d’une forme : le calligraphe choisit d’abord une silhouette, puis y loge les mots. Voici les grands genres de composition, puis les tracés géométriques qui servent de gabarits.</p>
+        <h3 class="ln-h3">Les grands genres</h3>
+        <div class="ln-genres" id="lnGenres"></div>
+        <h3 class="ln-h3">Tracer le gabarit</h3>
+        <div class="ln-geo" id="lnGeo"></div>
+      </div>
+
+      <div class="ln-pane" role="tabpanel" id="lp-exercice" aria-labelledby="lt-exercice" hidden>
+        <p class="ln-lead">Une feuille A4 à imprimer : lignes de guidage à la hauteur de l’alif, échelle de points, le modèle en noir puis des copies de plus en plus pâles à repasser, et de la place pour écrire seul.</p>
+        <div class="ln-ex">
+          <div class="ln-ex-ctl">
+            <label class="ln-field"><span>Texte à travailler</span><input type="text" id="lnExText" dir="rtl" lang="ar" maxlength="40" autocomplete="off" value="بسم الله"></label>
+            <div class="ln-field"><span>Écriture</span><div class="ln-chips" id="lnExScript" role="group" aria-label="Écriture de la feuille"></div></div>
+            <div class="ln-field"><span>Largeur du calame</span><div class="ln-chips" id="lnExNib" role="group" aria-label="Largeur du calame"></div></div>
+            <p class="hint ln-hint" id="lnExInfo"></p>
+            <div class="btnrow"><button class="btn primary" type="button" id="lnExPdf">Télécharger la feuille (PDF)</button></div>
+          </div>
+          <div class="ln-ex-prev" id="lnExPrev" aria-label="Aperçu de la feuille"></div>
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
 
 <div class="toast" id="toast" aria-hidden="true"></div>

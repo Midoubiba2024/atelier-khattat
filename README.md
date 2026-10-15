@@ -18,6 +18,11 @@ Une phrase en arabe, près de 200 styles calligraphiques, 82 modèles de tableau
   - SVG, PDF, EPS, DXF (découpe laser ou vinyle) ;
   - PNG jusqu'à ×8 ;
   - planche PDF de comparaison et lot .zip de plusieurs styles.
+- **Apprendre à écrire** :
+  - le tableau des 19 familles de lettres dans sept écritures ;
+  - l’étude d’une lettre : ses formes (isolée, initiale, médiane, finale), sa mesure en points du calame, le cercle d’Ibn Muqla, et un tracé à la souris ou au doigt, noté ;
+  - les grandes écritures, les genres de composition (musanna, shamsa, goutte, tughra, hilye…) et leurs gabarits géométriques ;
+  - une feuille d’exercice A4 en PDF, réglée sur la largeur du calame.
 - **Interface** :
   - sur ordinateur, une barre d'outils verticale (Texte, Styles, Modèles, Forme, Couleurs, Effets, Cadre, Fond, Format), un seul panneau ouvert à la fois et l'aperçu toujours visible ;
   - sur téléphone, l'aperçu reste en haut de l'écran et les outils passent dans une barre en bas ;
@@ -45,7 +50,7 @@ Un double-clic sur `site/index.html` ne suffit pas : l'atelier charge ses police
 
 | Élément | Rôle |
 | --- | --- |
-| `src/` | Les sources. Le moteur (`engine.js` texte, `shape.js` formes, `fx.js` effets, `ornament.js` cadres et motifs, `export.js` fichiers, `mockup.js` maquettes), puis l'interface (`app.html` et les 13 parties de `app/`). |
+| `src/` | Les sources. Le moteur (`engine.js` texte, `shape.js` formes, `fx.js` effets, `ornament.js` cadres et motifs, `export.js` fichiers, `mockup.js` maquettes), puis l'interface (`app.html` et les 14 parties de `app/`). |
 | `lancer-atelier.cmd` | Windows : lance le serveur local et ouvre l'atelier dans le navigateur. |
 | `site/` | Le site prêt à publier : `index.html`, généré par `npm run build`, les polices et leurs licences, HarfBuzz (`harfbuzz.wasm`, avec un repli en JavaScript `hb-fallback.js`) et Clipper (`clipper.js`). |
 | `build.js` | Assemble `src/` en `site/index.html`. Produit aussi `artifact/index.html`, la version à publier dans Claude. |

@@ -672,6 +672,17 @@
     return doc.finish(opt.title);
   }
   // Planche de comparaison : cellules { sc, label, sub } réparties sur des pages A4 portrait
+  // Feuille d'exercice : calques dessinés en px (96 par pouce) sur une page, et étiquettes en Helvetica
+  // sheet = { W, H, layers, labels:[{ x, y (ligne de base), size, text, color }], title }
+  async function practiceToPDF(sheet) {
+    const k = PX2MM * 72 / 25.4, Wpt = sheet.W * k, Hpt = sheet.H * k;
+    const doc = new PdfDoc(), res = new PdfRes(doc);
+    let cs = `q ${K.num(k, 6)} 0 0 ${K.num(-k, 6)} 0 ${f3(Hpt)} cm\n` + pdfLayers({ W: sheet.W, H: sheet.H, layers: sheet.layers }, res, null) + 'Q\n';
+    for (const l of sheet.labels || []) cs += 'BT ' + res.helv() + ' ' + f2(l.size * k) + ' Tf ' + rgbf(l.color || '#333333').map(f3).join(' ') + ' rg ' + f2(l.x * k) + ' ' + f2(Hpt - l.y * k) + ' Td ' + pdfLatin(l.text) + ' Tj ET\n';
+    await doc.addPage(Wpt, Hpt, cs, res);
+    return doc.finish(sheet.title);
+  }
+
   async function sheetToPDF(cells, opt) {
     opt = opt || {};
     const doc = new PdfDoc();
@@ -925,5 +936,5 @@
     return bytes;
   }
 
-  root.KhattExport = { setPngDpi, setJpegDpi, cutPolygons, sceneToCutSVG, buildScene, wrapForShape, fitSize, sceneToSVG, drawScene, sceneToPDF, sheetToPDF, sceneToEPS, sceneToDXF, makeZip, gradLine, gradStops, sampleStops, isGrad, hex2rgb, mix, PX2PT, PX2MM };
+  root.KhattExport = { setPngDpi, setJpegDpi, cutPolygons, sceneToCutSVG, buildScene, wrapForShape, fitSize, sceneToSVG, drawScene, sceneToPDF, sheetToPDF, practiceToPDF, sceneToEPS, sceneToDXF, makeZip, gradLine, gradStops, sampleStops, isGrad, hex2rgb, mix, PX2PT, PX2MM };
 })(typeof self !== 'undefined' ? self : globalThis);
