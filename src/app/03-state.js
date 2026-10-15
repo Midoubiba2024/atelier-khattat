@@ -27,9 +27,11 @@
       fillShape: 'oval', wrap: 'auto', fratio: 100, grow: 40, stretch: 10, lead: 18, center: 1, rgap: 14, rfill: 'on', rlines: 'none', tile: 'capsule', title: 'top', palette: 'pastel', cols: 0, tgap: 10, swash: 'on' },
     phys: { on: false, value: 60, unit: 'cm' },
     // réglages d'interface (hors historique)
-    scale: 2, filter: 'all', tab: 'ecr', tool: 'texte', favs: [], cardColors: false, pvBg: 'check', dims: false, gtab: 'styles', mdTheme: 'all', mdSrc: 'mine'
+    scale: 2, filter: 'all', tab: 'ecr', tool: 'texte', favs: [], cardColors: false, pvBg: 'check', dims: false, gtab: 'styles', mdTheme: 'all', mdSrc: 'mine',
+    // dernier texte vocalisé dont le tashkīl a été retiré (pour « Remettre le tashkīl »)
+    tkBackup: ''
   };
-  const UI_KEYS = ['scale', 'filter', 'tab', 'tool', 'favs', 'cardColors', 'pvBg', 'dims', 'gtab', 'mdTheme', 'mdSrc'];
+  const UI_KEYS = ['scale', 'filter', 'tab', 'tool', 'favs', 'cardColors', 'pvBg', 'dims', 'gtab', 'mdTheme', 'mdSrc', 'tkBackup'];
   const FX_OFF = clone(DEFAULT.fx);
 
   function normHex(v) {

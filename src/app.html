@@ -118,6 +118,8 @@ h1{font:700 1.28rem/1.1 var(--display);margin:0;letter-spacing:.005em;white-spac
 .chip .n{font-variant-numeric:tabular-nums;opacity:.65;font-size:.8rem}
 .chip-ar{font:400 1.1rem/1.35 var(--ar);padding-block:2px}
 .chip.ai{border-color:var(--lapis);color:var(--lapis)}
+.chip.prim{background:var(--gold);border-color:var(--gold);color:var(--sheet);font-weight:600}
+.chip.prim:hover{border-color:var(--ink)}
 .chip.ai:hover{background:var(--lapis-wash)}
 .chip[aria-busy="true"]{opacity:.65;cursor:progress}
 .tools .label{color:var(--muted);font-size:.88rem;margin-inline-end:2px}
@@ -664,10 +666,10 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
         <div id="kbd" class="kbd" hidden></div>
         <div class="tk" role="group" aria-labelledby="tkLbl">
           <span class="label" id="tkLbl">Tashkīl <span lang="ar">التشكيل</span> :</span>
+          <button class="chip" id="tkToggle" type="button">Retirer le tashkīl</button>
           <button class="chip ai" id="tkAuto" type="button" hidden>✦ Vocaliser automatiquement</button>
           <button class="chip" id="tkStop" type="button" hidden>Arrêter</button>
           <button class="chip" id="tkEdit" type="button" aria-expanded="false" aria-controls="tkPanel">Éditer lettre par lettre</button>
-          <button class="chip" id="tkClear" type="button">Retirer le tashkīl</button>
         </div>
         <p class="tk-status" id="tkStatus" role="status" aria-live="polite"></p>
         <div id="tkPanel" class="tkpanel" hidden>

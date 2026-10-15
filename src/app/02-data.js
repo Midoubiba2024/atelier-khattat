@@ -1,15 +1,15 @@
   // ------------------------------------------------------------------ bibliothèque de textes
-  // [texte arabe, sens ou transcription en français]
+  // [texte arabe, sens ou transcription en français, texte vocalisé (tashkīl) s'il n'est pas déjà dans le texte]
   const LIBRARY = [
     { id: 'formules', fr: 'Formules', items: [
-      ['بسم الله الرحمن الرحيم', 'Au nom de Dieu, le Tout Miséricordieux, le Très Miséricordieux'],
+      ['بسم الله الرحمن الرحيم', 'Au nom de Dieu, le Tout Miséricordieux, le Très Miséricordieux', 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ'],
       ['بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ', 'La basmala, entièrement vocalisée'],
-      ['الحمد لله', 'Louange à Dieu'], ['سبحان الله', 'Gloire à Dieu'], ['الله أكبر', 'Dieu est le plus grand'],
-      ['لا إله إلا الله', 'Il n’y a de dieu que Dieu'], ['ما شاء الله', 'Ce que Dieu a voulu'], ['إن شاء الله', 'Si Dieu le veut'],
-      ['بارك الله فيك', 'Que Dieu te bénisse'], ['جزاك الله خيرا', 'Que Dieu te récompense par le bien'], ['توكلت على الله', 'Je m’en remets à Dieu'],
-      ['أستغفر الله', 'Je demande pardon à Dieu'], ['لا حول ولا قوة إلا بالله', 'Il n’y a de force ni de puissance qu’en Dieu'],
-      ['سبحان الله وبحمده', 'Gloire et louange à Dieu'], ['السلام عليكم ورحمة الله وبركاته', 'Que la paix, la miséricorde de Dieu et Ses bénédictions soient sur vous'],
-      ['الله', 'Allah'], ['محمد رسول الله', 'Muhammad est le messager de Dieu']
+      ['الحمد لله', 'Louange à Dieu', 'الْحَمْدُ لِلَّهِ'], ['سبحان الله', 'Gloire à Dieu', 'سُبْحَانَ اللَّهِ'], ['الله أكبر', 'Dieu est le plus grand', 'اللَّهُ أَكْبَرُ'],
+      ['لا إله إلا الله', 'Il n’y a de dieu que Dieu', 'لَا إِلَٰهَ إِلَّا اللَّهُ'], ['ما شاء الله', 'Ce que Dieu a voulu', 'مَا شَاءَ اللَّهُ'], ['إن شاء الله', 'Si Dieu le veut', 'إِنْ شَاءَ اللَّهُ'],
+      ['بارك الله فيك', 'Que Dieu te bénisse', 'بَارَكَ اللَّهُ فِيكَ'], ['جزاك الله خيرا', 'Que Dieu te récompense par le bien', 'جَزَاكَ اللَّهُ خَيْرًا'], ['توكلت على الله', 'Je m’en remets à Dieu', 'تَوَكَّلْتُ عَلَى اللَّهِ'],
+      ['أستغفر الله', 'Je demande pardon à Dieu', 'أَسْتَغْفِرُ اللَّهَ'], ['لا حول ولا قوة إلا بالله', 'Il n’y a de force ni de puissance qu’en Dieu', 'لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ'],
+      ['سبحان الله وبحمده', 'Gloire et louange à Dieu', 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ'], ['السلام عليكم ورحمة الله وبركاته', 'Que la paix, la miséricorde de Dieu et Ses bénédictions soient sur vous', 'السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ'],
+      ['الله', 'Allah', 'اللَّه'], ['محمد رسول الله', 'Muhammad est le messager de Dieu', 'مُحَمَّدٌ رَسُولُ اللَّهِ']
     ] },
     { id: 'versets', fr: 'Versets courts', items: [
       ['إِنَّ مَعَ الْعُسْرِ يُسْرًا', 'Avec la difficulté vient la facilité (Coran 94:6)'],
@@ -31,43 +31,69 @@
       ['رَبَّنَا هَبْ لَنَا مِنْ أَزْوَاجِنَا وَذُرِّيَّاتِنَا قُرَّةَ أَعْيُنٍ', 'Seigneur, fais de nos épouses et de nos enfants la joie de nos yeux (Coran 25:74)']
     ] },
     { id: 'voeux', fr: 'Vœux et fêtes', items: [
-      ['عيد مبارك', 'Bonne fête de l’Aïd'], ['عيد سعيد', 'Joyeuse fête'], ['عيد أضحى مبارك', 'Bonne fête de l’Aïd al-Adha'],
-      ['رمضان كريم', 'Ramadan généreux'], ['رمضان مبارك', 'Ramadan béni'], ['كل عام وأنتم بخير', 'Bonne année à vous, vœu de toutes les fêtes'],
-      ['تقبل الله منا ومنكم', 'Que Dieu accepte nos œuvres et les vôtres'], ['مبروك', 'Félicitations'], ['ألف مبروك', 'Mille félicitations'],
-      ['عيد ميلاد سعيد', 'Joyeux anniversaire'], ['سنة سعيدة', 'Bonne année'], ['حج مبرور', 'Pèlerinage agréé'],
-      ['بالرفاء والبنين', 'Vœu de mariage : entente et descendance'], ['بارك الله لكما وبارك عليكما', 'Que Dieu vous bénisse tous les deux (vœu aux mariés)'],
-      ['أهلاً وسهلاً', 'Bienvenue'], ['مرحباً', 'Bonjour, bienvenue'], ['شكراً', 'Merci'], ['الحمد لله على السلامة', 'Heureux de vous voir sain et sauf']
+      ['عيد مبارك', 'Bonne fête de l’Aïd', 'عِيدٌ مُبَارَكٌ'], ['عيد سعيد', 'Joyeuse fête', 'عِيدٌ سَعِيدٌ'], ['عيد أضحى مبارك', 'Bonne fête de l’Aïd al-Adha', 'عِيدُ أَضْحًى مُبَارَكٌ'],
+      ['رمضان كريم', 'Ramadan généreux', 'رَمَضَانُ كَرِيمٌ'], ['رمضان مبارك', 'Ramadan béni', 'رَمَضَانُ مُبَارَكٌ'], ['كل عام وأنتم بخير', 'Bonne année à vous, vœu de toutes les fêtes', 'كُلُّ عَامٍ وَأَنْتُمْ بِخَيْرٍ'],
+      ['تقبل الله منا ومنكم', 'Que Dieu accepte nos œuvres et les vôtres', 'تَقَبَّلَ اللَّهُ مِنَّا وَمِنْكُمْ'], ['مبروك', 'Félicitations', 'مَبْرُوك'], ['ألف مبروك', 'Mille félicitations', 'أَلْفُ مَبْرُوكٍ'],
+      ['عيد ميلاد سعيد', 'Joyeux anniversaire', 'عِيدُ مِيلَادٍ سَعِيدٌ'], ['سنة سعيدة', 'Bonne année', 'سَنَةٌ سَعِيدَةٌ'], ['حج مبرور', 'Pèlerinage agréé', 'حَجٌّ مَبْرُورٌ'],
+      ['بالرفاء والبنين', 'Vœu de mariage : entente et descendance', 'بِالرِّفَاءِ وَالْبَنِينَ'], ['بارك الله لكما وبارك عليكما', 'Que Dieu vous bénisse tous les deux (vœu aux mariés)', 'بَارَكَ اللَّهُ لَكُمَا وَبَارَكَ عَلَيْكُمَا'],
+      ['أهلاً وسهلاً', 'Bienvenue', 'أَهْلًا وَسَهْلًا'], ['مرحباً', 'Bonjour, bienvenue', 'مَرْحَبًا'], ['شكراً', 'Merci', 'شُكْرًا'], ['الحمد لله على السلامة', 'Heureux de vous voir sain et sauf', 'الْحَمْدُ لِلَّهِ عَلَى السَّلَامَةِ']
     ] },
     { id: 'mots', fr: 'Mots et valeurs', items: [
-      ['حب', 'Amour'], ['سلام', 'Paix'], ['أمل', 'Espoir'], ['صبر', 'Patience'], ['نور', 'Lumière'], ['حرية', 'Liberté'],
-      ['سعادة', 'Bonheur'], ['إيمان', 'Foi'], ['رحمة', 'Miséricorde'], ['حكمة', 'Sagesse'], ['علم', 'Savoir'], ['كرم', 'Générosité'],
-      ['وفاء', 'Fidélité'], ['جمال', 'Beauté'], ['قوة', 'Force'], ['تواضع', 'Humilité'], ['سكينة', 'Sérénité'], ['بركة', 'Bénédiction'],
-      ['الخط العربي', 'La calligraphie arabe'], ['فن', 'Art'], ['وطن', 'Patrie'], ['أم', 'Mère'], ['أب', 'Père'], ['عائلة', 'Famille']
+      ['حب', 'Amour', 'حُبّ'], ['سلام', 'Paix', 'سَلَام'], ['أمل', 'Espoir', 'أَمَل'], ['صبر', 'Patience', 'صَبْر'], ['نور', 'Lumière', 'نُور'], ['حرية', 'Liberté', 'حُرِّيَّة'],
+      ['سعادة', 'Bonheur', 'سَعَادَة'], ['إيمان', 'Foi', 'إِيمَان'], ['رحمة', 'Miséricorde', 'رَحْمَة'], ['حكمة', 'Sagesse', 'حِكْمَة'], ['علم', 'Savoir', 'عِلْم'], ['كرم', 'Générosité', 'كَرَم'],
+      ['وفاء', 'Fidélité', 'وَفَاء'], ['جمال', 'Beauté', 'جَمَال'], ['قوة', 'Force', 'قُوَّة'], ['تواضع', 'Humilité', 'تَوَاضُع'], ['سكينة', 'Sérénité', 'سَكِينَة'], ['بركة', 'Bénédiction', 'بَرَكَة'],
+      ['الخط العربي', 'La calligraphie arabe', 'الْخَطُّ الْعَرَبِيُّ'], ['فن', 'Art', 'فَنّ'], ['وطن', 'Patrie', 'وَطَن'], ['أم', 'Mère', 'أُمّ'], ['أب', 'Père', 'أَب'], ['عائلة', 'Famille', 'عَائِلَة']
     ] },
     { id: 'garcons', fr: 'Prénoms de garçons', items: [
-      ['محمد', 'Mohammed'], ['أحمد', 'Ahmed'], ['علي', 'Ali'], ['يوسف', 'Youssef'], ['عمر', 'Omar'], ['آدم', 'Adam'],
-      ['إبراهيم', 'Ibrahim'], ['ياسين', 'Yassine'], ['حمزة', 'Hamza'], ['إلياس', 'Ilyès'], ['كريم', 'Karim'], ['سليمان', 'Soulaymane'],
-      ['ريان', 'Rayane'], ['أمين', 'Amine'], ['زكرياء', 'Zakaria'], ['عثمان', 'Othmane'], ['بلال', 'Bilal'], ['مصطفى', 'Moustafa'],
-      ['خالد', 'Khaled'], ['حمادي', 'Hamadi'], ['سامي', 'Sami'], ['نور الدين', 'Noureddine'], ['عبد الله', 'Abdallah'], ['إسماعيل', 'Ismaïl'], ['أنس', 'Anas']
+      ['محمد', 'Mohammed', 'مُحَمَّد'], ['أحمد', 'Ahmed', 'أَحْمَد'], ['علي', 'Ali', 'عَلِيّ'], ['يوسف', 'Youssef', 'يُوسُف'], ['عمر', 'Omar', 'عُمَر'], ['آدم', 'Adam', 'آدَم'],
+      ['إبراهيم', 'Ibrahim', 'إِبْرَاهِيم'], ['ياسين', 'Yassine', 'يَاسِين'], ['حمزة', 'Hamza', 'حَمْزَة'], ['إلياس', 'Ilyès', 'إِلْيَاس'], ['كريم', 'Karim', 'كَرِيم'], ['سليمان', 'Soulaymane', 'سُلَيْمَان'],
+      ['ريان', 'Rayane', 'رَيَّان'], ['أمين', 'Amine', 'أَمِين'], ['زكرياء', 'Zakaria', 'زَكَرِيَّاء'], ['عثمان', 'Othmane', 'عُثْمَان'], ['بلال', 'Bilal', 'بِلَال'], ['مصطفى', 'Moustafa', 'مُصْطَفَى'],
+      ['خالد', 'Khaled', 'خَالِد'], ['حمادي', 'Hamadi'], ['سامي', 'Sami', 'سَامِي'], ['نور الدين', 'Noureddine', 'نُورُ الدِّين'], ['عبد الله', 'Abdallah', 'عَبْدُ اللَّه'], ['إسماعيل', 'Ismaïl', 'إِسْمَاعِيل'], ['أنس', 'Anas', 'أَنَس']
     ] },
     { id: 'filles', fr: 'Prénoms de filles', items: [
-      ['مريم', 'Maryam'], ['فاطمة', 'Fatima'], ['عائشة', 'Aïcha'], ['خديجة', 'Khadija'], ['ليلى', 'Leïla'], ['سارة', 'Sarah'],
-      ['نور', 'Nour'], ['ياسمين', 'Yasmine'], ['إيناس', 'Inès'], ['هند', 'Hind'], ['سلمى', 'Salma'], ['لينا', 'Lina'],
-      ['آية', 'Aya'], ['زينب', 'Zineb'], ['سعاد', 'Souad'], ['أمينة', 'Amina'], ['رانيا', 'Rania'], ['صفية', 'Safia'],
-      ['هاجر', 'Hajar'], ['نادية', 'Nadia'], ['سلوى', 'Salwa'], ['جميلة', 'Jamila'], ['لمياء', 'Lamia'], ['دنيا', 'Donia'], ['مليكة', 'Malika']
+      ['مريم', 'Maryam', 'مَرْيَم'], ['فاطمة', 'Fatima', 'فَاطِمَة'], ['عائشة', 'Aïcha', 'عَائِشَة'], ['خديجة', 'Khadija', 'خَدِيجَة'], ['ليلى', 'Leïla', 'لَيْلَى'], ['سارة', 'Sarah', 'سَارَة'],
+      ['نور', 'Nour', 'نُور'], ['ياسمين', 'Yasmine', 'يَاسَمِين'], ['إيناس', 'Inès', 'إِينَاس'], ['هند', 'Hind', 'هِنْد'], ['سلمى', 'Salma', 'سَلْمَى'], ['لينا', 'Lina', 'لِينَا'],
+      ['آية', 'Aya', 'آيَة'], ['زينب', 'Zineb', 'زَيْنَب'], ['سعاد', 'Souad', 'سُعَاد'], ['أمينة', 'Amina', 'أَمِينَة'], ['رانيا', 'Rania', 'رَانِيَا'], ['صفية', 'Safia', 'صَفِيَّة'],
+      ['هاجر', 'Hajar', 'هَاجَر'], ['نادية', 'Nadia', 'نَادِيَة'], ['سلوى', 'Salwa', 'سَلْوَى'], ['جميلة', 'Jamila', 'جَمِيلَة'], ['لمياء', 'Lamia', 'لَمْيَاء'], ['دنيا', 'Donia', 'دُنْيَا'], ['مليكة', 'Malika', 'مَلِيكَة']
     ] },
     { id: 'maison', fr: 'Maison et famille', items: [
-      ['بيتي جنتي', 'Ma maison est mon paradis'], ['أهلاً بكم في بيتنا', 'Bienvenue chez nous'], ['اللهم بارك في هذا البيت', 'Seigneur, bénis cette maison'],
-      ['الجنة تحت أقدام الأمهات', 'Le paradis est sous les pieds des mères'], ['العائلة نعمة', 'La famille est une grâce'], ['البيت السعيد', 'La maison heureuse']
+      ['بيتي جنتي', 'Ma maison est mon paradis', 'بَيْتِي جَنَّتِي'], ['أهلاً بكم في بيتنا', 'Bienvenue chez nous', 'أَهْلًا بِكُمْ فِي بَيْتِنَا'], ['اللهم بارك في هذا البيت', 'Seigneur, bénis cette maison', 'اللَّهُمَّ بَارِكْ فِي هَٰذَا الْبَيْتِ'],
+      ['الجنة تحت أقدام الأمهات', 'Le paradis est sous les pieds des mères', 'الْجَنَّةُ تَحْتَ أَقْدَامِ الْأُمَّهَاتِ'], ['العائلة نعمة', 'La famille est une grâce', 'الْعَائِلَةُ نِعْمَةٌ'], ['البيت السعيد', 'La maison heureuse', 'الْبَيْتُ السَّعِيدُ']
     ] },
     { id: 'proverbes', fr: 'Proverbes et poésie', items: [
-      ['العلم نور', 'Le savoir est lumière'], ['الصبر مفتاح الفرج', 'La patience est la clé du soulagement'], ['من جد وجد', 'Qui s’applique réussit'],
-      ['الوقت كالسيف', 'Le temps est comme un sabre'], ['خير الكلام ما قل ودل', 'La meilleure parole est brève et juste'], ['القناعة كنز لا يفنى', 'La sobriété est un trésor inépuisable'],
-      ['لكل مجتهد نصيب', 'Tout effort a sa récompense'], ['الصديق وقت الضيق', 'L’ami se révèle dans l’épreuve'], ['يد واحدة لا تصفق', 'Une seule main ne peut applaudir'],
-      ['اطلبوا العلم من المهد إلى اللحد', 'Cherchez le savoir du berceau à la tombe'],
-      ['الخيل والليل والبيداء تعرفني\nوالسيف والرمح والقرطاس والقلم', 'Al-Mutanabbi (Xe siècle) : « Les chevaux, la nuit et le désert me connaissent, et le sabre, la lance, le papier et la plume »'],
-      ['دع الأيام تفعل ما تشاء\nوطب نفسا إذا حكم القضاء', 'Al-Shāfiʿī (IXe siècle) : « Laisse les jours faire ce qu’ils veulent, et garde l’âme sereine quand le destin décide »']
+      ['العلم نور', 'Le savoir est lumière', 'الْعِلْمُ نُورٌ'], ['الصبر مفتاح الفرج', 'La patience est la clé du soulagement', 'الصَّبْرُ مِفْتَاحُ الْفَرَجِ'], ['من جد وجد', 'Qui s’applique réussit', 'مَنْ جَدَّ وَجَدَ'],
+      ['الوقت كالسيف', 'Le temps est comme un sabre', 'الْوَقْتُ كَالسَّيْفِ'], ['خير الكلام ما قل ودل', 'La meilleure parole est brève et juste', 'خَيْرُ الْكَلَامِ مَا قَلَّ وَدَلَّ'], ['القناعة كنز لا يفنى', 'La sobriété est un trésor inépuisable', 'الْقَنَاعَةُ كَنْزٌ لَا يَفْنَى'],
+      ['لكل مجتهد نصيب', 'Tout effort a sa récompense', 'لِكُلِّ مُجْتَهِدٍ نَصِيبٌ'], ['الصديق وقت الضيق', 'L’ami se révèle dans l’épreuve', 'الصَّدِيقُ وَقْتَ الضِّيقِ'], ['يد واحدة لا تصفق', 'Une seule main ne peut applaudir', 'يَدٌ وَاحِدَةٌ لَا تُصَفِّقُ'],
+      ['اطلبوا العلم من المهد إلى اللحد', 'Cherchez le savoir du berceau à la tombe', 'اطْلُبُوا الْعِلْمَ مِنَ الْمَهْدِ إِلَى اللَّحْدِ'],
+      ['الخيل والليل والبيداء تعرفني\nوالسيف والرمح والقرطاس والقلم', 'Al-Mutanabbi (Xe siècle) : « Les chevaux, la nuit et le désert me connaissent, et le sabre, la lance, le papier et la plume »', 'الْخَيْلُ وَاللَّيْلُ وَالْبَيْدَاءُ تَعْرِفُنِي\nوَالسَّيْفُ وَالرُّمْحُ وَالْقِرْطَاسُ وَالْقَلَمُ'],
+      ['دع الأيام تفعل ما تشاء\nوطب نفسا إذا حكم القضاء', 'Al-Shāfiʿī (IXe siècle) : « Laisse les jours faire ce qu’ils veulent, et garde l’âme sereine quand le destin décide »', 'دَعِ الْأَيَّامَ تَفْعَلُ مَا تَشَاءُ\nوَطِبْ نَفْسًا إِذَا حَكَمَ الْقَضَاءُ']
     ] }
+  ];
+  // tashkīl des textes d'exemple absents de la bibliothèque (modèles, exemples rapides) : « Ajouter le tashkīl » les reconnaît
+  const TK_EXTRA = [
+    'السَّلَامُ عَلَيْكُمْ',
+    'الْمُلْكُ لِلَّهِ',
+    'سُبْحَانَ اللَّهِ وَالْحَمْدُ لِلَّهِ وَلَا إِلَٰهَ إِلَّا اللَّهُ وَاللَّهُ أَكْبَرُ',
+    'لَا غَالِبَ إِلَّا اللَّهُ',
+    'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ الرَّحْمَٰنِ الرَّحِيمِ مَالِكِ يَوْمِ الدِّينِ',
+    'اللَّهُ\nالرَّحْمَٰنُ الرَّحِيمُ الْمَلِكُ الْقُدُّوسُ السَّلَامُ\nالْمُؤْمِنُ الْمُهَيْمِنُ الْعَزِيزُ الْجَبَّارُ الْمُتَكَبِّرُ الْخَالِقُ الْبَارِئُ الْمُصَوِّرُ\nالْغَفَّارُ الْقَهَّارُ الْوَهَّابُ الرَّزَّاقُ الْفَتَّاحُ الْعَلِيمُ الْقَابِضُ الْبَاسِطُ الْخَافِضُ الرَّافِعُ',
+    'اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ\nالْحَيُّ الْقَيُّومُ\nلَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ لَهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ\nمَنْ ذَا الَّذِي يَشْفَعُ عِنْدَهُ إِلَّا بِإِذْنِهِ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ\nوَلَا يُحِيطُونَ بِشَيْءٍ مِنْ عِلْمِهِ إِلَّا بِمَا شَاءَ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ وَلَا يَئُودُهُ حِفْظُهُمَا وَهُوَ الْعَلِيُّ الْعَظِيمُ',
+    'مَكَارِمُ الْأَخْلَاقِ فِي الْقُرْآنِ\nوَقُولُوا لِلنَّاسِ حُسْنًا\nوَلَا تَجَسَّسُوا\nوَأَوْفُوا الْكَيْلَ\nادْفَعْ بِالَّتِي هِيَ أَحْسَنُ\nوَلَا تَمْشِ فِي الْأَرْضِ مَرَحًا\nوَاخْفِضْ جَنَاحَكَ لِلْمُؤْمِنِينَ\nوَتَعَاوَنُوا عَلَى الْبِرِّ وَالتَّقْوَىٰ\nاعْدِلُوا هُوَ أَقْرَبُ لِلتَّقْوَىٰ\nوَقُولُوا قَوْلًا سَدِيدًا\nخُذِ الْعَفْوَ',
+    'اللَّهُ\nالرَّحْمَٰنُ\nالرَّحِيمُ\nالْمَلِكُ\nالْقُدُّوسُ\nالسَّلَامُ\nالْمُؤْمِنُ\nالْمُهَيْمِنُ\nالْعَزِيزُ\nالْجَبَّارُ\nالْمُتَكَبِّرُ\nالْخَالِقُ\nالْبَارِئُ\nالْمُصَوِّرُ\nالْغَفَّارُ\nالْقَهَّارُ\nالْوَهَّابُ\nالرَّزَّاقُ\nالْفَتَّاحُ\nالْعَلِيمُ\nالْقَابِضُ\nالْبَاسِطُ\nالْخَافِضُ\nالرَّافِعُ\nالْمُعِزُّ',
+    'الْحَمْدُ لِلَّهِ الَّذِي لَهُ مَا فِي السَّمَاوَاتِ\nوَمَا فِي الْأَرْضِ وَلَهُ الْحَمْدُ فِي الْآخِرَةِ\nوَهُوَ الْحَكِيمُ الْخَبِيرُ\n\nيَعْلَمُ مَا يَلِجُ فِي الْأَرْضِ وَمَا يَخْرُجُ مِنْهَا\nوَمَا يَنْزِلُ مِنَ السَّمَاءِ وَمَا يَعْرُجُ فِيهَا\nوَهُوَ الرَّحِيمُ الْغَفُورُ',
+    'يَا اللَّهُ',
+    'هُوَ',
+    'عَبْدُ اللَّهِ\nالْمُظَفَّرُ دَائِمًا',
+    'رَوَائِع',
+    'أَحْمَدُ وَمَرْيَمُ',
+    'الْعَائِلَة',
+    'بِسْمِ اللَّهِ',
+    'رِسَالَةٌ إِلَى صَدِيقٍ',
+    'الْبَحْرُ الْأَزْرَقُ',
+    'انْظُرْ إِلَى الْجَمَالِ',
+    'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ',
+    'مَطْعَمُ الْأَنْدَلُسِ',
+    'مَكْتَبَة'
   ];
 
   // ------------------------------------------------------------------ modèles de tableaux (compositions originales)

@@ -221,24 +221,111 @@
     none.type = 'button'; none.className = 'tkm txt'; none.dataset.m = 'none'; none.textContent = 'Aucun signe';
     none.addEventListener('click', () => setMark('none'));
     mk.appendChild(none);
-    $('#tkEdit').addEventListener('click', () => {
-      const open = $('#tkPanel').hidden;
-      $('#tkPanel').hidden = !open;
-      $('#tkEdit').setAttribute('aria-expanded', String(open));
-      if (open) { buildTashkilPanel(); const b = $('#tkLetters .tkl[aria-selected="true"]'); if (b) b.focus(); }
-    });
-    $('#tkClear').addEventListener('click', () => {
-      if (!hasMarks(S.text)) return tkStatus('Le texte n’a pas de tashkīl.');
-      const before = S.text;
-      setText(K.stripMarks(S.text), 0);
-      textChanged(true);
-      tkStatus('Tashkīl retiré. « Annuler » le rétablit.', 'ok');
-      if (before !== S.text) commitHist();
-    });
+    $('#tkEdit').addEventListener('click', () => showTkPanel($('#tkPanel').hidden));
+    $('#tkToggle').addEventListener('click', tkToggle);
     $('#tkAuto').addEventListener('click', autoTashkil);
     $('#tkStop').addEventListener('click', () => { if (tkCtl) tkCtl.abort(); });
     // vocalisation automatique : disponible quand l'atelier peut interroger Claude
-    sampleP.then(fn => { $('#tkAuto').hidden = !fn; });
+    sampleP.then(fn => { tkClaude = !!fn; $('#tkAuto').hidden = !fn; syncTkUI(); });
+    syncTkUI();
+  }
+  function showTkPanel(open) {
+    $('#tkPanel').hidden = !open;
+    $('#tkEdit').setAttribute('aria-expanded', String(open));
+    if (open) { buildTashkilPanel(); const b = $('#tkLetters .tkl[aria-selected="true"]'); if (b) b.focus(); }
+  }
+
+  // ------------------------------------------------------------------ tashkīl : retirer, afficher, remettre, ajouter
+  // Un seul bouton, dont l'action suit le texte :
+  //   texte vocalisé → « Retirer » (la version vocalisée est gardée) ; signes masqués → « Afficher » ;
+  //   tashkīl retiré → « Remettre » ; texte connu de l'atelier → « Ajouter » (bibliothèque, modèles, exemples) ;
+  //   autre texte → « Ajouter » ouvre l'éditeur lettre par lettre (avec Claude : « Vocaliser automatiquement »).
+  let tkClaude = false;
+  // un texte sans ses signes : lettres seules, espaces et retours à la ligne réduits
+  const bareKey = t => K.stripMarks(String(t)).replace(/ٱ/g, 'ا').replace(/ـ/g, '').replace(/\s+/g, ' ').trim();
+  let tkCat = null;
+  function tkCatalogue() {
+    if (tkCat) return tkCat;
+    tkCat = new Map();
+    const add = v => { if (typeof v === 'string' && hasMarks(v)) { const k = bareKey(v); if (k && !tkCat.has(k)) tkCat.set(k, v); } };
+    for (const c of LIBRARY) for (const it of c.items) { add(it[2]); add(it[0]); }
+    for (const v of TK_EXTRA) add(v);
+    for (const m of MODELS) add(m.ex);
+    return tkCat;
+  }
+  // tashkīl d'après le catalogue : le texte entier, sinon chaque ligne connue ; les lettres restent celles de l'utilisateur
+  function catalogMarks(t) {
+    const cat = tkCatalogue(), whole = cat.get(bareKey(t));
+    const w = whole ? remapMarks(t, whole) : null;
+    if (w) return { v: w, all: true };
+    let n = 0, m = 0;
+    const v = t.split('\n').map(line => {
+      if (!line.trim()) return line;
+      m++;
+      const voc = hasMarks(line) ? null : cat.get(bareKey(line)), r = voc ? remapMarks(line, voc) : null;
+      if (r) n++;
+      return r || line;
+    }).join('\n');
+    return n ? { v, all: n === m } : null;
+  }
+  // tashkīl retiré puis remis : à l'identique si les lettres n'ont pas changé, sinon sur les mots restés les mêmes
+  function carryMarks(t, voc) {
+    if (!voc || !hasMarks(voc)) return null;
+    if (bareKey(t) === bareKey(voc)) { const r = remapMarks(t, voc); if (r) return { v: r, all: true }; }
+    const pool = new Map();
+    for (const w of voc.split(/\s+/)) { if (!w) continue; const k = bareKey(w); if (!pool.has(k)) pool.set(k, []); pool.get(k).push(w); }
+    let n = 0, m = 0;
+    const v = t.replace(/\S+/g, w => {
+      m++;
+      const list = hasMarks(w) ? null : pool.get(bareKey(w));
+      const r = list ? remapMarks(w, list.length > 1 ? list.shift() : list[0]) : null;
+      if (r) n++;
+      return r || w;
+    });
+    return n ? { v, all: n === m } : null;
+  }
+  function tkPlan() {
+    const t = S.text;
+    if (!t.trim()) return { m: 'none' };
+    if (hasMarks(t)) return { m: S.harakat ? 'clear' : 'show' };
+    const back = S.tkBackup ? carryMarks(t, S.tkBackup) : null;
+    if (back) return Object.assign({ m: 'restore' }, back);
+    const cat = catalogMarks(t);
+    if (cat) return Object.assign({ m: 'catalog' }, cat);
+    return { m: 'add' };
+  }
+  const TK_LABEL = { clear: 'Retirer le tashkīl', show: 'Afficher le tashkīl', restore: 'Remettre le tashkīl', catalog: 'Ajouter le tashkīl', add: 'Ajouter le tashkīl' };
+  function syncTkUI() {
+    const b = $('#tkToggle');
+    if (!b) return;
+    const p = tkPlan();
+    // sans signe ni texte connu, la vocalisation de Claude (bouton voisin) fait l'ajout
+    b.hidden = p.m === 'none' || (p.m === 'add' && tkClaude);
+    b.textContent = TK_LABEL[p.m] || TK_LABEL.clear;
+    b.dataset.mode = p.m;
+    b.classList.toggle('prim', p.m === 'restore' || p.m === 'catalog');
+  }
+  function tkToggle() {
+    const p = tkPlan(), before = S.text;
+    if (p.m === 'clear') {
+      S.tkBackup = before;
+      setText(K.stripMarks(before), 0);
+      textChanged(true);
+      tkStatus('Tashkīl retiré. « Remettre le tashkīl » le rétablit.', 'ok');
+    } else if (p.m === 'show') {
+      S.harakat = true;
+      textChanged(true);
+      tkStatus('Tashkīl affiché.', 'ok');
+    } else if (p.m === 'restore' || p.m === 'catalog') {
+      txt.value = p.v; S.text = p.v; S.harakat = true;
+      textChanged(true);
+      if (p.m === 'restore') tkStatus(p.all ? 'Tashkīl remis.' : 'Tashkīl remis sur les mots qui n’ont pas changé.', 'ok');
+      else tkStatus((p.all ? 'Tashkīl ajouté' : 'Tashkīl ajouté sur les lignes que l’atelier connaît') + ' (texte de la bibliothèque ou des modèles). Vérifiez-le ; « Annuler » revient au texte d’avant.', 'ok');
+    } else if (p.m === 'add') {
+      showTkPanel(true);
+      tkStatus('Ce texte n’est pas dans la bibliothèque de l’atelier : ajoutez les signes lettre par lettre ci-dessous.');
+    }
+    if (before !== S.text) commitHist();
   }
   const sampleP = (window.claude && typeof window.claude.use === 'function') ? window.claude.use('sample').catch(() => null) : Promise.resolve(null);
   let tkCtl = null;
@@ -281,7 +368,7 @@
     } catch (e) {
       const c = e && e.code;
       if (c === 'cancelled') tkStatus('Vocalisation arrêtée.');
-      else if (c === 'not_granted' || c === 'sampling_disabled' || c === 'not_declared' || c === 'capability_disabled' || c === 'capability_removed') { tkStatus('La vocalisation automatique n’est pas autorisée ici. L’éditeur lettre par lettre reste disponible.', 'err'); $('#tkAuto').hidden = true; }
+      else if (c === 'not_granted' || c === 'sampling_disabled' || c === 'not_declared' || c === 'capability_disabled' || c === 'capability_removed') { tkStatus('La vocalisation automatique n’est pas autorisée ici. L’éditeur lettre par lettre reste disponible.', 'err'); $('#tkAuto').hidden = true; tkClaude = false; syncTkUI(); }
       else if (c === 'rate_limited') tkStatus('Trop de demandes pour le moment : réessayez dans un instant.', 'err');
       else if (c === 'session_expired') tkStatus('Votre session Claude a expiré : reconnectez-vous puis réessayez.', 'err');
       else if (c === 'refused') tkStatus('Ce texte n’a pas pu être vocalisé.', 'err');

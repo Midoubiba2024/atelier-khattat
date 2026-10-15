@@ -161,8 +161,22 @@ fs.mkdirSync(OUT, { recursive: true });
   const tv = await page.$eval('#txt', t => t.value);
   ok(tv === 'كَتَبَ', 'tashkīl lettre par lettre : ' + tv);
   await page.screenshot({ path: OUT + '/tashkil.png', clip: { x: 82, y: 60, width: 410, height: 900 } });
-  await page.click('#tkClear'); await settle(300);
+  ok((await page.$eval('#tkToggle', b => b.textContent)) === 'Retirer le tashkīl', 'bouton : Retirer');
+  await page.click('#tkToggle'); await settle(300);
   ok((await page.$eval('#txt', t => t.value)) === 'كتب', 'tashkīl retiré');
+  ok((await page.$eval('#tkToggle', b => b.textContent)) === 'Remettre le tashkīl', 'bouton : Remettre');
+  await page.click('#tkToggle'); await settle(300);
+  ok((await page.$eval('#txt', t => t.value)) === 'كَتَبَ', 'tashkīl remis');
+  await page.click('#tkEdit');
+  // texte de la bibliothèque sans tashkīl : « Ajouter » le vocalise d'après le catalogue de l'atelier
+  await page.fill('#txt', 'الخط\nالعربي'); await settle(400);
+  ok((await page.$eval('#tkToggle', b => b.textContent)) === 'Ajouter le tashkīl', 'bouton : Ajouter (texte connu)');
+  await page.click('#tkToggle'); await settle(300);
+  ok((await page.$eval('#txt', t => t.value)) === 'الْخَطُّ\nالْعَرَبِيُّ', 'tashkīl ajouté, retour à la ligne gardé');
+  // texte inconnu : « Ajouter » ouvre l'éditeur lettre par lettre
+  await page.fill('#txt', 'قلم أزرق'); await settle(400);
+  await page.click('#tkToggle'); await settle(300);
+  ok(await page.$eval('#tkPanel', p => !p.hidden), 'texte inconnu : éditeur ouvert');
   await page.click('#tkEdit');
 
   // --- bibliothèque

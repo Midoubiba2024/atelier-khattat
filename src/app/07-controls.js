@@ -671,6 +671,7 @@
     const hm = hasMarks(S.text), cb = $('#harakat');
     cb.disabled = !hm; cb.checked = S.harakat;
     cb.parentElement.style.opacity = hm ? '1' : '.55';
+    syncTkUI();
   }
   let inkPick = null, inkGrad = null, bgPick = null, bgGrad = null;
   function updateColorUI() {

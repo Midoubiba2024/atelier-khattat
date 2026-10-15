@@ -6,7 +6,10 @@ Une phrase en arabe, près de 200 styles calligraphiques, 86 modèles de tableau
 
 - **195 styles d'écriture** en 12 familles : naskh, thuluth, diwani, ruqʿa, kufi, maghribi, nastaʿlīq, soudani, décoratif, couleur, moderne. Toutes les polices sont sous licence libre.
 - **86 modèles de tableaux** en 10 thèmes : shamsa, levha, musanna, mihrab, sceaux, compositions (pyramide, œuf, goutte, médaillon en anneaux, mosaïque, tughra, médaillon ailé, hilye, lettres semées), prénoms, fêtes, mariage, motifs géométriques, découpe…
-- **Tashkīl** : éditeur lettre par lettre, retrait du tashkīl, harakat en couleur, et vocalisation automatique dans Claude.
+- **Tashkīl** :
+  - un seul bouton qui retire le tashkīl, le remet, ou l'ajoute aux textes de la bibliothèque et des modèles, dont l'atelier connaît la vocalisation ;
+  - éditeur lettre par lettre, harakat en couleur ;
+  - vocalisation automatique de n'importe quelle phrase dans la version Claude de l'atelier.
 - **Mise en forme** :
   - 26 formes : arc, cercle, sceau, cœur, vague, spirale, loupe, tughra… ;
   - compositions par lignes : remplir une forme (pyramide, ovale, œuf, goutte, mihrab…), anneaux concentriques, mosaïque de tuiles colorées, tughra, médaillon ailé, panneau hilye ;
