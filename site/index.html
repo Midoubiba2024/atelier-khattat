@@ -58,6 +58,9 @@ h1{font:700 1.28rem/1.1 var(--display);margin:0;letter-spacing:.005em;white-spac
 .space:hover{color:var(--ink);background:var(--field)}
 .space[aria-current="page"]{color:var(--ink);background:var(--field)}
 .space .n{font-variant-numeric:tabular-nums;font-weight:500;opacity:.7;font-size:.8rem}
+.space .sm{display:none}
+@media (max-width:1099px){.space .lg{display:none}.space .sm{display:inline}}
+.space-sel{display:none;height:36px;max-width:48vw;border:1px solid var(--rule);border-radius:999px;background:var(--field) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%238A8578' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center/11px 8px;color:var(--ink);font-weight:700;font-size:.92rem;padding:0 32px 0 14px;-webkit-appearance:none;appearance:none}
 .top-acts{display:flex;align-items:center;gap:6px;margin-inline-start:auto}
 .tb{height:38px;min-width:38px;padding:0 11px;border:1px solid var(--rule);background:var(--sheet);color:var(--ink);border-radius:10px;font-weight:700;font-size:.9rem;display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap}
 .tb:hover{border-color:var(--gold)}
@@ -102,6 +105,12 @@ h1{font:700 1.28rem/1.1 var(--display);margin:0;letter-spacing:.005em;white-spac
 .lic{display:flex;flex-wrap:wrap;gap:8px 12px}
 .lic label{display:inline-flex;align-items:center;gap:6px;font-size:.86rem;color:var(--bench-muted)}
 .txt-in{flex:1 1 160px;min-width:0;background:var(--bench-2);color:var(--bench-ink);border:1px solid var(--bench-rule);border-radius:7px;padding:4px 8px;font:400 1.05rem/1.4 var(--ar)}
+.txt-in.cap-in{flex:none;width:100%;padding:8px 12px;font:500 1rem/1.4 var(--ui)}
+.vari{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--rule);border-radius:14px;background:var(--sheet)}
+.vari-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.vari-head h3{margin:0;font:700 1rem/1.2 var(--display)}
+.vari-head .hint{margin:2px 0 0}
+.share-out{width:100%;margin-top:8px;padding:8px 10px;border:1px solid var(--bench-rule);border-radius:8px;background:var(--bench-2);color:var(--bench-ink);font:400 .85rem/1.3 var(--ui)}
 .pvfont{min-width:0;flex:1 1 auto}
 .pvf{font:700 .95rem/1.2 var(--display);color:var(--bench-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .pvdl{display:none}
@@ -254,6 +263,13 @@ h1{font:700 1.28rem/1.1 var(--display);margin:0;letter-spacing:.005em;white-spac
 .preview.panning{cursor:grabbing}
 .stage{position:absolute;left:0;top:0;will-change:transform}
 .stage > svg{display:block;width:100%;height:100%;box-shadow:0 6px 22px var(--lift)}
+.stage > svg.guides{position:absolute;left:0;top:0;pointer-events:none;overflow:visible;box-shadow:none;background:none!important}
+.stage.anim{transition:transform .18s ease,width .18s ease,height .18s ease}
+.pvnav{position:absolute;right:10px;bottom:10px;z-index:3;border:1px solid var(--bench-rule);border-radius:8px;background:var(--bench);box-shadow:0 6px 18px var(--lift);overflow:hidden;touch-action:none;cursor:crosshair}
+.pvnav[hidden]{display:none}
+.pvnav-art{position:absolute;inset:0}
+.pvnav-art svg{display:block;width:100%;height:100%}
+.pvnav-win{position:absolute;border:2px solid var(--bench-gold);border-radius:3px;box-shadow:0 0 0 999px rgba(11,20,49,.38);pointer-events:none}
 .preview.see-through.pv-check .stage > svg{background:repeating-conic-gradient(var(--check-a) 0 25%,var(--check-b) 0 50%) 0 0/16px 16px}
 .preview.see-through.pv-light .stage > svg{background:#FFFFFF}
 .preview.see-through.pv-dark .stage > svg{background:#14161B}
@@ -401,10 +417,10 @@ input[type=color]{width:38px;height:30px;padding:0 2px;border:1px solid var(--be
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);z-index:20;max-width:min(560px,calc(100vw - 32px));background:var(--bench);color:var(--bench-ink);border:1px solid var(--bench-rule);border-radius:12px;padding:10px 16px;font-size:.92rem;box-shadow:0 10px 30px var(--lift);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .toast.err{border-color:var(--bench-alert);color:var(--bench-alert)}
-@media (max-width:1039px){.toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}}
+@media (max-width:899px) and (orientation:portrait),(max-width:899px) and (min-height:521px),(max-width:639px){.toast{bottom:calc(78px + env(safe-area-inset-bottom,0px))}}
 
 /* Boîtes de dialogue */
-dialog{border:1px solid var(--rule);border-radius:16px;background:var(--sheet);color:var(--ink);width:min(760px,calc(100vw - 32px));max-height:calc(100vh - 48px);padding:0}
+dialog{border:1px solid var(--rule);border-radius:16px;background:var(--sheet);color:var(--ink);width:min(760px,calc(100vw - 32px));max-height:calc(100vh - 48px);max-height:calc(100dvh - 48px);overflow:auto;overscroll-behavior:contain;padding:0}
 dialog::backdrop{background:var(--veil)}
 .dlg{padding:20px 22px;display:flex;flex-direction:column;gap:12px}
 .dlg h2{margin:0;font:700 1.25rem/1.2 var(--display)}
@@ -540,7 +556,7 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
 .ln-field input{border:1px solid var(--rule);border-radius:10px;background:var(--sheet);color:var(--ink);padding:6px 12px;font:400 1.6rem/1.5 var(--ar);text-align:right}
 .ln-ex-prev{border:1px solid var(--rule);border-radius:10px;background:#FFFFFF;box-shadow:0 6px 18px var(--lift);aspect-ratio:210/297;overflow:hidden}
 .ln-ex-prev svg{width:100%;height:100%;display:block}
-@media (max-width:1039px){.learn{height:auto;overflow:visible}.ln-table-wrap{max-height:none}}
+@media (max-width:899px) and (orientation:portrait),(max-width:899px) and (min-height:521px),(max-width:639px){.learn{height:auto;flex:1 1 0;min-height:0}.ln-table-wrap{max-height:none}}
 @media (max-width:860px){.ln-study,.ln-ex{grid-template-columns:minmax(0,1fr)}.ln-art{width:180px;height:84px}}
 
 /* Tiroir « Télécharger » */
@@ -574,42 +590,86 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
 .cmpcell b{font-size:.88rem}
 .cmpcell small{color:var(--bench-muted);font-size:.78rem}
 .vw .hint{color:var(--bench-muted)}
-@media (max-width:1039px){
-  .top{flex-wrap:wrap;padding:8px 12px;gap:6px 10px}
-  .brand-mark{width:50px;height:30px}
-  h1{font-size:1.12rem}
-  .spaces{order:3;flex:1 1 100%;margin:0;overflow-x:auto;scrollbar-width:none}
+@media (max-width:899px) and (orientation:portrait),(max-width:899px) and (min-height:521px),(max-width:639px){
+  /* Empilé (téléphone, tablette en portrait) : barre du haut sur une ligne, aperçu, réglages qui défilent, outils en bas ;
+     l'atelier tient dans la hauteur de l'écran et l'aperçu se réduit quand on descend dans les réglages */
+  .app{height:100vh;height:100dvh;min-height:0;overflow:hidden}
+  .top{padding:6px 12px;gap:6px 10px;min-height:0}
+  .brand-mark{width:48px;height:30px}
+  .brand-t{display:none}
+  .spaces{margin:0;min-width:0;overflow-x:auto;scrollbar-width:none}
   .spaces::-webkit-scrollbar{display:none}
-  .space{padding:5px 11px;font-size:.86rem}
-  .tb{height:36px;min-width:36px;padding:0 9px}
+  .space{padding:6px 11px;font-size:.88rem}
+  .tb{height:38px;min-width:38px;padding:0 9px}
   .tb span{display:none}
   .tb.primary span{display:inline}
   .top-acts #saveBtn{display:none}
-  .studio{display:flex;flex-direction:column;height:auto;min-height:0}
-  .bench.stagearea{order:1;position:sticky;top:0;z-index:5;padding:8px 10px 10px;gap:6px;overflow:visible;box-shadow:0 8px 18px var(--lift)}
-  .stagearea > .preview{flex:none;height:min(38vh,340px);height:min(38svh,340px);min-height:170px}
-  .panels{order:2;overflow:visible;border:0;padding:14px 14px calc(100px + env(safe-area-inset-bottom,0px))}
-  .rail{position:fixed;left:0;right:0;bottom:0;z-index:7;flex-direction:row;gap:2px;overflow-x:auto;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 18px var(--lift)}
-  .rail{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent)}
+  .studio{display:flex;flex-direction:column;flex:1 1 0;height:auto;min-height:0}
+  .bench.stagearea{order:1;flex:none;position:relative;z-index:5;padding:8px 10px 10px;gap:6px;overflow:visible;box-shadow:0 8px 18px var(--lift)}
+  .stagearea > .preview{flex:none;height:min(38vh,340px);height:min(38svh,340px);min-height:150px;transition:height .25s ease}
+  .studio.compact .stagearea > .preview{height:min(22vh,190px);height:min(22svh,190px);min-height:118px}
+  .panels{order:2;flex:1 1 0;min-height:0;overflow-y:auto;border:0;padding:14px 14px 28px}
+  .rail{order:3;flex:none;flex-direction:row;gap:1px;overflow-x:auto;padding:5px 4px calc(5px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 18px var(--lift);position:relative;z-index:6}
+  .rail{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent)}
   .rail.at-end{-webkit-mask-image:none;mask-image:none}
-  .rt{flex:1 0 58px;padding:7px 2px 6px;font-size:.7rem}
+  .rt{flex:1 1 0;min-width:0;padding:7px 1px 6px;font-size:.68rem}
+  .rt > span:not(.dot-on){max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .rt svg{width:21px;height:21px}
-  .rt .dot-on{inset-inline-end:10px;top:5px}
-  .pvfont,.pvview .sseg,#dimsBtn,.qdl,.meta{display:none}
+  .rt .dot-on{inset-inline-end:calc(50% - 16px);top:4px}
+  .pvfont,.pvview .sseg,#dimsBtn,#guidesBtn,.qdl,.meta{display:none}
   #fullBtn{font-size:0;gap:0}
   .pvdl{display:inline-flex}
 }
-@media (max-width:640px){
-  .brand-t .tagline{display:none}
+/* tablette en portrait : un aperçu plus grand */
+@media (min-width:640px) and (max-width:899px) and (orientation:portrait){.stagearea > .preview{height:min(40svh,470px)}.studio.compact .stagearea > .preview{height:min(24svh,250px)}}
+@media (max-width:399px){.tb.primary span{display:none}.tb.primary{padding:0 11px}}
+@media (max-width:380px){.rail{gap:0;padding-inline:2px}.rt{font-size:.6rem;padding-inline:0}}
+@media (max-width:639px) and (max-height:520px){.stagearea > .preview{min-height:110px}.studio.compact .stagearea > .preview{min-height:90px}}
+/* Téléphone en paysage : la mise en page large, resserrée (barre du haut sur une ligne, outils en icônes) */
+@media (max-height:520px) and (orientation:landscape) and (min-width:640px){
+  :root{--top-h:46px}
+  .top{min-height:var(--top-h);padding:3px 10px;gap:6px 10px}
+  .brand-mark{width:44px;height:26px}
+  .brand-t{display:none}
+  .space{padding:4px 10px;font-size:.84rem}
+  .tb{height:34px;min-width:34px;padding:0 8px}
+  .tb span{display:none}
+  .tb.primary span{display:inline}
+  .top-acts #saveBtn{display:none}
+  .studio{grid-template-columns:56px minmax(280px,360px) minmax(0,1fr);min-height:0}
+  .rail{padding:6px 5px;gap:2px}
+  .rt{padding:5px 2px;gap:0}
+  .rt > span:not(.dot-on){display:none}
+  .rt svg{width:21px;height:21px}
+  .rt .dot-on{top:4px;inset-inline-end:6px}
+  .panels{padding:12px 12px 32px}
+  .bench.stagearea{padding:6px 10px 8px}
+  .stagearea > .preview{min-height:0}
+  .pvfont,.meta,.qdl,.pvview .sseg,#dimsBtn,#guidesBtn{display:none}
+  #fullBtn{font-size:0;gap:0}
+  .pvdl{display:inline-flex}
+  dialog{max-height:calc(100vh - 16px);max-height:calc(100dvh - 16px)}
+}
+@media (max-width:639px){
+  .spaces{display:none}
+  .space-sel{display:block}
   #txt{font-size:1.6rem}
   .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .mgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .card{padding:8px 9px 9px}.card-art{height:70px}
   .row{grid-template-columns:minmax(0,1fr)}
   .dl{grid-template-columns:repeat(2,minmax(0,1fr))}
-  dialog.viewer{width:100vw;height:100vh;border-radius:0}
+  dialog.viewer{width:100vw;height:100vh;height:100dvh;border-radius:0}
   .comp .sthumb{flex:1 1 0;width:auto}
   .comp > .lbl{flex-basis:100%}
+}
+/* écrans tactiles : cibles plus grandes */
+@media (pointer:coarse){
+  .chip{min-height:34px}
+  .seg button{min-height:36px}
+  .ib{min-width:38px;height:38px}
+  .ctl input[type=range]{height:30px}
+  .space{min-height:34px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -626,9 +686,15 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     <nav class="spaces" aria-label="Espaces de l’atelier">
       <button class="space" type="button" id="spStudio" aria-current="page">Atelier</button>
       <button class="space" type="button" id="spLearn">Apprendre</button>
-      <button class="space" type="button" id="designsBtn">Mes créations <span class="n" id="designsCount"></span></button>
-      <button class="space" type="button" id="aboutBtn">Polices et licences</button>
+      <button class="space" type="button" id="designsBtn"><span class="lg">Mes créations</span><span class="sm">Créations</span> <span class="n" id="designsCount"></span></button>
+      <button class="space" type="button" id="aboutBtn"><span class="lg">Polices et licences</span><span class="sm">Licences</span></button>
     </nav>
+    <select class="space-sel" id="spaceSel" aria-label="Espace de l’atelier">
+      <option value="studio">Atelier</option>
+      <option value="learn">Apprendre</option>
+      <option value="designs">Mes créations</option>
+      <option value="about">Polices et licences</option>
+    </select>
     <div class="top-acts">
       <button class="tb" id="undoBtn" type="button" title="Annuler (Ctrl+Z)" aria-label="Annuler" disabled><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
       <button class="tb" id="redoBtn" type="button" title="Rétablir (Ctrl+Y)" aria-label="Rétablir" disabled><svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></button>
@@ -677,6 +743,25 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
           <div class="tk-marks" id="tkMarks" role="group" aria-label="Signes de la lettre choisie"></div>
           <p class="note-line">Touchez une lettre puis un signe : la sélection passe à la lettre suivante. Les flèches du clavier déplacent la sélection, Suppr efface les signes.</p>
         </div>
+        <h3 class="pn-sub">Légende en lettres latines</h3>
+        <div class="tp" id="tp-cap">
+          <div class="row"><span class="lbl">Légende</span>
+            <div class="ctl"><label class="check"><input type="checkbox" id="capOn"> Ajouter une ligne en français : prénom, traduction…</label></div></div>
+          <div id="capCtl" class="sub-ctl" hidden>
+            <input type="text" class="txt-in cap-in" id="capText" dir="ltr" lang="fr" maxlength="120" autocomplete="off" spellcheck="true" placeholder="Ex. : Yasmine — ou le sens de la phrase" aria-label="Texte de la légende">
+            <p class="hint" id="capHint">Un texte de la bibliothèque remplit la légende avec son nom ou son sens.</p>
+            <div class="row"><span class="lbl" id="lblCapFont">Police</span>
+              <div class="ctl"><div class="seg" id="capFont" role="group" aria-labelledby="lblCapFont"></div></div></div>
+            <div class="row"><span class="lbl" id="lblCapPos">Position</span>
+              <div class="ctl"><div class="seg" id="capPos" role="group" aria-labelledby="lblCapPos"></div><label class="check"><input type="checkbox" id="capUpper"> Majuscules</label></div></div>
+            <div class="row"><label for="capSize">Taille</label>
+              <div class="ctl"><input type="range" id="capSize" min="6" max="100" step="1"><span class="val" id="capSizeVal"></span></div></div>
+            <div class="row"><label for="capGap">Écart</label>
+              <div class="ctl"><input type="range" id="capGap" min="0" max="120" step="1"><span class="val" id="capGapVal"></span></div></div>
+            <div class="row"><span class="lbl" id="lblCapColor">Couleur</span>
+              <div class="ctl"><div class="seg" id="capColorMode" role="group" aria-labelledby="lblCapColor"></div><input type="color" id="capColor" aria-label="Couleur de la légende"></div></div>
+          </div>
+        </div>
         <h3 class="pn-sub">Mise en page</h3>
         <div class="tp" id="tp-ecr">
           <div class="row"><label for="size">Taille</label>
@@ -711,6 +796,10 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
       </div>
       <div class="pn" role="tabpanel" id="pn-modeles" aria-labelledby="tool-modeles" hidden>
         <div class="pn-head"><h2>Modèles de tableaux</h2><span class="n" id="modelCount"></span></div>
+        <div class="vari">
+          <div class="vari-head"><div><h3>✦ Variations de votre phrase</h3><p class="hint">Des mises en page tirées au sort parmi les écritures, les ambiances et les formes de l’atelier.</p></div><button class="chip ai" id="variBtn" type="button">Proposer des variations</button></div>
+          <div class="mgrid vgrid" id="vgrid" hidden></div>
+        </div>
         <div class="gtools">
           <span class="note-line">Aperçus avec :</span>
           <div class="lseg" id="mdSrc" role="group" aria-label="Texte des aperçus"></div>
@@ -856,6 +945,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
         </div>
         <div class="pvgrp pvview">
           <div class="sseg" id="pvBg" role="group" aria-label="Fond de l’aperçu derrière la transparence"></div>
+          <button class="ib" id="guidesBtn" type="button" aria-pressed="false" title="Repères : axes, tiers, marges de sécurité et boîte du texte">Repères</button>
           <button class="ib" id="dimsBtn" type="button" aria-pressed="false" title="Afficher les dimensions réelles">Cotes</button>
           <button class="ib" id="fullBtn" type="button" title="Plein écran, mise en situation, comparaison des styles"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Plein écran</button>
           <button class="ib pvdl" id="pvDl" type="button" aria-label="Télécharger"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4v11"/><path d="M7 10.5l5 5 5-5"/><path d="M5 20h14"/></svg></button>
@@ -1031,6 +1121,16 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
           <button type="button" data-x="sheet">Planche PDF<small id="sheetSub">styles favoris</small></button>
           <button type="button" data-x="batch">Lot .zip<small id="batchSub">SVG + PNG par style</small></button>
         </div>
+      </section>
+      <section aria-labelledby="hShare">
+        <h4 id="hShare">Partager</h4>
+        <p class="hint">Un lien qui ouvre votre création dans l’atelier en ligne, sur n’importe quel appareil : le texte et tous les réglages, sans la photo de fond.</p>
+        <div class="dl dl4">
+          <button type="button" id="shareLink">Copier le lien<small>atelier en ligne</small></button>
+          <button type="button" id="shareNative" hidden>Partager…<small>messagerie, e-mail</small></button>
+          <button type="button" id="shareImg" hidden>Partager l’image<small>PNG</small></button>
+        </div>
+        <input class="share-out" id="shareOut" type="text" readonly hidden aria-label="Lien de la création">
       </section>
       <p class="status" id="status" role="status" aria-live="polite"></p>
     </div>
@@ -3775,7 +3875,25 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     let pending = false;
     const wd = (fx.weight || 0) / 100 * size;
     if (Math.abs(wd) > 0.01) { if (fxReady) parts = parts.map(p => p.length ? FXL().grow(p, wd, tol) : p); else pending = true; }
+    // légende en lettres latines (prénom, traduction…) : centrée sous le dessin ou au-dessus, vectorielle comme le reste ;
+    // de la couleur de l'encre (avec le texte) ou de sa propre couleur (calque « légende »)
+    let capPart = null, capColor = null;
+    const cap = st.caption;
+    if (cap && cap.font && cap.text && String(cap.text).trim() && parts.some(p => p.length)) {
+      const mainBox = K.pathBBox(parts.reduce((a, p) => pushAll(a, p), []));
+      const chk = K.checkSupport(cap.font, cap.upper ? String(cap.text).toLocaleUpperCase('fr') : String(cap.text));
+      const csz = size * Math.min(1.2, Math.max(0.04, (cap.size == null ? 26 : cap.size) / 100));
+      const ct = chk.text.trim() ? K.buildText(cap.font, chk.text.trim(), { size: csz, align: 'center', lineHeight: 1.2, color: false }) : null;
+      if (ct && ct.cmds.length) {
+        const cb = K.pathBBox(ct.cmds), gap = size * Math.max(0, (cap.gap == null ? 16 : cap.gap) / 100);
+        const tx = mainBox.x + mainBox.w / 2 - (cb.x + cb.w / 2);
+        const ty = cap.pos === 'above' ? mainBox.y - gap - (cb.y + cb.h) : mainBox.y + mainBox.h + gap - cb.y;
+        const cmds = K.transformPath(ct.cmds, 1, tx, ty);
+        if (cap.color && cap.color !== 'ink') { capPart = cmds; capColor = cap.color; } else pushAll(parts[0], cmds);
+      }
+    }
     const textAll = parts.reduce((a, p) => pushAll(a, p), []);
+    if (capPart) pushAll(textAll, capPart);
     const empty = !textAll.length;
     const tb = K.pathBBox(textAll);
     // 5. effets (coordonnées du texte)
@@ -3829,6 +3947,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     if (parts[2].length) L.push({ role: 'dots', path: body(parts[2]), fill: solid(fx.dots.color || '#c62828') });
     colorKeys.forEach((k, i) => { const p = parts[3 + i]; if (p && p.length) L.push({ role: 'color', path: body(p), fill: solid(k) }); });
     lineKeys.forEach((k, i) => { const p = parts[3 + colorKeys.length + i]; if (p && p.length) L.push({ role: 'text', path: body(p), fill: solid(k) }); });
+    if (capPart && capPart.length) L.push({ role: 'caption', path: body(capPart), fill: solid(capColor) });
     // tuiles colorées de la forme (mosaïque), sous les effets et le texte
     const PL = panels.filter(p => p.path && p.path.length).map(p => ({ role: 'tile', path: p.path, fill: solid(p.color) }));
     // lettres semées dans les vides autour du texte
@@ -4009,9 +4128,13 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
       return pt.color;
     };
     // calques nommés (Illustrator, Inkscape) ; dans la page : attribut data-layer
-    const ROLE = { bg: 'fond', pattern: 'motif', panel: 'fond-cadre', tile: 'tuiles', scatter: 'lettres-semees', counter: 'contre-formes', frame: 'cadre', glow: 'halo', shadow: 'ombre', extrude: 'relief', outline: 'lisere', stroke: 'contour', text: 'texte', marks: 'harakat', dots: 'points', color: 'couleurs' };
+    const ROLE = { bg: 'fond', pattern: 'motif', panel: 'fond-cadre', tile: 'tuiles', scatter: 'lettres-semees', caption: 'legende', counter: 'contre-formes', frame: 'cadre', glow: 'halo', shadow: 'ombre', extrude: 'relief', outline: 'lisere', stroke: 'contour', text: 'texte', marks: 'harakat', dots: 'points', color: 'couleurs' };
     const seen = new Map();
     const label = r => { const b = ROLE[r] || 'calque', n = (seen.get(b) || 0) + 1; seen.set(b, n); return opt.inline ? ` data-layer="${b}"` : ` id="${b}${n > 1 ? '-' + n : ''}"`; };
+    // zone des flous : la page et ses abords (et tout le dessin quand l'aperçu montre le hors-format)
+    const over = !!(opt.overflowMark && sc.overflow && sc.content);
+    const fr = over ? { x: Math.min(0, sc.content.x) - W * 0.1, y: Math.min(0, sc.content.y) - H * 0.1, x1: Math.max(W, sc.content.x + sc.content.w) + W * 0.1, y1: Math.max(H, sc.content.y + sc.content.h) + H * 0.1 }
+      : { x: -W * 0.1, y: -H * 0.1, x1: W * 1.1, y1: H * 1.1 };
     for (const l of sc.layers) {
       if (l.image) {
         if (opt.imageHref) {
@@ -4039,18 +4162,27 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
         if (!id) {
           id = P + '-f' + (filters.size + 1);
           filters.set(key, id);
-          defs += `<filter id="${id}" filterUnits="userSpaceOnUse" x="${f2(-W * 0.1)}" y="${f2(-H * 0.1)}" width="${f2(W * 1.2)}" height="${f2(H * 1.2)}" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="${f2(l.blur / 2)}"/></filter>`;
+          defs += `<filter id="${id}" filterUnits="userSpaceOnUse" x="${f2(fr.x)}" y="${f2(fr.y)}" width="${f2(fr.x1 - fr.x)}" height="${f2(fr.y1 - fr.y)}" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="${f2(l.blur / 2)}"/></filter>`;
         }
         g += ` filter="url(#${id})"`;
       }
       const el = '<path' + label(l.role) + ' d="' + d + '"' + a + '/>';
       body += g ? '<g' + g + '>' + el + '</g>' : el;
     }
+    // aperçu seulement : ce qui dépasse du format reste visible autour de la page, sous un voile, avec le bord de la page en pointillé
+    let rootStyle = '';
+    if (over) {
+      const c = sc.content, m = Math.max(W, H) * 0.02;
+      const x0 = Math.min(0, c.x) - m, y0 = Math.min(0, c.y) - m, x1 = Math.max(W, c.x + c.w) + m, y1 = Math.max(H, c.y + c.h) + m;
+      body += `<path data-layer="hors-format" d="M${f2(x0)} ${f2(y0)}H${f2(x1)}V${f2(y1)}H${f2(x0)}Z M0 0V${f2(H)}H${f2(W)}V0Z" fill="#0B1431" fill-opacity="0.62" fill-rule="evenodd"/>` +
+        `<rect data-layer="bord-format" x="0" y="0" width="${f2(W)}" height="${f2(H)}" fill="none" stroke="#E3C06A" stroke-width="1.5" stroke-dasharray="7 5" vector-effect="non-scaling-stroke"/>`;
+      rootStyle = ' style="overflow:visible"';
+    }
     const title = opt.title ? `<title>${esc(opt.title)}</title>` : '';
     const phys = sc.mmPerPx && Math.abs(sc.mmPerPx - PX2MM) > 1e-9;
     const size = opt.inline ? '' : phys ? ` width="${f2(W * sc.mmPerPx)}mm" height="${f2(H * sc.mmPerPx)}mm"` : ` width="${f2(W)}" height="${f2(H)}"`;
     return (opt.inline ? '' : '<?xml version="1.0" encoding="UTF-8"?>\n') +
-      `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"${size} viewBox="0 0 ${f2(W)} ${f2(H)}">${title}${defs ? '<defs>' + defs + '</defs>' : ''}${body}</svg>`;
+      `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"${size} viewBox="0 0 ${f2(W)} ${f2(H)}"${rootStyle}>${title}${defs ? '<defs>' + defs + '</defs>' : ''}${body}</svg>`;
   }
 
   // ---------------------------------------------------------------------------
@@ -4992,20 +5124,13 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
   const SPIRAL_ICON = (() => { let d = ''; for (let i = 0; i <= 60; i++) { const t = i / 60 * Math.PI * 5, r = 1 + 1.6 * t / Math.PI; d += (i ? 'L' : 'M') + (12 + r * Math.cos(t)).toFixed(1) + ' ' + (12 + r * Math.sin(t)).toFixed(1); } return '<path d="' + d + '"/>'; })();
   const RING_OPTS = [['none', 'Aucune'], ['single', 'Simple'], ['double', 'Double']];
   const ringW = st => st.ring !== 'none';
-  // chargement à l'approche : sur ordinateur, les galeries défilent dans leur panneau (racine = le panneau),
-  // sur téléphone, dans la page ; l'observateur est refait quand la fenêtre passe d'une mise en page à l'autre
+  // mise en page empilée (téléphone, tablette en portrait) : même condition que dans la feuille de style
+  const STACK_MQ = window.matchMedia ? window.matchMedia('(max-width:899px) and (orientation:portrait),(max-width:899px) and (min-height:521px),(max-width:639px)') : { matches: false, addEventListener() {} };
+  // chargement à l'approche : les galeries défilent dans leur panneau (racine = le panneau), sur ordinateur comme sur téléphone
   function lazyObserver(cb, margin) {
     if (!('IntersectionObserver' in window)) return null;
-    const targets = new Set();
-    let io = null, wide = null;
-    const make = () => {
-      wide = window.innerWidth >= 1040;
-      io = new IntersectionObserver(cb, { root: wide ? document.getElementById('panels') : null, rootMargin: margin + ' 0px' });
-      for (const t of targets) io.observe(t);
-    };
-    make();
-    window.addEventListener('resize', () => { if ((window.innerWidth >= 1040) !== wide) { io.disconnect(); make(); } });
-    return { observe: t => { targets.add(t); io.observe(t); }, unobserve: t => { targets.delete(t); io.unobserve(t); } };
+    const io = new IntersectionObserver(cb, { root: document.getElementById('panels'), rootMargin: margin + ' 0px' });
+    return { observe: t => io.observe(t), unobserve: t => io.unobserve(t) };
   }
   // outils de l'atelier (barre verticale sur ordinateur, barre du bas sur téléphone)
   const TOOLS = ['texte', 'styles', 'modeles', 'forme', 'couleurs', 'effets', 'cadre', 'fond', 'format'];
@@ -5380,6 +5505,8 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     },
     frame: { type: 'none', width: 2.5, double: false, dash: false, pad: 14, ink: true, color: '#c9a227', panelOn: false, panel: '#ffffff', fit: 'text' },
     pattern: { type: 'none', color: '#c9a227', opacity: 0.25, scale: 12, width: 100, colorful: false, text: '' },
+    // légende en lettres latines sous (ou sur) le dessin : prénom, traduction…
+    caption: { on: false, text: '', pos: 'below', size: 26, gap: 16, font: 'serif', color: 'ink', custom: '#1b1712', upper: false },
     // une couleur par ligne (médaillon et ailes, titres, mosaïques…)
     lineInk: { on: false, colors: ['#7a3b1e', '#1f7a7a', '#1f7a7a', '#8e3b5e', '#0f4c81', '#9a7420', '#2e7d32', '#b3261e'] },
     bg: { type: 'solid', color: '#0e1a3a', stops: stopsOf(PARCH), angle: 90, gk: 'linear', veil: 0.3, veilColor: 'dark' },
@@ -5388,11 +5515,11 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
       fillShape: 'oval', wrap: 'auto', fratio: 100, grow: 40, stretch: 10, lead: 18, center: 1, rgap: 14, rfill: 'on', rlines: 'none', tile: 'capsule', title: 'top', palette: 'pastel', cols: 0, tgap: 10, swash: 'on' },
     phys: { on: false, value: 60, unit: 'cm' },
     // réglages d'interface (hors historique)
-    scale: 2, filter: 'all', tab: 'ecr', tool: 'texte', favs: [], cardColors: false, pvBg: 'check', dims: false, gtab: 'styles', mdTheme: 'all', mdSrc: 'mine',
+    scale: 2, filter: 'all', tab: 'ecr', tool: 'texte', favs: [], cardColors: false, pvBg: 'check', dims: false, guides: false, gtab: 'styles', mdTheme: 'all', mdSrc: 'mine',
     // dernier texte vocalisé dont le tashkīl a été retiré (pour « Remettre le tashkīl »)
     tkBackup: ''
   };
-  const UI_KEYS = ['scale', 'filter', 'tab', 'tool', 'favs', 'cardColors', 'pvBg', 'dims', 'gtab', 'mdTheme', 'mdSrc', 'tkBackup'];
+  const UI_KEYS = ['scale', 'filter', 'tab', 'tool', 'favs', 'cardColors', 'pvBg', 'dims', 'guides', 'gtab', 'mdTheme', 'mdSrc', 'tkBackup'];
   const FX_OFF = clone(DEFAULT.fx);
 
   function normHex(v) {
@@ -5461,6 +5588,14 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     s.pattern.opacity = clampN(s.pattern.opacity, 0.02, 1, 0.25);
     s.pattern.text = String(s.pattern.text || '').slice(0, 60);
     s.lineInk.colors = DEFAULT.lineInk.colors.map((d, i) => normHex(s.lineInk.colors[i]) || d);
+    const cp = s.caption;
+    cp.pos = oneOf(cp.pos, ['below', 'above'], 'below');
+    cp.font = oneOf(cp.font, ['serif', 'sans', 'thin', 'bold'], 'serif');
+    cp.color = oneOf(cp.color, ['ink', 'custom'], 'ink');
+    cp.custom = normHex(cp.custom) || DEFAULT.caption.custom;
+    cp.text = String(cp.text || '').replace(/[\r\n]+/g, ' ').slice(0, 120);
+    cp.size = clampN(cp.size, 6, 100, 26);
+    cp.gap = clampN(cp.gap, 0, 120, 16);
     const sh = s.shape;
     sh.type = oneOf(sh.type, SHAPES.map(x => x.id), 'straight');
     sh.side = oneOf(sh.side, ['top', 'bottom'], 'top');
@@ -5873,7 +6008,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     const f = fontById(id);
     if (!f) return;
     if (f.state === 'error') f.state = 'idle';
-    if (S.fontId !== id) { S.fontId = id; if (!keepWeight) S.wght = null; }
+    if (S.fontId !== id) { S.fontId = id; if (!keepWeight) S.wght = null; requestFit('overflow'); }
     syncCardSelection();
     ensureFont(f, true).then(() => { updateWeightUI(); scheduleBench(); }).catch(() => scheduleBench());
     updateWeightUI(); scheduleBench(); changed();
@@ -5940,6 +6075,16 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
   const UNIT_MM = { mm: 1, cm: 10, m: 1000 };
   const physMm = () => Math.max(0.1, +S.phys.value || 0) * (UNIT_MM[S.phys.unit] || 10);
   const isA4 = () => S.format.id === 'a4p' || S.format.id === 'a4l';
+  // légende en lettres latines : polices au latin complet (accents compris), chargées à la demande
+  const CAP_FONTS = { serif: 'scheherazade', sans: 'plex', thin: 'plex-thin', bold: 'plex-bold' };
+  function captionSettings(st) {
+    const c = st.caption;
+    if (!c || !c.on || !String(c.text || '').trim()) return null;
+    const f = fontById(CAP_FONTS[c.font] || CAP_FONTS.serif);
+    if (!f) return null;
+    if (f.state !== 'ready') { ensureFont(f).then(() => { scheduleBench(); renderModelsSoon(); }, () => {}); return null; }
+    return { text: c.text, size: c.size, gap: c.gap, pos: c.pos, upper: c.upper, color: c.color === 'custom' ? c.custom : 'ink', font: f.hb };
+  }
   // réglages de dessin d'un état (S ou un modèle)
   function settingsOf(st, opt) {
     opt = opt || {};
@@ -5955,6 +6100,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
       fx: clone(st.fx),
       frame: { type: fr.type, width: fr.width, double: fr.double, dash: fr.dash, pad: fr.pad, color: fr.ink ? 'ink' : fr.color, panel: fr.panelOn ? fr.panel : 'none', fit: fr.fit },
       lineInk: st.lineInk && st.lineInk.on ? st.lineInk.colors.slice() : null,
+      caption: captionSettings(st),
       pattern: Object.assign({}, st.pattern),
       bg, format: opt.format || resolveFormat(st.format),
       shape: Object.assign({}, st.shape),
@@ -5988,15 +6134,53 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
 
   // ------------------------------------------------------------------ aperçu zoomable
   // box : conteneur (overflow caché) ; stage : élément positionné qui reçoit le SVG
+  // ext : étendue du dessin quand il déborde de la page (coordonnées de la page) ; on peut alors dézoomer
+  // jusqu'à le voir en entier, le hors-page restant voilé
   function makeZoomer(box, stage, o) {
-    let z = 1, px = 0, py = 0, W = 0, H = 0, fitK = 1, drag = null;
+    let z = 1, px = 0, py = 0, W = 0, H = 0, fitK = 1, drag = null, ext = null, zMin = 1;
     const pointers = new Map();
     let pinch = null;
+    // vignette de navigation (zoom avant) : tout le dessin, la partie visible encadrée ; on la touche pour s'y rendre
+    let nav = null, navSrc = null, navStale = true, navW = 0, navH = 0;
+    if (o.nav) {
+      nav = document.createElement('div');
+      nav.className = 'pvnav'; nav.hidden = true;
+      nav.setAttribute('aria-hidden', 'true');
+      nav.innerHTML = '<div class="pvnav-art"></div><div class="pvnav-win"></div>';
+      box.appendChild(nav);
+      const goTo = e => {
+        const r = nav.getBoundingClientRect();
+        const u = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), v = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
+        px = W * fitK * z * (0.5 - u); py = H * fitK * z * (0.5 - v);
+        layout();
+      };
+      let navDrag = false;
+      nav.addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); navDrag = true; try { nav.setPointerCapture(e.pointerId); } catch (err) { /* sans capture */ } goTo(e); });
+      nav.addEventListener('pointermove', e => { if (navDrag) goTo(e); });
+      const end = () => { navDrag = false; };
+      nav.addEventListener('pointerup', end); nav.addEventListener('pointercancel', end);
+      nav.addEventListener('dblclick', e => e.stopPropagation());
+    }
+    function layoutNav(bw, bh) {
+      if (!nav) return;
+      const show = z > 1.15 && W > 0;
+      nav.hidden = !show;
+      if (!show) return;
+      const maxW = bw < 520 ? 104 : 148, maxH = bw < 520 ? 76 : 104, k = Math.min(maxW / W, maxH / H);
+      if (Math.abs(navW - W * k) > 0.5 || Math.abs(navH - H * k) > 0.5) { navW = W * k; navH = H * k; nav.style.width = navW + 'px'; nav.style.height = navH + 'px'; }
+      if (navStale && navSrc) { nav.firstChild.innerHTML = navSrc(); navStale = false; }
+      const sw = W * fitK * z, sh = H * fitK * z, left = (bw - sw) / 2 + px, top = (bh - sh) / 2 + py;
+      const u0 = Math.max(0, -left / sw), u1 = Math.min(1, (bw - left) / sw), v0 = Math.max(0, -top / sh), v1 = Math.min(1, (bh - top) / sh);
+      const win = nav.lastChild.style;
+      win.left = (u0 * navW).toFixed(1) + 'px'; win.top = (v0 * navH).toFixed(1) + 'px';
+      win.width = Math.max(4, (u1 - u0) * navW).toFixed(1) + 'px'; win.height = Math.max(4, (v1 - v0) * navH).toFixed(1) + 'px';
+    }
     const pad = () => (o.pad ? o.pad() : 12);
     function sizes() {
       const P = pad(), bw = box.clientWidth;
       const maxH = o.maxH ? o.maxH() : box.clientHeight;
       fitK = Math.max(1e-6, Math.min((bw - 2 * P) / W, (maxH - 2 * P) / H));
+      zMin = ext ? Math.min(1, Math.min((bw - 2 * P) / ext.w, (maxH - 2 * P) / ext.h) / fitK) : 1;
       if (o.autoHeight) box.style.height = Math.max(180, Math.round(H * fitK + 2 * P)) + 'px';
       return { bw, bh: box.clientHeight };
     }
@@ -6009,20 +6193,28 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     function layout() {
       if (!W || !H) return;
       const { bw, bh } = sizes();
-      if (z <= 1) { z = 1; px = 0; py = 0; }
+      if (z < zMin) z = zMin;
+      if (z <= 1) { px = 0; py = 0; }
       clampPan(bw, bh);
       const sw = W * fitK * z, sh = H * fitK * z;
       stage.style.width = Math.max(1, sw) + 'px'; stage.style.height = Math.max(1, sh) + 'px';
       stage.style.transform = 'translate(' + ((bw - sw) / 2 + px).toFixed(1) + 'px,' + ((bh - sh) / 2 + py).toFixed(1) + 'px)';
       box.classList.toggle('zoomed', z > 1.001);
-      if (o.onZoom) o.onZoom(fitK * z, z);
+      layoutNav(bw, bh);
+      if (o.onZoom) o.onZoom(fitK * z, z, z > zMin + 1e-3);
     }
-    function setScene(w, h) {
+    function setScene(w, h, e) {
+      ext = e && e.w > 0 && e.h > 0 ? e : null;
       if (w !== W || h !== H) { const first = !W; W = w; H = h; if (first) { z = 1; px = py = 0; } }
+      // plus de débordement : retour à la page entière
+      if (!ext && z < 1) z = 1;
       layout();
     }
+    // zoom aux boutons : un court glissement plutôt qu'un saut
+    let animT = 0;
+    function animated(fn) { stage.classList.add('anim'); clearTimeout(animT); fn(); animT = setTimeout(() => stage.classList.remove('anim'), 220); }
     function zoomAt(nz, cx, cy) {
-      nz = Math.min(zMax(), Math.max(1, nz));
+      nz = Math.min(zMax(), Math.max(zMin, nz));
       const r = box.getBoundingClientRect();
       const bx = cx == null ? r.width / 2 : cx - r.left, by = cy == null ? r.height / 2 : cy - r.top;
       // point du dessin sous le curseur, conservé pendant le zoom
@@ -6078,8 +6270,9 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     if ('ResizeObserver' in window) new ResizeObserver(() => layout()).observe(box);
     return {
       setScene, layout,
-      zoomIn: () => zoomAt(z * 1.5), zoomOut: () => zoomAt(z / 1.5), fit: () => zoomAt(1),
-      real: () => zoomAt(1 / fitK),
+      zoomIn: () => animated(() => zoomAt(z * 1.5)), zoomOut: () => animated(() => zoomAt(z / 1.5)), fit: () => animated(() => zoomAt(1)),
+      navSource: fn => { navSrc = fn; navStale = true; if (nav && !nav.hidden) layout(); },
+      real: () => animated(() => zoomAt(1 / fitK)),
       get scale() { return fitK * z; }
     };
   }
@@ -6088,9 +6281,9 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
   const pvPad = () => (S.dims ? 36 : 12);
   const zoomer = makeZoomer(pv, stage, {
     // la hauteur de l'aperçu vient de la mise en page (scène de l'atelier, ou bandeau collé en haut sur téléphone)
-    pad: pvPad,
+    pad: pvPad, nav: true,
     blocked: () => !!drawing,
-    onZoom: k => { $('#zoomVal').textContent = nf0.format(Math.round(k * 100)) + ' %'; }
+    onZoom: (k, z, canOut) => { $('#zoomVal').textContent = nf0.format(Math.round(k * 100)) + ' %'; $('#zoomOut').disabled = !canOut; }
   });
   function showMsg(msg) {
     const m = $('#pvMsg');
@@ -6102,11 +6295,35 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     const mpp = sc.mmPerPx, w = sc.W * mpp, h = sc.H * mpp, ref = Math.max(w, h);
     return '<div class="dims" aria-hidden="true"><span class="dim-w"><span class="dlab">' + fmtLen(w, ref) + '</span></span><span class="dim-h"><span class="dlab">' + fmtLen(h, ref) + '</span></span></div>';
   }
+  function guidesHTML(sc) {
+    const W = sc.W, H = sc.H, m = Math.min(W, H) * 0.05, b = sc.box, f = v => (+v).toFixed(1), G = '#E3C06A', T = '#2BB3A8';
+    const ln = (x1, y1, x2, y2, c, dash, op) => '<line x1="' + f(x1) + '" y1="' + f(y1) + '" x2="' + f(x2) + '" y2="' + f(y2) + '" stroke="' + c + '" stroke-width="1"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + (op ? ' stroke-opacity="' + op + '"' : '') + ' vector-effect="non-scaling-stroke"/>';
+    let g = '';
+    for (const k of [1, 2]) g += ln(W * k / 3, 0, W * k / 3, H, G, '', 0.35) + ln(0, H * k / 3, W, H * k / 3, G, '', 0.35);
+    g += ln(W / 2, 0, W / 2, H, G, '6 4', 0.9) + ln(0, H / 2, W, H / 2, G, '6 4', 0.9);
+    g += '<rect x="' + f(m) + '" y="' + f(m) + '" width="' + f(W - 2 * m) + '" height="' + f(H - 2 * m) + '" fill="none" stroke="' + G + '" stroke-opacity=".6" stroke-dasharray="2 4" vector-effect="non-scaling-stroke"/>';
+    if (b && b.w) {
+      const cx = b.x + b.w / 2, cy = b.y + b.h / 2, s = Math.min(W, H) * 0.025;
+      g += '<rect x="' + f(b.x) + '" y="' + f(b.y) + '" width="' + f(b.w) + '" height="' + f(b.h) + '" fill="none" stroke="' + T + '" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/>' + ln(cx - s, cy, cx + s, cy, T) + ln(cx, cy - s, cx, cy + s, T);
+    }
+    return '<svg class="guides" viewBox="0 0 ' + f(W) + ' ' + f(H) + '" preserveAspectRatio="none" aria-hidden="true" focusable="false">' + g + '</svg>';
+  }
   function syncPreviewBg() {
     pv.classList.remove('pv-check', 'pv-light', 'pv-dark');
     pv.classList.add('pv-' + S.pvBg);
   }
 
+  // étendue page + débordement (null si tout tient dans la page)
+  function overflowExtent(sc) {
+    if (!sc || !sc.overflow || !sc.content) return null;
+    const c = sc.content, x0 = Math.min(0, c.x), y0 = Math.min(0, c.y), x1 = Math.max(sc.W, c.x + c.w), y1 = Math.max(sc.H, c.y + c.h);
+    // le dessin est centré sur la page : étendue symétrique
+    const w = Math.max(sc.W / 2 - x0, x1 - sc.W / 2) * 2, h = Math.max(sc.H / 2 - y0, y1 - sc.H / 2) * 2;
+    return { w: w * 1.03, h: h * 1.03 };
+  }
+  // ajustement de la taille au format demandé par un changement de forme ('always') ou de réglage ('overflow')
+  let autoFit = null;
+  function requestFit(mode) { autoFit = autoFit === 'always' ? 'always' : mode; }
   let raf = 0;
   function scheduleBench() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; renderBench(); }); }
   function renderBench() {
@@ -6128,11 +6345,22 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
       $('#overflow').hidden = true; $('#missing').hidden = true;
       return;
     }
+    // format fixe : après un changement de forme, de composition ou de dimensions, la taille s'ajuste au format
+    if (autoFit) {
+      const m = autoFit;
+      autoFit = null;
+      if (S.format.id !== 'auto' && (m === 'always' || sc.overflow)) {
+        const before = S.size;
+        fitToFormat();
+        if (S.size !== before) { if (sc.overflow) status('Taille ajustée : la composition tient maintenant dans le format.'); return; }
+      }
+    }
     hideMsg();
-    stage.innerHTML = KX.sceneToSVG(sc, { inline: true, idPrefix: 'pv', imageHref: bgImage && bgImage.url }) + (S.dims ? dimsHTML(sc) : '');
+    stage.innerHTML = KX.sceneToSVG(sc, { inline: true, idPrefix: 'pv', imageHref: bgImage && bgImage.url, overflowMark: true }) + (S.guides ? guidesHTML(sc) : '') + (S.dims ? dimsHTML(sc) : '');
+    zoomer.navSource(() => KX.sceneToSVG(sc, { inline: true, idPrefix: 'nv', imageHref: bgImage && bgImage.url }));
     pv.classList.toggle('see-through', sc.st.bg.type === 'none');
     pv.setAttribute('aria-label', 'Aperçu : ' + S.text.replace(/\s+/g, ' ') + '. Ctrl + molette ou deux doigts pour zoomer.');
-    zoomer.setScene(sc.W, sc.H);
+    zoomer.setScene(sc.W, sc.H, overflowExtent(sc));
     const note = $('#pvNote');
     note.hidden = !sc.pending;
     note.textContent = sc.pending ? 'Effets en préparation…' : '';
@@ -6439,6 +6667,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
         stopDraw();
         // réglages de départ propres à la forme (le médaillon a besoin de son cercle…)
         if (d.id !== S.shape.type && d.init) d.init(S.shape);
+        if (d.id !== S.shape.type) { requestFit('always'); if (d.id === 'hilye') readableInk('#F1DFA8'); }
         S.shape.type = d.id;
         syncSeg(g, d.id); buildShapeParams();
         if (d.id !== 'straight' && showTabRef) showTabRef('forme');
@@ -6453,7 +6682,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
       b.type = 'button'; b.className = 'sthumb'; b.dataset.v = id;
       b.setAttribute('aria-label', 'Composition : ' + label);
       b.innerHTML = '<span class="art"><span class="sk"></span></span>' + esc(label);
-      b.addEventListener('click', () => { S.shape.repeat = id; syncSeg(c, id); buildCompParams(); if (id !== 'none' && showTabRef) showTabRef('forme'); changed(); });
+      b.addEventListener('click', () => { if (S.shape.repeat !== id) requestFit('always'); S.shape.repeat = id; syncSeg(c, id); buildCompParams(); if (id !== 'none' && showTabRef) showTabRef('forme'); changed(); });
       compEls[id] = b;
       c.appendChild(b);
     }
@@ -6529,7 +6758,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
       if (Array.isArray(p[2])) {
         row.innerHTML = '<span class="lbl" id="lbl-sh-' + key + '">' + esc(label) + '</span><div class="ctl"><div class="seg" role="group" aria-labelledby="lbl-sh-' + key + '"></div></div>';
         box.appendChild(row);
-        seg(row.querySelector('.seg'), p[2], () => obj()[key], v => { obj()[key] = v; rebuild(); changed(); }, true);
+        seg(row.querySelector('.seg'), p[2], () => obj()[key], v => { obj()[key] = v; rebuild(); requestFit('overflow'); changed(); }, true);
       } else {
         const min = p[2], max = p[3], step = p[4], unit = p[5], cond = p[6], show = p[7];
         if (cond && !cond(obj())) continue;
@@ -6540,6 +6769,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
         const cur = Math.min(max, Math.max(min, +obj()[key]));
         r.value = cur; v.textContent = fmt(cur);
         r.addEventListener('input', () => { obj()[key] = +r.value; v.textContent = fmt(obj()[key]); changed(); });
+        r.addEventListener('change', () => { requestFit('overflow'); scheduleBench(); });
       }
     }
   }
@@ -6868,6 +7098,41 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     syncSeg($('#physUnit'), S.phys.unit);
     syncFrameUI();
   }
+  // ------------------------------------------------------------------ légende en lettres latines
+  function buildCaptionUI() {
+    const C = () => S.caption;
+    const sync = () => {
+      $('#capOn').checked = C().on; $('#capCtl').hidden = !C().on;
+      if (document.activeElement !== $('#capText')) $('#capText').value = C().text;
+      $('#capUpper').checked = C().upper;
+      $('#capColor').value = C().custom; $('#capColor').hidden = C().color !== 'custom';
+    };
+    $('#capOn').addEventListener('change', () => {
+      C().on = $('#capOn').checked;
+      // légende vide : le nom ou le sens du texte s'il vient de la bibliothèque
+      if (C().on && !C().text.trim()) C().text = libraryMeaning(S.text) || '';
+      sync(); requestFit('overflow'); changed();
+      if (C().on && !C().text) $('#capText').focus();
+    });
+    $('#capText').addEventListener('input', () => { C().text = $('#capText').value.replace(/[\r\n]+/g, ' '); changed(); });
+    $('#capText').addEventListener('change', () => { requestFit('overflow'); scheduleBench(); });
+    seg($('#capFont'), [['serif', 'Classique'], ['sans', 'Moderne'], ['thin', 'Fine'], ['bold', 'Grasse']], () => C().font, v => { C().font = v; changed(); });
+    seg($('#capPos'), [['below', 'Dessous'], ['above', 'Dessus']], () => C().pos, v => { C().pos = v; changed(); });
+    $('#capUpper').addEventListener('change', () => { C().upper = $('#capUpper').checked; requestFit('overflow'); changed(); });
+    bindRange('capSize', () => C().size, v => { C().size = v; }, v => v + ' %', 'capSizeVal').addEventListener('change', () => { requestFit('overflow'); scheduleBench(); });
+    bindRange('capGap', () => C().gap, v => { C().gap = v; }, v => v + ' %', 'capGapVal').addEventListener('change', () => { requestFit('overflow'); scheduleBench(); });
+    seg($('#capColorMode'), [['ink', 'Encre du texte'], ['custom', 'Autre couleur']], () => C().color, v => { C().color = v; sync(); changed(); });
+    $('#capColor').addEventListener('input', () => { C().custom = $('#capColor').value; changed(); });
+    reg(sync); sync();
+  }
+  // composition à compartiments clairs (hilye) : une encre trop claire (or, blanc) y serait illisible
+  function readableInk(panel) {
+    const a = lum(paintAvg(S.fill)), b = lum(panel), c = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+    if (c >= 3) return;
+    S.fill = Object.assign({}, S.fill, { type: 'solid', color: '#1B1712' });
+    updateColorUI();
+    status('Encre passée en brun foncé : elle reste lisible sur les compartiments clairs (onglet Couleurs pour la changer).');
+  }
   function fitToFormat() {
     const f = currentFont();
     if (!f || f.state !== 'ready' || S.format.id === 'auto' || !prepared.trim()) return;
@@ -6944,15 +7209,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
         if (on && focus) t.focus();
       }
       showGTab(id === 'modeles' ? 'models' : 'styles');
-      if (changedTool) {
-        const pn = $('#panels');
-        if (window.innerWidth >= 1040) pn.scrollTop = 0;
-        else {
-          // téléphone : le panneau commence juste sous l'aperçu collé en haut
-          const y = pn.getBoundingClientRect().top + window.scrollY - $('#bench').offsetHeight - 6;
-          if (window.scrollY > y) window.scrollTo({ top: Math.max(0, y) });
-        }
-      }
+      if (changedTool) $('#panels').scrollTop = 0;
       saveSoon();
     }
     rail.forEach((t, i) => {
@@ -6971,6 +7228,17 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     });
     showTabRef = showTool;
     showToolRef = showTool;
+    // téléphone et tablette en portrait : l'aperçu se réduit quand on descend dans les réglages, et reprend
+    // sa taille en haut du panneau (seuils écartés : pas de va-et-vient) ; seulement si le panneau est assez long
+    const pnEl = $('#panels'), studioEl = $('#studio');
+    let compactPv = false;
+    const setCompact = c => { if (c !== compactPv) { compactPv = c; studioEl.classList.toggle('compact', c); } };
+    pnEl.addEventListener('scroll', () => {
+      if (!STACK_MQ.matches) return setCompact(false);
+      const t = pnEl.scrollTop, room = pnEl.scrollHeight - pnEl.clientHeight;
+      setCompact(compactPv ? t > 4 : t > 48 && room > 260);
+    }, { passive: true });
+    STACK_MQ.addEventListener('change', () => setCompact(false));
     // téléphone : la barre d'outils défile ; le fondu à droite disparaît quand on arrive au bout
     const railEl = $('#rail');
     const railEnd = () => railEl.classList.toggle('at-end', railEl.scrollLeft + railEl.clientWidth >= railEl.scrollWidth - 4);
@@ -6982,6 +7250,9 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     buildShapeThumbs(); buildShapeParams(); buildCompParams();
     bindRange('shWidth', () => S.shape.width, v => { S.shape.width = v; }, v => v + ' %', 'shWidthVal');
     bindRange('shRot', () => S.shape.rotate, v => { S.shape.rotate = v; }, v => v + '°', 'shRotVal');
+
+    // légende en lettres latines
+    buildCaptionUI();
 
     // écriture
     syncSize();
@@ -7044,8 +7315,8 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
       fg.appendChild(b);
     }
     bindRange('margin', () => S.format.margin, v => { S.format.margin = v; }, v => v + ' px', 'marginVal');
-    $('#cw').addEventListener('change', () => { S.format.w = Math.min(12000, Math.max(50, +$('#cw').value || 1200)); updateFormatUI(); changed(); });
-    $('#ch').addEventListener('change', () => { S.format.h = Math.min(12000, Math.max(50, +$('#ch').value || 800)); updateFormatUI(); changed(); });
+    $('#cw').addEventListener('change', () => { S.format.w = Math.min(12000, Math.max(50, +$('#cw').value || 1200)); updateFormatUI(); requestFit('always'); changed(); });
+    $('#ch').addEventListener('change', () => { S.format.h = Math.min(12000, Math.max(50, +$('#ch').value || 800)); updateFormatUI(); requestFit('always'); changed(); });
     $('#fitBtn').addEventListener('click', fitToFormat);
     $('#fitBtn2').addEventListener('click', fitToFormat);
     $('#physOn').addEventListener('change', () => { S.phys.on = $('#physOn').checked; updateFormatUI(); changed(); });
@@ -7069,6 +7340,8 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     $('#zoomVal').addEventListener('click', () => zoomer.real());
     $('#dimsBtn').setAttribute('aria-pressed', String(S.dims));
     $('#dimsBtn').addEventListener('click', () => { S.dims = !S.dims; $('#dimsBtn').setAttribute('aria-pressed', String(S.dims)); saveSoon(); renderBench(); zoomer.layout(); });
+    $('#guidesBtn').setAttribute('aria-pressed', String(!!S.guides));
+    $('#guidesBtn').addEventListener('click', () => { S.guides = !S.guides; $('#guidesBtn').setAttribute('aria-pressed', String(S.guides)); saveSoon(); renderBench(); });
     $('#undoBtn').addEventListener('click', undo);
     $('#redoBtn').addEventListener('click', redo);
     document.addEventListener('keydown', e => {
@@ -7221,12 +7494,22 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
         const v = libMode === 'line' && txt.value.trim() ? txt.value.replace(/\s+$/, '') + '\n' + ar : ar;
         setText(v, v.length);
         if (hasMarks(ar) && !S.harakat) { S.harakat = true; }
+        // légende affichée : elle reprend le nom ou le sens du texte choisi
+        if (S.caption.on && libMode !== 'line') { S.caption.text = libraryMeaning(ar) || captionOf(fr); $('#capText').value = S.caption.text; }
         textChanged(true);
         closeDialog($('#lib'));
         status('Texte placé : ' + fr.replace(/\s*\(.*\)$/, '') + '.');
       });
       g.appendChild(b);
     }
+  }
+
+  // nom ou sens d'un texte de la bibliothèque, pour la légende (sans la mention « vœu de… » ni les précisions entre parenthèses)
+  const captionOf = fr => String(fr || '').replace(/\s*\((?!Coran)[^)]*\)/g, '').trim();
+  let libMeaning = null;
+  function libraryMeaning(t) {
+    if (!libMeaning) { libMeaning = new Map(); for (const c of LIBRARY) for (const it of c.items) { const k = bareKey(it[0]); if (!libMeaning.has(k)) libMeaning.set(k, captionOf(it[1])); } }
+    return libMeaning.get(bareKey(t)) || '';
   }
 
   // ------------------------------------------------------------------ tashkīl (التشكيل)
@@ -7817,8 +8100,8 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
   let vTab = 'pv', mockId = 'wall', cmpSrc = 'fav', cmpRun = 0;
   function viewerOpen() { const v = document.getElementById('viewer'); return !!(v && v.open); }
   const vzoomer = makeZoomer($('#vpreview'), $('#vstage'), {
-    pad: () => 16,
-    onZoom: k => { $('#vzVal').textContent = nf0.format(Math.round(k * 100)) + ' %'; }
+    pad: () => 16, nav: true,
+    onZoom: (k, z, canOut) => { $('#vzVal').textContent = nf0.format(Math.round(k * 100)) + ' %'; $('#vzOut').disabled = !canOut; }
   });
   function showVTab(id) {
     vTab = id;
@@ -7833,9 +8116,10 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     const sc = lastScene;
     if (vTab === 'pv') {
       if (!sc || sc.empty) { $('#vstage').innerHTML = ''; return; }
-      $('#vstage').innerHTML = KX.sceneToSVG(sc, { inline: true, idPrefix: 'vw', imageHref: bgImage && bgImage.url });
+      $('#vstage').innerHTML = KX.sceneToSVG(sc, { inline: true, idPrefix: 'vw', imageHref: bgImage && bgImage.url, overflowMark: true });
       $('#vpreview').classList.toggle('see-through', sc.st.bg.type === 'none');
-      vzoomer.setScene(sc.W, sc.H);
+      vzoomer.setScene(sc.W, sc.H, overflowExtent(sc));
+      vzoomer.navSource(() => KX.sceneToSVG(sc, { inline: true, idPrefix: 'vn', imageHref: bgImage && bgImage.url }));
     } else if (vTab === 'mock') renderMock();
     else if (vTab === 'cmp') renderCompare();
   }
@@ -7966,6 +8250,77 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
       format: S.format.id === 'custom' ? 'auto' : S.format.id, lineHeight: S.lineHeight, kashida: S.kashida, wordSpace: S.wordSpace, align: S.align, harakat: S.harakat
     };
   }
+  // ------------------------------------------------------------------ variations : propositions tirées au sort pour la phrase
+  // une police, une ambiance et une forme qui conviennent à la longueur du texte ; jamais deux fois la même police
+  // ni la même ambiance dans une série
+  const VAR_FONTS = ['layla-thuluth', 'layla-diwani', 'aref-ruqaa-bold', 'amiri-bold', 'kitab-bold', 'reem-kufi-bold', 'kufam-black', 'qahiri', 'bouazzi-maghribi', 'gulzar', 'mirza-bold', 'el-messiri-bold', 'lalezar', 'rakkas', 'marhey-bold', 'noto-naskh-bold'];
+  const pickOne = a => a[Math.floor(Math.random() * a.length)];
+  function variationLooks(n) {
+    const t = S.text.trim() || 'الخط العربي';
+    const lines = t.split('\n').filter(l => l.trim()).length || 1, words = t.split(/\s+/).filter(Boolean).length, chars = t.replace(/\s+/g, '').length;
+    const shapes = [];
+    const add = (w, sh, fmt, round) => shapes.push({ w, sh, fmt, round });
+    add(1.2, { type: 'straight' }, 'auto');
+    add(1, { type: 'bridge', height: 28 }, 'landscape');
+    if (lines === 1 && chars <= 40) add(1, { type: 'arc', bend: 80 + Math.round(Math.random() * 40) }, 'landscape');
+    if (lines === 1 && words >= 2 && chars <= 60) add(1, { type: 'circle', cover: 96, ring: 'single', ringW: 5 }, 'square', true);
+    if (words <= 2 && chars <= 12) { add(0.6, { repeat: 'rosette', copies: 8, spread: 100 }, 'square', true); add(0.5, { repeat: 'kaleido', copies: 8, spread: 90 }, 'square', true); add(0.5, { repeat: 'mirror', mgap: 4 }, 'auto'); }
+    if (lines >= 2 && lines <= 3) add(1, { type: 'seal', cover: 70, ring: 'double', ringW: 6, sep: 'star' }, 'square', true);
+    if (words >= 4 || chars > 22) add(1.4, { type: 'fill', fillShape: pickOne(['oval', 'egg', 'circle', 'drop', 'arch']), wrap: 'auto', grow: 55, stretch: 10, lead: 16, ring: 'single', ringW: 5 }, 'portrait');
+    if (words >= 6) add(0.8, { type: 'rings', center: 1, rgap: 14, rlines: 'thin', sep: 'dot', ring: 'single', ringW: 5 }, 'square', true);
+    if (lines === 1 && words >= 3 && words <= 6) add(0.6, { type: 'wings', ring: 'single', swash: 'on' }, 'banner');
+    const total = shapes.reduce((a, s) => a + s.w, 0);
+    const pickShape = () => { let r = Math.random() * total; for (const s of shapes) { r -= s.w; if (r <= 0) return s; } return shapes[0]; };
+    const fonts = VAR_FONTS.filter(id => fontById(id)), out = [];
+    for (let i = 0; i < n * 8 && out.length < n; i++) {
+      const f = pickOne(fonts), m = pickOne(MOODS), s = pickShape();
+      if (out.some(o => o.look.font === f || o.mood === m.id)) continue;
+      const look = { font: f, shape: clone(s.sh), fill: clone(m.ink), bg: clone(m.bg), shadow: m.shadow ? clone(m.shadow) : null, fx: m.fx ? clone(m.fx) : {},
+        frame: m.frame ? clone(m.frame) : null, pattern: m.pattern ? clone(m.pattern) : null, format: s.fmt, harakat: S.harakat };
+      if (!look.frame && Math.random() < 0.4) look.frame = s.round ? { type: 'circle', width: 1.6, double: true, pad: 12 } : { type: pickOne(['rect', 'cartouche', 'arch', 'round', 'octagon']), width: 1.6, double: Math.random() < 0.5, pad: 16 };
+      const fo = fontById(f), sh = SHAPES.find(x => x.id === (s.sh.type || 'straight')), rp = s.sh.repeat ? REPEATS.find(r => r[0] === s.sh.repeat) : null;
+      out.push({ id: 'var' + Date.now().toString(36) + i, name: fo ? fo.name : f, note: m.name + (rp ? ' · ' + rp[1] : sh && sh.id !== 'straight' ? ' · ' + sh.name : ''), look, mood: m.id, variation: true });
+    }
+    return out;
+  }
+  let curVars = [], varSeq = 0, varKey = '';
+  function variationCard(v) {
+    const w = document.createElement('div');
+    w.className = 'mc'; w.dataset.id = v.id; w._m = v;
+    w.innerHTML = '<button type="button" class="mc-apply"><span class="mc-art"><span class="sk"></span></span><span class="mc-name"></span><span class="mc-note"></span></button>';
+    w.querySelector('.mc-name').textContent = v.name;
+    w.querySelector('.mc-note').textContent = v.note;
+    const ap = w.querySelector('.mc-apply');
+    ap.setAttribute('aria-label', 'Appliquer la variation : ' + v.name + ', ' + v.note);
+    ap.addEventListener('click', () => applyModel(v, false));
+    return w;
+  }
+  // aperçus des variations avec la phrase en cours (redessinés quand elle change)
+  async function drawVariations() {
+    const g = $('#vgrid'), run = ++varSeq;
+    varKey = [S.text, S.harakat].join('|');
+    for (const c of $$('.mc', g)) {
+      if (run !== varSeq) return;
+      const v = c._m, art = c.querySelector('.mc-art');
+      try {
+        await ensureFont(fontById(v.look.font));
+        if (fxLookNeedsClipper(v.look)) await ensureClipper();
+        if (run !== varSeq) return;
+        const sc = modelScene(v, S.text.trim() ? S.text : 'الخط العربي');
+        art.innerHTML = sc && !sc.empty ? KX.sceneToSVG(sc, { inline: true, idPrefix: 'vr' + run + '-' + c.dataset.id }) : '';
+      } catch (e) { art.innerHTML = ''; }
+      await sleep(0);
+    }
+  }
+  function showVariations() {
+    curVars = variationLooks(6);
+    const g = $('#vgrid');
+    g.innerHTML = '';
+    for (const v of curVars) g.appendChild(variationCard(v));
+    g.hidden = false;
+    $('#variBtn').textContent = 'Nouvelles variations';
+    drawVariations();
+  }
   function applyModel(m, withExample) {
     const keepText = S.text;
     const st = lookInto(clone(S), m.look);
@@ -7975,7 +8330,8 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     // format fixe : la taille s'ajuste au cadre une fois la police chargée
     const f = currentFont();
     if (S.format.id !== 'auto' && f) ensureFont(f, true).then(() => { fitToFormat(); }).catch(() => {});
-    status('Modèle « ' + m.name + ' » appliqué' + (withExample ? ' avec son exemple' : ' à votre phrase') + '. Tout reste réglable ; « Annuler » revient en arrière.');
+    status(m.variation ? 'Variation appliquée : ' + m.name + ', ' + m.note + '. Tout reste réglable ; « Annuler » revient en arrière.'
+      : 'Modèle « ' + m.name + ' » appliqué' + (withExample ? ' avec son exemple' : ' à votre phrase') + '. Tout reste réglable ; « Annuler » revient en arrière.');
   }
   // scène d'aperçu d'un modèle (format réduit)
   function modelScene(m, text) {
@@ -8078,6 +8434,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
   let builtTheme = null;
   function renderModels(force) {
     if (S.gtab !== 'models') return;
+    if (curVars.length && varKey !== [S.text, S.harakat].join('|')) drawVariations();
     const g = $('#mgrid');
     const t = MTHEMES.find(x => x[0] === S.mdTheme) || MTHEMES[0];
     $('#mdNote').textContent = t[2];
@@ -8128,6 +8485,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     status('Modèle supprimé.');
   }
   function buildModels() {
+    $('#variBtn').addEventListener('click', showVariations);
     seg($('#mdSrc'), [['mine', 'Votre phrase'], ['ex', 'L’exemple de chaque modèle']], () => S.mdSrc, v => { S.mdSrc = v; saveSoon(); renderModels(false); }, true);
     $('#saveModelBtn').addEventListener('click', async () => {
       const f = currentFont();
@@ -8476,6 +8834,46 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     else status('Création importée. « Annuler » revient à la précédente.');
     return true;
   }
+  // ------------------------------------------------------------------ partage : lien de la création, partage natif
+  // le lien mène toujours au site public, qui s'ouvre partout (même depuis l'application Claude ou un serveur local)
+  const SHARE_BASE = 'https://midoubiba2024.github.io/atelier-khattat/';
+  async function shareUrl() { return SHARE_BASE + '#' + await creationCode(); }
+  function buildShare() {
+    $('#shareNative').hidden = typeof navigator.share !== 'function';
+    let files = false;
+    try { files = !!(navigator.canShare && navigator.canShare({ files: [new File([new Uint8Array(8)], 'a.png', { type: 'image/png' })] })); } catch (e) { files = false; }
+    $('#shareImg').hidden = !files;
+    $('#shareLink').addEventListener('click', async () => {
+      const url = await shareUrl(), out = $('#shareOut');
+      if (await copyText(url)) { out.hidden = true; status('Lien copié : envoyez-le, il ouvre votre création dans l’atelier en ligne.'); }
+      else { out.value = url; out.hidden = false; out.focus(); out.select(); status('Copiez le lien affiché (Ctrl+C), puis envoyez-le.', true); }
+    });
+    $('#shareOut').addEventListener('focus', e => e.target.select());
+    $('#shareNative').addEventListener('click', async () => {
+      const url = await shareUrl();
+      try { await navigator.share({ title: 'Atelier Khattat', text: S.text.replace(/\s+/g, ' ').trim(), url }); }
+      catch (e) {
+        if (e && e.name === 'AbortError') return;
+        if (await copyText(url)) status('Partage indisponible dans cette fenêtre : le lien a été copié.');
+        else status('Partage indisponible dans cette fenêtre : utilisez « Copier le lien ».', true);
+      }
+    });
+    $('#shareImg').addEventListener('click', async () => {
+      try {
+        const sc = await exportScene();
+        const blob = await rasterBlob(sc, 'png', 2, 4096);
+        await navigator.share({ files: [new File([blob], fileBase() + '.png', { type: 'image/png' })], title: 'Atelier Khattat' });
+      } catch (e) { if (e && e.name !== 'AbortError') status('Le partage de l’image n’est pas possible ici : téléchargez le PNG.', true); }
+    });
+    window.addEventListener('hashchange', importFromHash);
+  }
+  // un lien de partage (…#KHATTAT1:…) ouvre la création ; l'adresse est ensuite nettoyée
+  function importFromHash() {
+    let h = '';
+    try { h = decodeURIComponent(location.hash || ''); } catch (e) { h = location.hash || ''; }
+    if (!isCode(h)) return;
+    importCreation(h.slice(1)).then(() => { try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* adresse inchangée */ } });
+  }
   function buildDesigns() {
     $('#designsBtn').addEventListener('click', () => { renderDesigns(); openDialog(dDlg); $('#dname').focus(); });
     $('#designsClose').addEventListener('click', () => closeDialog(dDlg));
@@ -8581,6 +8979,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
   function showSpace(id) {
     const learn = id === 'learn';
     $('#studio').hidden = learn; $('#learn').hidden = !learn;
+    $('#spaceSel').value = learn ? 'learn' : 'studio';
     if (learn) { $('#spLearn').setAttribute('aria-current', 'page'); $('#spStudio').removeAttribute('aria-current'); lnInit(); }
     else { $('#spStudio').setAttribute('aria-current', 'page'); $('#spLearn').removeAttribute('aria-current'); zoomer.layout(); scheduleBench(); }
     window.scrollTo(0, 0);
@@ -9039,6 +9438,14 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
   function buildLearn() {
     $('#spLearn').addEventListener('click', () => showSpace('learn'));
     $('#spStudio').addEventListener('click', () => showSpace('studio'));
+    // téléphone : menu des espaces (les créations et les licences s'ouvrent en fenêtre ; le menu revient à l'espace courant)
+    $('#spaceSel').addEventListener('change', e => {
+      const v = e.target.value;
+      if (v === 'designs') $('#designsBtn').click();
+      else if (v === 'about') $('#aboutBtn').click();
+      else return showSpace(v);
+      e.target.value = $('#learn').hidden ? 'studio' : 'learn';
+    });
     const tabs = $$('.ln-tab');
     tabs.forEach((t, i) => {
       t.addEventListener('click', () => lnShowTab(t.id.slice(3)));
@@ -9096,6 +9503,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
   buildLearn();
   buildImitate();
   buildDesigns();
+  buildShare();
   buildDownloads();
   buildLicences();
   updateTextUI();
@@ -9107,6 +9515,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
   if (!currentFont()) S.fontId = DEFAULT.fontId;
   selectFont(S.fontId, true);
   histInit();
+  importFromHash();
   renderBrand();
   // effets et cadres : la bibliothèque de géométrie se charge en parallèle des polices
   ensureClipper().then(ok => { syncFxWait(); if (ok) { scheduleBench(); renderModelsSoon(); } });

@@ -43,6 +43,7 @@
   buildLearn();
   buildImitate();
   buildDesigns();
+  buildShare();
   buildDownloads();
   buildLicences();
   updateTextUI();
@@ -54,6 +55,7 @@
   if (!currentFont()) S.fontId = DEFAULT.fontId;
   selectFont(S.fontId, true);
   histInit();
+  importFromHash();
   renderBrand();
   // effets et cadres : la bibliothèque de géométrie se charge en parallèle des polices
   ensureClipper().then(ok => { syncFxWait(); if (ok) { scheduleBench(); renderModelsSoon(); } });

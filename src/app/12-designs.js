@@ -99,6 +99,46 @@
     else status('Création importée. « Annuler » revient à la précédente.');
     return true;
   }
+  // ------------------------------------------------------------------ partage : lien de la création, partage natif
+  // le lien mène toujours au site public, qui s'ouvre partout (même depuis l'application Claude ou un serveur local)
+  const SHARE_BASE = 'https://midoubiba2024.github.io/atelier-khattat/';
+  async function shareUrl() { return SHARE_BASE + '#' + await creationCode(); }
+  function buildShare() {
+    $('#shareNative').hidden = typeof navigator.share !== 'function';
+    let files = false;
+    try { files = !!(navigator.canShare && navigator.canShare({ files: [new File([new Uint8Array(8)], 'a.png', { type: 'image/png' })] })); } catch (e) { files = false; }
+    $('#shareImg').hidden = !files;
+    $('#shareLink').addEventListener('click', async () => {
+      const url = await shareUrl(), out = $('#shareOut');
+      if (await copyText(url)) { out.hidden = true; status('Lien copié : envoyez-le, il ouvre votre création dans l’atelier en ligne.'); }
+      else { out.value = url; out.hidden = false; out.focus(); out.select(); status('Copiez le lien affiché (Ctrl+C), puis envoyez-le.', true); }
+    });
+    $('#shareOut').addEventListener('focus', e => e.target.select());
+    $('#shareNative').addEventListener('click', async () => {
+      const url = await shareUrl();
+      try { await navigator.share({ title: 'Atelier Khattat', text: S.text.replace(/\s+/g, ' ').trim(), url }); }
+      catch (e) {
+        if (e && e.name === 'AbortError') return;
+        if (await copyText(url)) status('Partage indisponible dans cette fenêtre : le lien a été copié.');
+        else status('Partage indisponible dans cette fenêtre : utilisez « Copier le lien ».', true);
+      }
+    });
+    $('#shareImg').addEventListener('click', async () => {
+      try {
+        const sc = await exportScene();
+        const blob = await rasterBlob(sc, 'png', 2, 4096);
+        await navigator.share({ files: [new File([blob], fileBase() + '.png', { type: 'image/png' })], title: 'Atelier Khattat' });
+      } catch (e) { if (e && e.name !== 'AbortError') status('Le partage de l’image n’est pas possible ici : téléchargez le PNG.', true); }
+    });
+    window.addEventListener('hashchange', importFromHash);
+  }
+  // un lien de partage (…#KHATTAT1:…) ouvre la création ; l'adresse est ensuite nettoyée
+  function importFromHash() {
+    let h = '';
+    try { h = decodeURIComponent(location.hash || ''); } catch (e) { h = location.hash || ''; }
+    if (!isCode(h)) return;
+    importCreation(h.slice(1)).then(() => { try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* adresse inchangée */ } });
+  }
   function buildDesigns() {
     $('#designsBtn').addEventListener('click', () => { renderDesigns(); openDialog(dDlg); $('#dname').focus(); });
     $('#designsClose').addEventListener('click', () => closeDialog(dDlg));

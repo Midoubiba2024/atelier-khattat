@@ -284,6 +284,7 @@
         stopDraw();
         // réglages de départ propres à la forme (le médaillon a besoin de son cercle…)
         if (d.id !== S.shape.type && d.init) d.init(S.shape);
+        if (d.id !== S.shape.type) { requestFit('always'); if (d.id === 'hilye') readableInk('#F1DFA8'); }
         S.shape.type = d.id;
         syncSeg(g, d.id); buildShapeParams();
         if (d.id !== 'straight' && showTabRef) showTabRef('forme');
@@ -298,7 +299,7 @@
       b.type = 'button'; b.className = 'sthumb'; b.dataset.v = id;
       b.setAttribute('aria-label', 'Composition : ' + label);
       b.innerHTML = '<span class="art"><span class="sk"></span></span>' + esc(label);
-      b.addEventListener('click', () => { S.shape.repeat = id; syncSeg(c, id); buildCompParams(); if (id !== 'none' && showTabRef) showTabRef('forme'); changed(); });
+      b.addEventListener('click', () => { if (S.shape.repeat !== id) requestFit('always'); S.shape.repeat = id; syncSeg(c, id); buildCompParams(); if (id !== 'none' && showTabRef) showTabRef('forme'); changed(); });
       compEls[id] = b;
       c.appendChild(b);
     }
@@ -374,7 +375,7 @@
       if (Array.isArray(p[2])) {
         row.innerHTML = '<span class="lbl" id="lbl-sh-' + key + '">' + esc(label) + '</span><div class="ctl"><div class="seg" role="group" aria-labelledby="lbl-sh-' + key + '"></div></div>';
         box.appendChild(row);
-        seg(row.querySelector('.seg'), p[2], () => obj()[key], v => { obj()[key] = v; rebuild(); changed(); }, true);
+        seg(row.querySelector('.seg'), p[2], () => obj()[key], v => { obj()[key] = v; rebuild(); requestFit('overflow'); changed(); }, true);
       } else {
         const min = p[2], max = p[3], step = p[4], unit = p[5], cond = p[6], show = p[7];
         if (cond && !cond(obj())) continue;
@@ -385,6 +386,7 @@
         const cur = Math.min(max, Math.max(min, +obj()[key]));
         r.value = cur; v.textContent = fmt(cur);
         r.addEventListener('input', () => { obj()[key] = +r.value; v.textContent = fmt(obj()[key]); changed(); });
+        r.addEventListener('change', () => { requestFit('overflow'); scheduleBench(); });
       }
     }
   }
@@ -713,6 +715,41 @@
     syncSeg($('#physUnit'), S.phys.unit);
     syncFrameUI();
   }
+  // ------------------------------------------------------------------ légende en lettres latines
+  function buildCaptionUI() {
+    const C = () => S.caption;
+    const sync = () => {
+      $('#capOn').checked = C().on; $('#capCtl').hidden = !C().on;
+      if (document.activeElement !== $('#capText')) $('#capText').value = C().text;
+      $('#capUpper').checked = C().upper;
+      $('#capColor').value = C().custom; $('#capColor').hidden = C().color !== 'custom';
+    };
+    $('#capOn').addEventListener('change', () => {
+      C().on = $('#capOn').checked;
+      // légende vide : le nom ou le sens du texte s'il vient de la bibliothèque
+      if (C().on && !C().text.trim()) C().text = libraryMeaning(S.text) || '';
+      sync(); requestFit('overflow'); changed();
+      if (C().on && !C().text) $('#capText').focus();
+    });
+    $('#capText').addEventListener('input', () => { C().text = $('#capText').value.replace(/[\r\n]+/g, ' '); changed(); });
+    $('#capText').addEventListener('change', () => { requestFit('overflow'); scheduleBench(); });
+    seg($('#capFont'), [['serif', 'Classique'], ['sans', 'Moderne'], ['thin', 'Fine'], ['bold', 'Grasse']], () => C().font, v => { C().font = v; changed(); });
+    seg($('#capPos'), [['below', 'Dessous'], ['above', 'Dessus']], () => C().pos, v => { C().pos = v; changed(); });
+    $('#capUpper').addEventListener('change', () => { C().upper = $('#capUpper').checked; requestFit('overflow'); changed(); });
+    bindRange('capSize', () => C().size, v => { C().size = v; }, v => v + ' %', 'capSizeVal').addEventListener('change', () => { requestFit('overflow'); scheduleBench(); });
+    bindRange('capGap', () => C().gap, v => { C().gap = v; }, v => v + ' %', 'capGapVal').addEventListener('change', () => { requestFit('overflow'); scheduleBench(); });
+    seg($('#capColorMode'), [['ink', 'Encre du texte'], ['custom', 'Autre couleur']], () => C().color, v => { C().color = v; sync(); changed(); });
+    $('#capColor').addEventListener('input', () => { C().custom = $('#capColor').value; changed(); });
+    reg(sync); sync();
+  }
+  // composition à compartiments clairs (hilye) : une encre trop claire (or, blanc) y serait illisible
+  function readableInk(panel) {
+    const a = lum(paintAvg(S.fill)), b = lum(panel), c = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+    if (c >= 3) return;
+    S.fill = Object.assign({}, S.fill, { type: 'solid', color: '#1B1712' });
+    updateColorUI();
+    status('Encre passée en brun foncé : elle reste lisible sur les compartiments clairs (onglet Couleurs pour la changer).');
+  }
   function fitToFormat() {
     const f = currentFont();
     if (!f || f.state !== 'ready' || S.format.id === 'auto' || !prepared.trim()) return;
@@ -789,15 +826,7 @@
         if (on && focus) t.focus();
       }
       showGTab(id === 'modeles' ? 'models' : 'styles');
-      if (changedTool) {
-        const pn = $('#panels');
-        if (window.innerWidth >= 1040) pn.scrollTop = 0;
-        else {
-          // téléphone : le panneau commence juste sous l'aperçu collé en haut
-          const y = pn.getBoundingClientRect().top + window.scrollY - $('#bench').offsetHeight - 6;
-          if (window.scrollY > y) window.scrollTo({ top: Math.max(0, y) });
-        }
-      }
+      if (changedTool) $('#panels').scrollTop = 0;
       saveSoon();
     }
     rail.forEach((t, i) => {
@@ -816,6 +845,17 @@
     });
     showTabRef = showTool;
     showToolRef = showTool;
+    // téléphone et tablette en portrait : l'aperçu se réduit quand on descend dans les réglages, et reprend
+    // sa taille en haut du panneau (seuils écartés : pas de va-et-vient) ; seulement si le panneau est assez long
+    const pnEl = $('#panels'), studioEl = $('#studio');
+    let compactPv = false;
+    const setCompact = c => { if (c !== compactPv) { compactPv = c; studioEl.classList.toggle('compact', c); } };
+    pnEl.addEventListener('scroll', () => {
+      if (!STACK_MQ.matches) return setCompact(false);
+      const t = pnEl.scrollTop, room = pnEl.scrollHeight - pnEl.clientHeight;
+      setCompact(compactPv ? t > 4 : t > 48 && room > 260);
+    }, { passive: true });
+    STACK_MQ.addEventListener('change', () => setCompact(false));
     // téléphone : la barre d'outils défile ; le fondu à droite disparaît quand on arrive au bout
     const railEl = $('#rail');
     const railEnd = () => railEl.classList.toggle('at-end', railEl.scrollLeft + railEl.clientWidth >= railEl.scrollWidth - 4);
@@ -827,6 +867,9 @@
     buildShapeThumbs(); buildShapeParams(); buildCompParams();
     bindRange('shWidth', () => S.shape.width, v => { S.shape.width = v; }, v => v + ' %', 'shWidthVal');
     bindRange('shRot', () => S.shape.rotate, v => { S.shape.rotate = v; }, v => v + '°', 'shRotVal');
+
+    // légende en lettres latines
+    buildCaptionUI();
 
     // écriture
     syncSize();
@@ -889,8 +932,8 @@
       fg.appendChild(b);
     }
     bindRange('margin', () => S.format.margin, v => { S.format.margin = v; }, v => v + ' px', 'marginVal');
-    $('#cw').addEventListener('change', () => { S.format.w = Math.min(12000, Math.max(50, +$('#cw').value || 1200)); updateFormatUI(); changed(); });
-    $('#ch').addEventListener('change', () => { S.format.h = Math.min(12000, Math.max(50, +$('#ch').value || 800)); updateFormatUI(); changed(); });
+    $('#cw').addEventListener('change', () => { S.format.w = Math.min(12000, Math.max(50, +$('#cw').value || 1200)); updateFormatUI(); requestFit('always'); changed(); });
+    $('#ch').addEventListener('change', () => { S.format.h = Math.min(12000, Math.max(50, +$('#ch').value || 800)); updateFormatUI(); requestFit('always'); changed(); });
     $('#fitBtn').addEventListener('click', fitToFormat);
     $('#fitBtn2').addEventListener('click', fitToFormat);
     $('#physOn').addEventListener('change', () => { S.phys.on = $('#physOn').checked; updateFormatUI(); changed(); });
@@ -914,6 +957,8 @@
     $('#zoomVal').addEventListener('click', () => zoomer.real());
     $('#dimsBtn').setAttribute('aria-pressed', String(S.dims));
     $('#dimsBtn').addEventListener('click', () => { S.dims = !S.dims; $('#dimsBtn').setAttribute('aria-pressed', String(S.dims)); saveSoon(); renderBench(); zoomer.layout(); });
+    $('#guidesBtn').setAttribute('aria-pressed', String(!!S.guides));
+    $('#guidesBtn').addEventListener('click', () => { S.guides = !S.guides; $('#guidesBtn').setAttribute('aria-pressed', String(S.guides)); saveSoon(); renderBench(); });
     $('#undoBtn').addEventListener('click', undo);
     $('#redoBtn').addEventListener('click', redo);
     document.addEventListener('keydown', e => {

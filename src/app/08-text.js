@@ -111,12 +111,22 @@
         const v = libMode === 'line' && txt.value.trim() ? txt.value.replace(/\s+$/, '') + '\n' + ar : ar;
         setText(v, v.length);
         if (hasMarks(ar) && !S.harakat) { S.harakat = true; }
+        // légende affichée : elle reprend le nom ou le sens du texte choisi
+        if (S.caption.on && libMode !== 'line') { S.caption.text = libraryMeaning(ar) || captionOf(fr); $('#capText').value = S.caption.text; }
         textChanged(true);
         closeDialog($('#lib'));
         status('Texte placé : ' + fr.replace(/\s*\(.*\)$/, '') + '.');
       });
       g.appendChild(b);
     }
+  }
+
+  // nom ou sens d'un texte de la bibliothèque, pour la légende (sans la mention « vœu de… » ni les précisions entre parenthèses)
+  const captionOf = fr => String(fr || '').replace(/\s*\((?!Coran)[^)]*\)/g, '').trim();
+  let libMeaning = null;
+  function libraryMeaning(t) {
+    if (!libMeaning) { libMeaning = new Map(); for (const c of LIBRARY) for (const it of c.items) { const k = bareKey(it[0]); if (!libMeaning.has(k)) libMeaning.set(k, captionOf(it[1])); } }
+    return libMeaning.get(bareKey(t)) || '';
   }
 
   // ------------------------------------------------------------------ tashkīl (التشكيل)

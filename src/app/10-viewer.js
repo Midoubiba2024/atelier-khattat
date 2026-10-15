@@ -3,8 +3,8 @@
   let vTab = 'pv', mockId = 'wall', cmpSrc = 'fav', cmpRun = 0;
   function viewerOpen() { const v = document.getElementById('viewer'); return !!(v && v.open); }
   const vzoomer = makeZoomer($('#vpreview'), $('#vstage'), {
-    pad: () => 16,
-    onZoom: k => { $('#vzVal').textContent = nf0.format(Math.round(k * 100)) + ' %'; }
+    pad: () => 16, nav: true,
+    onZoom: (k, z, canOut) => { $('#vzVal').textContent = nf0.format(Math.round(k * 100)) + ' %'; $('#vzOut').disabled = !canOut; }
   });
   function showVTab(id) {
     vTab = id;
@@ -19,9 +19,10 @@
     const sc = lastScene;
     if (vTab === 'pv') {
       if (!sc || sc.empty) { $('#vstage').innerHTML = ''; return; }
-      $('#vstage').innerHTML = KX.sceneToSVG(sc, { inline: true, idPrefix: 'vw', imageHref: bgImage && bgImage.url });
+      $('#vstage').innerHTML = KX.sceneToSVG(sc, { inline: true, idPrefix: 'vw', imageHref: bgImage && bgImage.url, overflowMark: true });
       $('#vpreview').classList.toggle('see-through', sc.st.bg.type === 'none');
-      vzoomer.setScene(sc.W, sc.H);
+      vzoomer.setScene(sc.W, sc.H, overflowExtent(sc));
+      vzoomer.navSource(() => KX.sceneToSVG(sc, { inline: true, idPrefix: 'vn', imageHref: bgImage && bgImage.url }));
     } else if (vTab === 'mock') renderMock();
     else if (vTab === 'cmp') renderCompare();
   }

@@ -207,7 +207,7 @@
     const f = fontById(id);
     if (!f) return;
     if (f.state === 'error') f.state = 'idle';
-    if (S.fontId !== id) { S.fontId = id; if (!keepWeight) S.wght = null; }
+    if (S.fontId !== id) { S.fontId = id; if (!keepWeight) S.wght = null; requestFit('overflow'); }
     syncCardSelection();
     ensureFont(f, true).then(() => { updateWeightUI(); scheduleBench(); }).catch(() => scheduleBench());
     updateWeightUI(); scheduleBench(); changed();

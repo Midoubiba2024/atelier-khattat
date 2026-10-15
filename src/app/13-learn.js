@@ -81,6 +81,7 @@
   function showSpace(id) {
     const learn = id === 'learn';
     $('#studio').hidden = learn; $('#learn').hidden = !learn;
+    $('#spaceSel').value = learn ? 'learn' : 'studio';
     if (learn) { $('#spLearn').setAttribute('aria-current', 'page'); $('#spStudio').removeAttribute('aria-current'); lnInit(); }
     else { $('#spStudio').setAttribute('aria-current', 'page'); $('#spLearn').removeAttribute('aria-current'); zoomer.layout(); scheduleBench(); }
     window.scrollTo(0, 0);
@@ -539,6 +540,14 @@
   function buildLearn() {
     $('#spLearn').addEventListener('click', () => showSpace('learn'));
     $('#spStudio').addEventListener('click', () => showSpace('studio'));
+    // téléphone : menu des espaces (les créations et les licences s'ouvrent en fenêtre ; le menu revient à l'espace courant)
+    $('#spaceSel').addEventListener('change', e => {
+      const v = e.target.value;
+      if (v === 'designs') $('#designsBtn').click();
+      else if (v === 'about') $('#aboutBtn').click();
+      else return showSpace(v);
+      e.target.value = $('#learn').hidden ? 'studio' : 'learn';
+    });
     const tabs = $$('.ln-tab');
     tabs.forEach((t, i) => {
       t.addEventListener('click', () => lnShowTab(t.id.slice(3)));

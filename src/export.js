@@ -258,7 +258,25 @@
     let pending = false;
     const wd = (fx.weight || 0) / 100 * size;
     if (Math.abs(wd) > 0.01) { if (fxReady) parts = parts.map(p => p.length ? FXL().grow(p, wd, tol) : p); else pending = true; }
+    // légende en lettres latines (prénom, traduction…) : centrée sous le dessin ou au-dessus, vectorielle comme le reste ;
+    // de la couleur de l'encre (avec le texte) ou de sa propre couleur (calque « légende »)
+    let capPart = null, capColor = null;
+    const cap = st.caption;
+    if (cap && cap.font && cap.text && String(cap.text).trim() && parts.some(p => p.length)) {
+      const mainBox = K.pathBBox(parts.reduce((a, p) => pushAll(a, p), []));
+      const chk = K.checkSupport(cap.font, cap.upper ? String(cap.text).toLocaleUpperCase('fr') : String(cap.text));
+      const csz = size * Math.min(1.2, Math.max(0.04, (cap.size == null ? 26 : cap.size) / 100));
+      const ct = chk.text.trim() ? K.buildText(cap.font, chk.text.trim(), { size: csz, align: 'center', lineHeight: 1.2, color: false }) : null;
+      if (ct && ct.cmds.length) {
+        const cb = K.pathBBox(ct.cmds), gap = size * Math.max(0, (cap.gap == null ? 16 : cap.gap) / 100);
+        const tx = mainBox.x + mainBox.w / 2 - (cb.x + cb.w / 2);
+        const ty = cap.pos === 'above' ? mainBox.y - gap - (cb.y + cb.h) : mainBox.y + mainBox.h + gap - cb.y;
+        const cmds = K.transformPath(ct.cmds, 1, tx, ty);
+        if (cap.color && cap.color !== 'ink') { capPart = cmds; capColor = cap.color; } else pushAll(parts[0], cmds);
+      }
+    }
     const textAll = parts.reduce((a, p) => pushAll(a, p), []);
+    if (capPart) pushAll(textAll, capPart);
     const empty = !textAll.length;
     const tb = K.pathBBox(textAll);
     // 5. effets (coordonnées du texte)
@@ -312,6 +330,7 @@
     if (parts[2].length) L.push({ role: 'dots', path: body(parts[2]), fill: solid(fx.dots.color || '#c62828') });
     colorKeys.forEach((k, i) => { const p = parts[3 + i]; if (p && p.length) L.push({ role: 'color', path: body(p), fill: solid(k) }); });
     lineKeys.forEach((k, i) => { const p = parts[3 + colorKeys.length + i]; if (p && p.length) L.push({ role: 'text', path: body(p), fill: solid(k) }); });
+    if (capPart && capPart.length) L.push({ role: 'caption', path: body(capPart), fill: solid(capColor) });
     // tuiles colorées de la forme (mosaïque), sous les effets et le texte
     const PL = panels.filter(p => p.path && p.path.length).map(p => ({ role: 'tile', path: p.path, fill: solid(p.color) }));
     // lettres semées dans les vides autour du texte
@@ -492,9 +511,13 @@
       return pt.color;
     };
     // calques nommés (Illustrator, Inkscape) ; dans la page : attribut data-layer
-    const ROLE = { bg: 'fond', pattern: 'motif', panel: 'fond-cadre', tile: 'tuiles', scatter: 'lettres-semees', counter: 'contre-formes', frame: 'cadre', glow: 'halo', shadow: 'ombre', extrude: 'relief', outline: 'lisere', stroke: 'contour', text: 'texte', marks: 'harakat', dots: 'points', color: 'couleurs' };
+    const ROLE = { bg: 'fond', pattern: 'motif', panel: 'fond-cadre', tile: 'tuiles', scatter: 'lettres-semees', caption: 'legende', counter: 'contre-formes', frame: 'cadre', glow: 'halo', shadow: 'ombre', extrude: 'relief', outline: 'lisere', stroke: 'contour', text: 'texte', marks: 'harakat', dots: 'points', color: 'couleurs' };
     const seen = new Map();
     const label = r => { const b = ROLE[r] || 'calque', n = (seen.get(b) || 0) + 1; seen.set(b, n); return opt.inline ? ` data-layer="${b}"` : ` id="${b}${n > 1 ? '-' + n : ''}"`; };
+    // zone des flous : la page et ses abords (et tout le dessin quand l'aperçu montre le hors-format)
+    const over = !!(opt.overflowMark && sc.overflow && sc.content);
+    const fr = over ? { x: Math.min(0, sc.content.x) - W * 0.1, y: Math.min(0, sc.content.y) - H * 0.1, x1: Math.max(W, sc.content.x + sc.content.w) + W * 0.1, y1: Math.max(H, sc.content.y + sc.content.h) + H * 0.1 }
+      : { x: -W * 0.1, y: -H * 0.1, x1: W * 1.1, y1: H * 1.1 };
     for (const l of sc.layers) {
       if (l.image) {
         if (opt.imageHref) {
@@ -522,18 +545,27 @@
         if (!id) {
           id = P + '-f' + (filters.size + 1);
           filters.set(key, id);
-          defs += `<filter id="${id}" filterUnits="userSpaceOnUse" x="${f2(-W * 0.1)}" y="${f2(-H * 0.1)}" width="${f2(W * 1.2)}" height="${f2(H * 1.2)}" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="${f2(l.blur / 2)}"/></filter>`;
+          defs += `<filter id="${id}" filterUnits="userSpaceOnUse" x="${f2(fr.x)}" y="${f2(fr.y)}" width="${f2(fr.x1 - fr.x)}" height="${f2(fr.y1 - fr.y)}" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="${f2(l.blur / 2)}"/></filter>`;
         }
         g += ` filter="url(#${id})"`;
       }
       const el = '<path' + label(l.role) + ' d="' + d + '"' + a + '/>';
       body += g ? '<g' + g + '>' + el + '</g>' : el;
     }
+    // aperçu seulement : ce qui dépasse du format reste visible autour de la page, sous un voile, avec le bord de la page en pointillé
+    let rootStyle = '';
+    if (over) {
+      const c = sc.content, m = Math.max(W, H) * 0.02;
+      const x0 = Math.min(0, c.x) - m, y0 = Math.min(0, c.y) - m, x1 = Math.max(W, c.x + c.w) + m, y1 = Math.max(H, c.y + c.h) + m;
+      body += `<path data-layer="hors-format" d="M${f2(x0)} ${f2(y0)}H${f2(x1)}V${f2(y1)}H${f2(x0)}Z M0 0V${f2(H)}H${f2(W)}V0Z" fill="#0B1431" fill-opacity="0.62" fill-rule="evenodd"/>` +
+        `<rect data-layer="bord-format" x="0" y="0" width="${f2(W)}" height="${f2(H)}" fill="none" stroke="#E3C06A" stroke-width="1.5" stroke-dasharray="7 5" vector-effect="non-scaling-stroke"/>`;
+      rootStyle = ' style="overflow:visible"';
+    }
     const title = opt.title ? `<title>${esc(opt.title)}</title>` : '';
     const phys = sc.mmPerPx && Math.abs(sc.mmPerPx - PX2MM) > 1e-9;
     const size = opt.inline ? '' : phys ? ` width="${f2(W * sc.mmPerPx)}mm" height="${f2(H * sc.mmPerPx)}mm"` : ` width="${f2(W)}" height="${f2(H)}"`;
     return (opt.inline ? '' : '<?xml version="1.0" encoding="UTF-8"?>\n') +
-      `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"${size} viewBox="0 0 ${f2(W)} ${f2(H)}">${title}${defs ? '<defs>' + defs + '</defs>' : ''}${body}</svg>`;
+      `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"${size} viewBox="0 0 ${f2(W)} ${f2(H)}"${rootStyle}>${title}${defs ? '<defs>' + defs + '</defs>' : ''}${body}</svg>`;
   }
 
   // ---------------------------------------------------------------------------

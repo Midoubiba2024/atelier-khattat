@@ -6,6 +6,7 @@ Une phrase en arabe, près de 200 styles calligraphiques, 86 modèles de tableau
 
 - **195 styles d'écriture** en 12 familles : naskh, thuluth, diwani, ruqʿa, kufi, maghribi, nastaʿlīq, soudani, décoratif, couleur, moderne. Toutes les polices sont sous licence libre.
 - **86 modèles de tableaux** en 10 thèmes : shamsa, levha, musanna, mihrab, sceaux, compositions (pyramide, œuf, goutte, médaillon en anneaux, mosaïque, tughra, médaillon ailé, hilye, lettres semées), prénoms, fêtes, mariage, motifs géométriques, découpe…
+- **Variations** : six mises en page de votre phrase tirées au sort (écriture, ambiance, forme), appliquées en un clic.
 - **Tashkīl** :
   - un seul bouton qui retire le tashkīl, le remet, ou l'ajoute aux textes de la bibliothèque et des modèles, dont l'atelier connaît la vocalisation ;
   - éditeur lettre par lettre, harakat en couleur ;
@@ -15,6 +16,8 @@ Une phrase en arabe, près de 200 styles calligraphiques, 86 modèles de tableau
   - compositions par lignes : remplir une forme (pyramide, ovale, œuf, goutte, mihrab…), anneaux concentriques, mosaïque de tuiles colorées, tughra, médaillon ailé, panneau hilye ;
   - répétitions en miroir, en rosace et en kaléidoscope ;
   - une couleur par ligne, contre-formes colorées, lettres semées autour du texte ;
+  - une légende en lettres latines sous le dessin ou au-dessus (prénom, traduction), en quatre polices ;
+  - dans un format fixe, la taille s'ajuste toute seule quand on change de forme ;
   - effets : relief 3D, néon, liseré, lettres creuses ;
   - 16 cadres (dont filet pointillé), 9 motifs de fond (dont points du calame et écriture répétée), dégradés et fonds partagés.
 - **Téléchargements** :
@@ -27,12 +30,18 @@ Une phrase en arabe, près de 200 styles calligraphiques, 86 modèles de tableau
   - les grandes écritures, les genres de composition (musanna, shamsa, goutte, tughra, hilye…) et leurs gabarits géométriques ;
   - une feuille d’exercice A4 en PDF, réglée sur la largeur du calame.
 - **Interface** :
-  - sur ordinateur, une barre d'outils verticale (Texte, Styles, Modèles, Forme, Couleurs, Effets, Cadre, Fond, Format), un seul panneau ouvert à la fois et l'aperçu toujours visible ;
-  - sur téléphone, l'aperçu reste en haut de l'écran et les outils passent dans une barre en bas ;
+  - sur ordinateur et tablette en paysage, une barre d'outils verticale (Texte, Styles, Modèles, Forme, Couleurs, Effets, Cadre, Fond, Format), un seul panneau ouvert à la fois et l'aperçu toujours visible ;
+  - sur téléphone et tablette en portrait, l'aperçu en haut, les réglages dessous et les outils dans une barre en bas ; l'aperçu se réduit quand on descend dans les réglages ;
+  - téléphone en paysage : l'aperçu et les réglages côte à côte ;
   - un bouton « Télécharger » toujours à portée de main.
+- **Aperçu** :
+  - zoom à la molette, au pincement ou aux boutons, vignette de navigation quand on zoome ;
+  - repères (axes, tiers, marges de sécurité, boîte du texte) et cotes en taille réelle ;
+  - ce qui dépasse d'un format fixe reste visible en dézoomant, sous un voile.
 - **Organisation** :
   - « Mes créations » ;
   - code de création pour passer d'un appareil à l'autre ;
+  - lien de partage : il ouvre la création dans l'atelier en ligne, sur n'importe quel appareil ; partage natif sur téléphone ;
   - annuler / rétablir ;
   - plein écran avec maquettes.
 

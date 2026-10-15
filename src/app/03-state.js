@@ -19,6 +19,8 @@
     },
     frame: { type: 'none', width: 2.5, double: false, dash: false, pad: 14, ink: true, color: '#c9a227', panelOn: false, panel: '#ffffff', fit: 'text' },
     pattern: { type: 'none', color: '#c9a227', opacity: 0.25, scale: 12, width: 100, colorful: false, text: '' },
+    // légende en lettres latines sous (ou sur) le dessin : prénom, traduction…
+    caption: { on: false, text: '', pos: 'below', size: 26, gap: 16, font: 'serif', color: 'ink', custom: '#1b1712', upper: false },
     // une couleur par ligne (médaillon et ailes, titres, mosaïques…)
     lineInk: { on: false, colors: ['#7a3b1e', '#1f7a7a', '#1f7a7a', '#8e3b5e', '#0f4c81', '#9a7420', '#2e7d32', '#b3261e'] },
     bg: { type: 'solid', color: '#0e1a3a', stops: stopsOf(PARCH), angle: 90, gk: 'linear', veil: 0.3, veilColor: 'dark' },
@@ -27,11 +29,11 @@
       fillShape: 'oval', wrap: 'auto', fratio: 100, grow: 40, stretch: 10, lead: 18, center: 1, rgap: 14, rfill: 'on', rlines: 'none', tile: 'capsule', title: 'top', palette: 'pastel', cols: 0, tgap: 10, swash: 'on' },
     phys: { on: false, value: 60, unit: 'cm' },
     // réglages d'interface (hors historique)
-    scale: 2, filter: 'all', tab: 'ecr', tool: 'texte', favs: [], cardColors: false, pvBg: 'check', dims: false, gtab: 'styles', mdTheme: 'all', mdSrc: 'mine',
+    scale: 2, filter: 'all', tab: 'ecr', tool: 'texte', favs: [], cardColors: false, pvBg: 'check', dims: false, guides: false, gtab: 'styles', mdTheme: 'all', mdSrc: 'mine',
     // dernier texte vocalisé dont le tashkīl a été retiré (pour « Remettre le tashkīl »)
     tkBackup: ''
   };
-  const UI_KEYS = ['scale', 'filter', 'tab', 'tool', 'favs', 'cardColors', 'pvBg', 'dims', 'gtab', 'mdTheme', 'mdSrc', 'tkBackup'];
+  const UI_KEYS = ['scale', 'filter', 'tab', 'tool', 'favs', 'cardColors', 'pvBg', 'dims', 'guides', 'gtab', 'mdTheme', 'mdSrc', 'tkBackup'];
   const FX_OFF = clone(DEFAULT.fx);
 
   function normHex(v) {
@@ -100,6 +102,14 @@
     s.pattern.opacity = clampN(s.pattern.opacity, 0.02, 1, 0.25);
     s.pattern.text = String(s.pattern.text || '').slice(0, 60);
     s.lineInk.colors = DEFAULT.lineInk.colors.map((d, i) => normHex(s.lineInk.colors[i]) || d);
+    const cp = s.caption;
+    cp.pos = oneOf(cp.pos, ['below', 'above'], 'below');
+    cp.font = oneOf(cp.font, ['serif', 'sans', 'thin', 'bold'], 'serif');
+    cp.color = oneOf(cp.color, ['ink', 'custom'], 'ink');
+    cp.custom = normHex(cp.custom) || DEFAULT.caption.custom;
+    cp.text = String(cp.text || '').replace(/[\r\n]+/g, ' ').slice(0, 120);
+    cp.size = clampN(cp.size, 6, 100, 26);
+    cp.gap = clampN(cp.gap, 0, 120, 16);
     const sh = s.shape;
     sh.type = oneOf(sh.type, SHAPES.map(x => x.id), 'straight');
     sh.side = oneOf(sh.side, ['top', 'bottom'], 'top');

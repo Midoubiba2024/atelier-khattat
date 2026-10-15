@@ -38,6 +38,77 @@
       format: S.format.id === 'custom' ? 'auto' : S.format.id, lineHeight: S.lineHeight, kashida: S.kashida, wordSpace: S.wordSpace, align: S.align, harakat: S.harakat
     };
   }
+  // ------------------------------------------------------------------ variations : propositions tirées au sort pour la phrase
+  // une police, une ambiance et une forme qui conviennent à la longueur du texte ; jamais deux fois la même police
+  // ni la même ambiance dans une série
+  const VAR_FONTS = ['layla-thuluth', 'layla-diwani', 'aref-ruqaa-bold', 'amiri-bold', 'kitab-bold', 'reem-kufi-bold', 'kufam-black', 'qahiri', 'bouazzi-maghribi', 'gulzar', 'mirza-bold', 'el-messiri-bold', 'lalezar', 'rakkas', 'marhey-bold', 'noto-naskh-bold'];
+  const pickOne = a => a[Math.floor(Math.random() * a.length)];
+  function variationLooks(n) {
+    const t = S.text.trim() || 'الخط العربي';
+    const lines = t.split('\n').filter(l => l.trim()).length || 1, words = t.split(/\s+/).filter(Boolean).length, chars = t.replace(/\s+/g, '').length;
+    const shapes = [];
+    const add = (w, sh, fmt, round) => shapes.push({ w, sh, fmt, round });
+    add(1.2, { type: 'straight' }, 'auto');
+    add(1, { type: 'bridge', height: 28 }, 'landscape');
+    if (lines === 1 && chars <= 40) add(1, { type: 'arc', bend: 80 + Math.round(Math.random() * 40) }, 'landscape');
+    if (lines === 1 && words >= 2 && chars <= 60) add(1, { type: 'circle', cover: 96, ring: 'single', ringW: 5 }, 'square', true);
+    if (words <= 2 && chars <= 12) { add(0.6, { repeat: 'rosette', copies: 8, spread: 100 }, 'square', true); add(0.5, { repeat: 'kaleido', copies: 8, spread: 90 }, 'square', true); add(0.5, { repeat: 'mirror', mgap: 4 }, 'auto'); }
+    if (lines >= 2 && lines <= 3) add(1, { type: 'seal', cover: 70, ring: 'double', ringW: 6, sep: 'star' }, 'square', true);
+    if (words >= 4 || chars > 22) add(1.4, { type: 'fill', fillShape: pickOne(['oval', 'egg', 'circle', 'drop', 'arch']), wrap: 'auto', grow: 55, stretch: 10, lead: 16, ring: 'single', ringW: 5 }, 'portrait');
+    if (words >= 6) add(0.8, { type: 'rings', center: 1, rgap: 14, rlines: 'thin', sep: 'dot', ring: 'single', ringW: 5 }, 'square', true);
+    if (lines === 1 && words >= 3 && words <= 6) add(0.6, { type: 'wings', ring: 'single', swash: 'on' }, 'banner');
+    const total = shapes.reduce((a, s) => a + s.w, 0);
+    const pickShape = () => { let r = Math.random() * total; for (const s of shapes) { r -= s.w; if (r <= 0) return s; } return shapes[0]; };
+    const fonts = VAR_FONTS.filter(id => fontById(id)), out = [];
+    for (let i = 0; i < n * 8 && out.length < n; i++) {
+      const f = pickOne(fonts), m = pickOne(MOODS), s = pickShape();
+      if (out.some(o => o.look.font === f || o.mood === m.id)) continue;
+      const look = { font: f, shape: clone(s.sh), fill: clone(m.ink), bg: clone(m.bg), shadow: m.shadow ? clone(m.shadow) : null, fx: m.fx ? clone(m.fx) : {},
+        frame: m.frame ? clone(m.frame) : null, pattern: m.pattern ? clone(m.pattern) : null, format: s.fmt, harakat: S.harakat };
+      if (!look.frame && Math.random() < 0.4) look.frame = s.round ? { type: 'circle', width: 1.6, double: true, pad: 12 } : { type: pickOne(['rect', 'cartouche', 'arch', 'round', 'octagon']), width: 1.6, double: Math.random() < 0.5, pad: 16 };
+      const fo = fontById(f), sh = SHAPES.find(x => x.id === (s.sh.type || 'straight')), rp = s.sh.repeat ? REPEATS.find(r => r[0] === s.sh.repeat) : null;
+      out.push({ id: 'var' + Date.now().toString(36) + i, name: fo ? fo.name : f, note: m.name + (rp ? ' · ' + rp[1] : sh && sh.id !== 'straight' ? ' · ' + sh.name : ''), look, mood: m.id, variation: true });
+    }
+    return out;
+  }
+  let curVars = [], varSeq = 0, varKey = '';
+  function variationCard(v) {
+    const w = document.createElement('div');
+    w.className = 'mc'; w.dataset.id = v.id; w._m = v;
+    w.innerHTML = '<button type="button" class="mc-apply"><span class="mc-art"><span class="sk"></span></span><span class="mc-name"></span><span class="mc-note"></span></button>';
+    w.querySelector('.mc-name').textContent = v.name;
+    w.querySelector('.mc-note').textContent = v.note;
+    const ap = w.querySelector('.mc-apply');
+    ap.setAttribute('aria-label', 'Appliquer la variation : ' + v.name + ', ' + v.note);
+    ap.addEventListener('click', () => applyModel(v, false));
+    return w;
+  }
+  // aperçus des variations avec la phrase en cours (redessinés quand elle change)
+  async function drawVariations() {
+    const g = $('#vgrid'), run = ++varSeq;
+    varKey = [S.text, S.harakat].join('|');
+    for (const c of $$('.mc', g)) {
+      if (run !== varSeq) return;
+      const v = c._m, art = c.querySelector('.mc-art');
+      try {
+        await ensureFont(fontById(v.look.font));
+        if (fxLookNeedsClipper(v.look)) await ensureClipper();
+        if (run !== varSeq) return;
+        const sc = modelScene(v, S.text.trim() ? S.text : 'الخط العربي');
+        art.innerHTML = sc && !sc.empty ? KX.sceneToSVG(sc, { inline: true, idPrefix: 'vr' + run + '-' + c.dataset.id }) : '';
+      } catch (e) { art.innerHTML = ''; }
+      await sleep(0);
+    }
+  }
+  function showVariations() {
+    curVars = variationLooks(6);
+    const g = $('#vgrid');
+    g.innerHTML = '';
+    for (const v of curVars) g.appendChild(variationCard(v));
+    g.hidden = false;
+    $('#variBtn').textContent = 'Nouvelles variations';
+    drawVariations();
+  }
   function applyModel(m, withExample) {
     const keepText = S.text;
     const st = lookInto(clone(S), m.look);
@@ -47,7 +118,8 @@
     // format fixe : la taille s'ajuste au cadre une fois la police chargée
     const f = currentFont();
     if (S.format.id !== 'auto' && f) ensureFont(f, true).then(() => { fitToFormat(); }).catch(() => {});
-    status('Modèle « ' + m.name + ' » appliqué' + (withExample ? ' avec son exemple' : ' à votre phrase') + '. Tout reste réglable ; « Annuler » revient en arrière.');
+    status(m.variation ? 'Variation appliquée : ' + m.name + ', ' + m.note + '. Tout reste réglable ; « Annuler » revient en arrière.'
+      : 'Modèle « ' + m.name + ' » appliqué' + (withExample ? ' avec son exemple' : ' à votre phrase') + '. Tout reste réglable ; « Annuler » revient en arrière.');
   }
   // scène d'aperçu d'un modèle (format réduit)
   function modelScene(m, text) {
@@ -150,6 +222,7 @@
   let builtTheme = null;
   function renderModels(force) {
     if (S.gtab !== 'models') return;
+    if (curVars.length && varKey !== [S.text, S.harakat].join('|')) drawVariations();
     const g = $('#mgrid');
     const t = MTHEMES.find(x => x[0] === S.mdTheme) || MTHEMES[0];
     $('#mdNote').textContent = t[2];
@@ -200,6 +273,7 @@
     status('Modèle supprimé.');
   }
   function buildModels() {
+    $('#variBtn').addEventListener('click', showVariations);
     seg($('#mdSrc'), [['mine', 'Votre phrase'], ['ex', 'L’exemple de chaque modèle']], () => S.mdSrc, v => { S.mdSrc = v; saveSoon(); renderModels(false); }, true);
     $('#saveModelBtn').addEventListener('click', async () => {
       const f = currentFont();
