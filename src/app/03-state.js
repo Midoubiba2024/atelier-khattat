@@ -12,14 +12,18 @@
       outline: { on: false, color: '#ffffff', gap: 3, width: 4 },
       extrude: { on: false, angle: 45, depth: 8, color: '#6b4f1d', shade: true },
       glow: { on: false, color: '#00f5d4', size: 12, strength: 0.8 },
+      counters: { on: false, color: '#ffffff' },
       marks: { on: false, color: '#c62828' },
       dots: { on: false, color: '#c62828' }
     },
-    frame: { type: 'none', width: 2.5, double: false, pad: 14, ink: true, color: '#c9a227', panelOn: false, panel: '#ffffff', fit: 'text' },
-    pattern: { type: 'none', color: '#c9a227', opacity: 0.25, scale: 12, width: 100 },
+    frame: { type: 'none', width: 2.5, double: false, dash: false, pad: 14, ink: true, color: '#c9a227', panelOn: false, panel: '#ffffff', fit: 'text' },
+    pattern: { type: 'none', color: '#c9a227', opacity: 0.25, scale: 12, width: 100, colorful: false, text: '' },
+    // une couleur par ligne (médaillon et ailes, titres, mosaïques…)
+    lineInk: { on: false, colors: ['#7a3b1e', '#1f7a7a', '#1f7a7a', '#8e3b5e', '#0f4c81', '#9a7420', '#2e7d32', '#b3261e'] },
     bg: { type: 'solid', color: '#0e1a3a', stops: stopsOf(PARCH), angle: 90, gk: 'linear', veil: 0.3, veilColor: 'dark' },
     format: { id: 'auto', margin: 56, w: 1200, h: 800 },
-    shape: { type: 'straight', bend: 90, cover: 60, side: 'top', spin: 0, ring: 'none', ringW: 8, height: 50, ratio: 60, amp: 30, waves: 1.5, intensity: 40, gap: 130, sides: 6, round: 35, sep: 'star', free: null, flip: false, width: 100, rotate: 0, repeat: 'none', copies: 6, spread: 110, mgap: 8 },
+    shape: { type: 'straight', bend: 90, cover: 60, side: 'top', spin: 0, ring: 'none', ringW: 8, height: 50, ratio: 60, amp: 30, waves: 1.5, intensity: 40, gap: 130, sides: 6, round: 35, sep: 'star', free: null, flip: false, width: 100, rotate: 0, repeat: 'none', copies: 6, spread: 110, mgap: 8,
+      fillShape: 'oval', wrap: 'auto', fratio: 100, grow: 40, stretch: 10, lead: 18, center: 1, rgap: 14, rfill: 'on', rlines: 'none', tile: 'capsule', title: 'top', palette: 'pastel', cols: 0, tgap: 10 },
     phys: { on: false, value: 60, unit: 'cm' },
     // réglages d'interface (hors historique)
     scale: 2, filter: 'all', tab: 'ecr', tool: 'texte', favs: [], cardColors: false, pvBg: 'check', dims: false, gtab: 'styles', mdTheme: 'all', mdSrc: 'mine'
@@ -78,7 +82,7 @@
     s.stroke.width = clampN(s.stroke.width, 0, 200, 6);
     s.shadow.color = normHex(s.shadow.color) || DEFAULT.shadow.color;
     s.shadow.opacity = clampN(s.shadow.opacity, 0, 1, 0.45);
-    for (const k of ['outline', 'extrude', 'glow', 'marks', 'dots']) s.fx[k].color = normHex(s.fx[k].color) || DEFAULT.fx[k].color;
+    for (const k of ['outline', 'extrude', 'glow', 'counters', 'marks', 'dots']) s.fx[k].color = normHex(s.fx[k].color) || DEFAULT.fx[k].color;
     s.fx.weight = clampN(s.fx.weight, -10, 20, 0);
     s.fill = cleanPaint(s.fill, o && o.fill, DEFAULT.fill, ['solid', 'linear', 'radial']);
     s.bg = cleanPaint(s.bg, o && o.bg, DEFAULT.bg, ['none', 'solid', 'linear', 'radial', 'image']);
@@ -91,6 +95,8 @@
     s.pattern.type = oneOf(s.pattern.type, PATTERNS.map(p => p[0]), 'none');
     s.pattern.color = normHex(s.pattern.color) || DEFAULT.pattern.color;
     s.pattern.opacity = clampN(s.pattern.opacity, 0.02, 1, 0.25);
+    s.pattern.text = String(s.pattern.text || '').slice(0, 60);
+    s.lineInk.colors = DEFAULT.lineInk.colors.map((d, i) => normHex(s.lineInk.colors[i]) || d);
     const sh = s.shape;
     sh.type = oneOf(sh.type, SHAPES.map(x => x.id), 'straight');
     sh.side = oneOf(sh.side, ['top', 'bottom'], 'top');
@@ -100,6 +106,17 @@
     sh.copies = Math.round(clampN(sh.copies, 2, 16, 6));
     sh.sides = Math.round(clampN(sh.sides, 3, 12, 6));
     sh.width = clampN(sh.width, 20, 400, 100);
+    sh.fillShape = oneOf(sh.fillShape, FILL_OPTS.map(x => x[0]), 'oval');
+    sh.wrap = oneOf(sh.wrap, ['auto', 'off'], 'auto');
+    sh.rfill = oneOf(sh.rfill, ['on', 'off'], 'on');
+    sh.rlines = oneOf(sh.rlines, ['none', 'thin'], 'none');
+    sh.tile = oneOf(sh.tile, TILE_OPTS.map(x => x[0]), 'capsule');
+    sh.title = oneOf(sh.title, ['top', 'center', 'none'], 'top');
+    sh.palette = oneOf(sh.palette, ['pastel', 'jewel', 'earth', 'gold', 'none'], 'pastel');
+    sh.cols = Math.round(clampN(sh.cols, 0, 12, 0));
+    sh.center = Math.round(clampN(sh.center, 1, 4, 1));
+    sh.fratio = clampN(sh.fratio, 40, 250, 100);
+    for (const [k, a, b, d] of [['grow', 0, 100, 40], ['stretch', 0, 60, 10], ['lead', 0, 80, 18], ['rgap', 0, 60, 14], ['tgap', 0, 40, 10]]) sh[k] = clampN(sh[k], a, b, d);
     sh.free = Array.isArray(sh.free) && sh.free.length >= 4 && sh.free.length <= 4000 && sh.free.every(v => typeof v === 'number' && isFinite(v)) ? sh.free : null;
     s.format.id = oneOf(s.format.id, FORMATS.map(f => f.id), 'auto');
     s.format.w = clampN(s.format.w, 50, 12000, 1200);

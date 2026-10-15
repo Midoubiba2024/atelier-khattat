@@ -98,6 +98,9 @@ h1{font:700 1.28rem/1.1 var(--display);margin:0;letter-spacing:.005em;white-spac
 .panels .filters .chip{font-size:.84rem;padding:3px 10px}
 .panels .comp > .lbl{flex-basis:100%;min-width:0}
 .panels .comp .sthumb{flex:1 1 0;width:auto;min-width:0}
+.lic{display:flex;flex-wrap:wrap;gap:8px 12px}
+.lic label{display:inline-flex;align-items:center;gap:6px;font-size:.86rem;color:var(--bench-muted)}
+.txt-in{flex:1 1 160px;min-width:0;background:var(--bench-2);color:var(--bench-ink);border:1px solid var(--bench-rule);border-radius:7px;padding:4px 8px;font:400 1.05rem/1.4 var(--ar)}
 .pvfont{min-width:0;flex:1 1 auto}
 .pvf{font:700 .95rem/1.2 var(--display);color:var(--bench-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .pvdl{display:none}
@@ -668,6 +671,12 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
             <div class="ctl"><span class="hint">Flou</span><input type="range" id="shadowBlur" min="0" max="40" step="1" aria-label="Flou de l'ombre"><span class="val" id="shadowBlurVal"></span></div>
             <p class="hint">Le flou est conservé en PNG, JPG, WEBP et SVG ; en PDF et EPS l'ombre reste nette.</p>
           </div>
+          <div class="row"><span class="lbl">Par ligne</span>
+            <div class="ctl"><label class="check"><input type="checkbox" id="lineInkOn"> Une couleur par ligne</label></div></div>
+          <div id="lineInkCtl" class="sub-ctl" hidden>
+            <div class="lic" id="lineInkList"></div>
+            <p class="hint">Chaque ligne du texte prend sa couleur : un médaillon et ses ailes, un titre, les tuiles d’une mosaïque…</p>
+          </div>
         </div>
       </div>
       <div class="pn" role="tabpanel" id="pn-effets" aria-labelledby="tool-effets" hidden>
@@ -690,7 +699,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
             <div class="row"><label for="frPad">Marge intérieure</label>
               <div class="ctl"><input type="range" id="frPad" min="0" max="60" step="1"><span class="val" id="frPadVal"></span></div></div>
             <div class="row"><span class="lbl">Filet</span>
-              <div class="ctl"><label class="check"><input type="checkbox" id="frDouble"> Double filet</label></div></div>
+              <div class="ctl"><label class="check"><input type="checkbox" id="frDouble"> Double filet</label><label class="check"><input type="checkbox" id="frDash"> Pointillé</label></div></div>
             <div class="row"><span class="lbl" id="lblFrInk">Couleur</span>
               <div class="ctl"><div class="seg" id="frInk" role="group" aria-labelledby="lblFrInk"></div><input type="color" id="frColor" aria-label="Couleur du cadre"></div></div>
             <div class="row"><span class="lbl">Fond du cadre</span>
@@ -722,6 +731,8 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
             <div class="ctl"><input type="color" id="patColor" aria-label="Couleur du motif"><span class="hint">Opacité</span><input type="range" id="patOp" min="0.05" max="1" step="0.05" aria-label="Opacité du motif"><span class="val" id="patOpVal"></span></div>
             <div class="ctl"><span class="hint">Taille</span><input type="range" id="patScale" min="4" max="40" step="1" aria-label="Taille du motif"><span class="val" id="patScaleVal"></span></div>
             <div class="ctl"><span class="hint">Trait</span><input type="range" id="patW" min="30" max="400" step="10" aria-label="Épaisseur du trait du motif"><span class="val" id="patWVal"></span></div>
+            <div class="ctl" id="patColorfulRow" hidden><label class="check"><input type="checkbox" id="patColorful"> Points en couleurs (rouge, bleu, vert, or)</label></div>
+            <div class="ctl" id="patTextRow" hidden><label class="hint" for="patText">Mot répété</label><input type="text" class="txt-in" id="patText" dir="rtl" lang="ar" maxlength="60" autocomplete="off" placeholder="vide : début de la phrase"></div>
           </div>
         </div>
       </div>

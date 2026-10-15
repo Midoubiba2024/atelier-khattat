@@ -98,6 +98,9 @@ h1{font:700 1.28rem/1.1 var(--display);margin:0;letter-spacing:.005em;white-spac
 .panels .filters .chip{font-size:.84rem;padding:3px 10px}
 .panels .comp > .lbl{flex-basis:100%;min-width:0}
 .panels .comp .sthumb{flex:1 1 0;width:auto;min-width:0}
+.lic{display:flex;flex-wrap:wrap;gap:8px 12px}
+.lic label{display:inline-flex;align-items:center;gap:6px;font-size:.86rem;color:var(--bench-muted)}
+.txt-in{flex:1 1 160px;min-width:0;background:var(--bench-2);color:var(--bench-ink);border:1px solid var(--bench-rule);border-radius:7px;padding:4px 8px;font:400 1.05rem/1.4 var(--ar)}
 .pvfont{min-width:0;flex:1 1 auto}
 .pvf{font:700 .95rem/1.2 var(--display);color:var(--bench-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .pvdl{display:none}
@@ -668,6 +671,12 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
             <div class="ctl"><span class="hint">Flou</span><input type="range" id="shadowBlur" min="0" max="40" step="1" aria-label="Flou de l'ombre"><span class="val" id="shadowBlurVal"></span></div>
             <p class="hint">Le flou est conservé en PNG, JPG, WEBP et SVG ; en PDF et EPS l'ombre reste nette.</p>
           </div>
+          <div class="row"><span class="lbl">Par ligne</span>
+            <div class="ctl"><label class="check"><input type="checkbox" id="lineInkOn"> Une couleur par ligne</label></div></div>
+          <div id="lineInkCtl" class="sub-ctl" hidden>
+            <div class="lic" id="lineInkList"></div>
+            <p class="hint">Chaque ligne du texte prend sa couleur : un médaillon et ses ailes, un titre, les tuiles d’une mosaïque…</p>
+          </div>
         </div>
       </div>
       <div class="pn" role="tabpanel" id="pn-effets" aria-labelledby="tool-effets" hidden>
@@ -690,7 +699,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
             <div class="row"><label for="frPad">Marge intérieure</label>
               <div class="ctl"><input type="range" id="frPad" min="0" max="60" step="1"><span class="val" id="frPadVal"></span></div></div>
             <div class="row"><span class="lbl">Filet</span>
-              <div class="ctl"><label class="check"><input type="checkbox" id="frDouble"> Double filet</label></div></div>
+              <div class="ctl"><label class="check"><input type="checkbox" id="frDouble"> Double filet</label><label class="check"><input type="checkbox" id="frDash"> Pointillé</label></div></div>
             <div class="row"><span class="lbl" id="lblFrInk">Couleur</span>
               <div class="ctl"><div class="seg" id="frInk" role="group" aria-labelledby="lblFrInk"></div><input type="color" id="frColor" aria-label="Couleur du cadre"></div></div>
             <div class="row"><span class="lbl">Fond du cadre</span>
@@ -722,6 +731,8 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
             <div class="ctl"><input type="color" id="patColor" aria-label="Couleur du motif"><span class="hint">Opacité</span><input type="range" id="patOp" min="0.05" max="1" step="0.05" aria-label="Opacité du motif"><span class="val" id="patOpVal"></span></div>
             <div class="ctl"><span class="hint">Taille</span><input type="range" id="patScale" min="4" max="40" step="1" aria-label="Taille du motif"><span class="val" id="patScaleVal"></span></div>
             <div class="ctl"><span class="hint">Trait</span><input type="range" id="patW" min="30" max="400" step="10" aria-label="Épaisseur du trait du motif"><span class="val" id="patWVal"></span></div>
+            <div class="ctl" id="patColorfulRow" hidden><label class="check"><input type="checkbox" id="patColorful"> Points en couleurs (rouge, bleu, vert, or)</label></div>
+            <div class="ctl" id="patTextRow" hidden><label class="hint" for="patText">Mot répété</label><input type="text" class="txt-in" id="patText" dir="rtl" lang="ar" maxlength="60" autocomplete="off" placeholder="vide : début de la phrase"></div>
           </div>
         </div>
       </div>
@@ -1924,6 +1935,226 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
   }
 
   // ---------------------------------------------------------------------------
+  // Compositions par lignes : remplir une forme, anneaux concentriques, mosaïque de tuiles
+  // ---------------------------------------------------------------------------
+  // lignes du texte : morceaux (spans) de chaque ligne, boîte serrée et ligne de base (null : ligne vide)
+  function lineGroups(c, sp, tinfo) {
+    let n = tinfo && tinfo.lines ? tinfo.lines : 0;
+    for (const s of sp) n = Math.max(n, (s.line || 0) + 1);
+    const G = new Array(n).fill(null);
+    sp.forEach((s, k) => {
+      const L = s.line || 0;
+      let g = G[L];
+      if (!g) g = G[L] = { line: L, idx: [], x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity, lb: tinfo && tinfo.lineBase ? tinfo.lineBase[L] : s.lb };
+      g.idx.push(k);
+      const b = bbox(c.slice(s.i0, s.i1));
+      if (!(b.w || b.h)) return;
+      if (b.x < g.x0) g.x0 = b.x;
+      if (b.y < g.y0) g.y0 = b.y;
+      if (b.x + b.w > g.x1) g.x1 = b.x + b.w;
+      if (b.y + b.h > g.y1) g.y1 = b.y + b.h;
+    });
+    return G.map(g => g && g.x1 > g.x0 && g.y1 > g.y0 ? Object.assign(g, { w: g.x1 - g.x0, h: g.y1 - g.y0 }) : null);
+  }
+  // polygone convexe (sommets en sens horaire à l'écran) aux coins arrondis : somme de Minkowski avec un disque de rayon r
+  function roundPoly(V, r) {
+    const o = [], n = V.length;
+    for (let i = 0; i < n; i++) {
+      const P = V[(i + n - 1) % n], C = V[i], N = V[(i + 1) % n];
+      const a0 = Math.atan2(-(C[0] - P[0]), C[1] - P[1]);
+      let a1 = Math.atan2(-(N[0] - C[0]), N[1] - C[1]);
+      while (a1 < a0) a1 += TAU;
+      const k = Math.max(1, Math.ceil((a1 - a0) / (Math.PI / 24)));
+      for (let j = 0; j <= k; j++) { const a = a0 + (a1 - a0) * j / k; o.push(C[0] + r * Math.cos(a), C[1] + r * Math.sin(a)); }
+    }
+    return o;
+  }
+  // contours à remplir : hauteur 2, centrés, sens horaire à l'écran ; ratio > 100 : plus haut (plus étroit)
+  const FILL_KINDS = ['tri', 'oval', 'egg', 'circle', 'capsule', 'drop', 'arch', 'diamond', 'hexagon', 'octagon', 'heart', 'rect', 'round'];
+  function fillLoop(kind, ratio) {
+    const k = Math.min(3, Math.max(0.33, (ratio || 100) / 100));
+    let p = [];
+    const ell = (A, f) => { for (let i = 0; i < 240; i++) { const t = TAU * i / 240; p.push(A * Math.cos(t) * (f ? f(t) : 1), Math.sin(t)); } };
+    switch (kind) {
+      case 'tri': p = roundPoly([[0, -1], [1.1547 / k, 1], [-1.1547 / k, 1]], 0.05); break;
+      case 'diamond': p = roundPoly([[0, -1], [1.2 / k, 0], [0, 1], [-1.2 / k, 0]], 0.04); break;
+      case 'hexagon': { const A = 1.1547 / k; p = roundPoly([[-A / 2, -1], [A / 2, -1], [A, 0], [A / 2, 1], [-A / 2, 1], [-A, 0]], 0.04); break; }
+      case 'octagon': {
+        const R = 1 / Math.cos(Math.PI / 8), V = [];
+        for (let j = 0; j < 8; j++) { const a = -Math.PI / 2 - Math.PI / 8 + j * Math.PI / 4; V.push([R * Math.cos(a) / k, R * Math.sin(a)]); }
+        p = roundPoly(V, 0.03); break;
+      }
+      case 'rect': { const A = 1.4 / k; p = roundPoly([[-A, -1], [A, -1], [A, 1], [-A, 1]], 0.03); break; }
+      case 'round': { const A = 1.4 / k, r = 0.34; p = roundPoly([[-A + r, -1 + r], [A - r, -1 + r], [A - r, 1 - r], [-A + r, 1 - r]], r); break; }
+      case 'circle': ell(1 / k); break;
+      case 'egg': ell(0.74 / k, t => 1 + 0.2 * Math.sin(t)); break;
+      case 'capsule': {
+        const a = Math.max(0, 3.2 / k - 1);
+        for (let i = 0; i <= 60; i++) { const t = -Math.PI / 2 + Math.PI * i / 60; p.push(a + Math.cos(t), Math.sin(t)); }
+        for (let i = 0; i <= 60; i++) { const t = Math.PI / 2 + Math.PI * i / 60; p.push(-a + Math.cos(t), Math.sin(t)); }
+        break;
+      }
+      case 'drop': {
+        const T = 1 + 1.6 * k, al = Math.acos(1 / T);
+        p.push(0, -T);
+        for (let i = 0; i <= 120; i++) { const t = -Math.PI / 2 + al + (TAU - 2 * al) * i / 120; p.push(Math.cos(t), Math.sin(t)); }
+        break;
+      }
+      case 'arch': {
+        const O = root.KhattOrn;
+        if (O) { p = O.unitShape('arch', 0.8 / k); break; }
+        ell(0.8 / k); break;
+      }
+      case 'heart': p = HEART.pts.map((v, i) => i % 2 ? v - HEART.cy : v); break;
+      default: ell(1.45 / k);
+    }
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (let i = 0; i < p.length; i += 2) {
+      if (p[i] < x0) x0 = p[i]; if (p[i] > x1) x1 = p[i];
+      if (p[i + 1] < y0) y0 = p[i + 1]; if (p[i + 1] > y1) y1 = p[i + 1];
+    }
+    const s = 2 / (y1 - y0), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+    return densify(p.map((v, i) => i % 2 ? (v - cy) * s : (v - cx) * s), 0.04);
+  }
+  // même contour, élargi ou resserré pour une proportion largeur / hauteur donnée
+  function loopAspect(P, aspect) {
+    let x0 = Infinity, x1 = -Infinity;
+    for (let i = 0; i < P.length; i += 2) { if (P[i] < x0) x0 = P[i]; if (P[i] > x1) x1 = P[i]; }
+    const k = 2 * aspect / Math.max(1e-6, x1 - x0);
+    return P.map((v, i) => i % 2 ? v : v * k);
+  }
+  // intervalle horizontal intérieur d'un contour à la hauteur y : celui qui contient xc, sinon le plus large
+  function chordAt(P, y, xc) {
+    const xs = [];
+    for (let i = 0, n = P.length; i < n; i += 2) {
+      const j = (i + 2) % n, ya = P[i + 1], yb = P[j + 1];
+      if ((ya <= y && yb > y) || (yb <= y && ya > y)) xs.push(P[i] + (P[j] - P[i]) * (y - ya) / (yb - ya));
+    }
+    if (xs.length < 2) return null;
+    xs.sort((a, b) => a - b);
+    let best = null;
+    for (let k = 0; k + 1 < xs.length; k += 2) {
+      const a = xs[k], b = xs[k + 1];
+      if (a <= xc && xc <= b) return [a, b];
+      if (!best || b - a > best[1] - best[0]) best = [a, b];
+    }
+    return best;
+  }
+  // cordes échantillonnées sur toute la hauteur : band(ya, yb, m) = intervalle commun à la bande, marge m comprise
+  function chordTable(P, xc, n) {
+    let y0 = Infinity, y1 = -Infinity;
+    for (let i = 1; i < P.length; i += 2) { if (P[i] < y0) y0 = P[i]; if (P[i] > y1) y1 = P[i]; }
+    const L = new Float64Array(n + 1), R = new Float64Array(n + 1), H = y1 - y0;
+    for (let k = 0; k <= n; k++) {
+      const y = Math.min(y1 - H * 1e-6, Math.max(y0 + H * 1e-6, y0 + H * k / n)), c = chordAt(P, y, xc);
+      L[k] = c ? c[0] : NaN; R[k] = c ? c[1] : NaN;
+    }
+    return {
+      y0, y1,
+      band(ya, yb, m) {
+        if (ya < y0 - 1e-9 || yb > y1 + 1e-9) return null;
+        const ka = Math.max(0, Math.floor((ya - y0) / H * n)), kb = Math.min(n, Math.ceil((yb - y0) / H * n));
+        let l = -Infinity, r = Infinity;
+        for (let k = ka; k <= kb; k++) { if (isNaN(L[k])) return null; if (L[k] > l) l = L[k]; if (R[k] < r) r = R[k]; }
+        l += m; r -= m;
+        return r > l ? [l, r] : null;
+      }
+    };
+  }
+  // place des lignes (boîtes w × h) dans un contour : chaque ligne remplit la largeur disponible à sa hauteur.
+  // o = { lead : écart entre lignes, grow : 0..1 (une ligne courte peut grandir jusqu'à ×4), stretch : 0..1 (étirement
+  // horizontal permis), pad : marge intérieure } ; écarts et marges en fraction de la hauteur moyenne des lignes.
+  // Renvoie { rows : [{ y (haut), s (échelle), sx (étirement), cx (centre) }], scale : échelle moyenne } en unités du contour
+  function fitRows(rows, P, o) {
+    o = o || {};
+    const n = rows.length;
+    if (!n) return null;
+    let x0 = Infinity, x1 = -Infinity;
+    for (let i = 0; i < P.length; i += 2) { if (P[i] < x0) x0 = P[i]; if (P[i] > x1) x1 = P[i]; }
+    const T = chordTable(P, (x0 + x1) / 2, 480), H0 = T.y1 - T.y0;
+    const grow = 1 + 3 * Math.min(1, Math.max(0, o.grow || 0));
+    const st = Math.min(1, Math.max(0, o.stretch || 0)), sxMin = 1 / (1 + st / 2), sxMax = 1 + st;
+    const lead = o.lead == null ? 0.18 : o.lead, padK = o.pad == null ? 0.14 : o.pad;
+    let al = 0.5;
+    const place = s => {
+      let hs = 0;
+      for (let i = 0; i < n; i++) hs += s[i] * rows[i].h;
+      const hm = hs / n, G = lead * hm, m = padK * hm, H = H0 - 2 * m, tot = hs + G * (n - 1);
+      let y = T.y0 + m + (H - tot) * al;
+      const out = [];
+      let ok = tot <= H + 1e-9;
+      for (let i = 0; i < n; i++) {
+        const hh = s[i] * rows[i].h, ch = T.band(y, y + hh, m);
+        out.push({ y, hh, ch });
+        if (!ch) ok = false;
+        y += hh + G;
+      }
+      return { out, ok };
+    };
+    function lay(sig) {
+      const s = rows.map(() => sig);
+      for (let it = 0; it < 16; it++) {
+        const { out } = place(s);
+        let diff = 0;
+        for (let i = 0; i < n; i++) {
+          const ch = out[i].ch, cw = ch ? ch[1] - ch[0] : 0;
+          const ns = ch ? Math.min(sig * grow, cw / (rows[i].w * sxMin)) : s[i] * 0.8;
+          diff = Math.max(diff, Math.abs(ns - s[i]) / sig);
+          s[i] = it < 3 ? ns : 0.5 * (s[i] + ns);
+        }
+        if (diff < 1e-3) break;
+      }
+      // contrôle final : chaque ligne tient dans sa corde
+      const { out, ok } = place(s);
+      let good = ok;
+      const res = out.map((q, i) => {
+        const cw = q.ch ? q.ch[1] - q.ch[0] : 0, nat = s[i] * rows[i].w;
+        let sx = nat > cw ? cw / nat : Math.min(sxMax, cw / nat);
+        if (sx < sxMin * 0.999) good = false;
+        sx = Math.max(sxMin, sx);
+        return { y: q.y, s: s[i], sx, cx: q.ch ? (q.ch[0] + q.ch[1]) / 2 : (x0 + x1) / 2 };
+      });
+      return { ok: good, rows: res };
+    }
+    const solve = () => {
+      let lo = 0, hi = H0 / Math.max(1e-9, Math.min(...rows.map(r => r.h))), best = null;
+      const top = lay(hi);
+      if (top.ok) best = top;
+      else {
+        for (let it = 0; it < 34; it++) {
+          const mid = (lo + hi) / 2, r = lay(mid);
+          if (r.ok) { lo = mid; best = r; } else hi = mid;
+        }
+      }
+      if (!best) best = lay(Math.max(lo, hi * 1e-3));
+      best.scale = best.rows.reduce((a, r) => a + r.s, 0) / n || 1;
+      return best;
+    };
+    // centré d'abord ; un autre alignement n'est retenu que s'il agrandit nettement le texte (pyramide, goutte…)
+    let win = solve();
+    for (const a of o.align == null ? [1, 0.75, 0.25, 0] : []) {
+      al = a;
+      const r = solve();
+      if (r.scale > win.scale * 1.02) win = r;
+    }
+    if (o.align != null) { al = o.align; win = solve(); }
+    return { rows: win.rows, scale: win.scale };
+  }
+  // couleurs des tuiles (mosaïque) ; accent : tuile du titre placée au centre
+  const PALETTES = {
+    pastel: { tiles: ['#F6D5C8', '#D6E7CF', '#F8E6B3', '#D2E2F1', '#E8D7EC', '#F2D2D9', '#D3ECE5', '#FBE2C6'], accent: '#EED9A0' },
+    jewel: { tiles: ['#1F5F8B', '#7A1F3D', '#1F6B4F', '#4B2E83', '#0F7173', '#8C4A12'], accent: '#B8892B' },
+    earth: { tiles: ['#D9C29E', '#C49A72', '#E6D5B8', '#B07F5A', '#D1B48C', '#E9DCC4'], accent: '#9C6B3C' },
+    gold: { tiles: ['#F1DFA8', '#E8CF86', '#F6E8C1'], accent: '#D4A537' },
+    none: { tiles: [], accent: '' }
+  };
+  function shade(hex, t) {
+    const h = String(hex).replace('#', ''), n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16) || 0;
+    const f = v => Math.round(v * (1 - t)).toString(16).padStart(2, '0');
+    return '#' + f((n >> 16) & 255) + f((n >> 8) & 255) + f(n & 255);
+  }
+
+  // ---------------------------------------------------------------------------
   // Application d'une forme
   // ---------------------------------------------------------------------------
   // shape = { type, bend, cover, side, spin, ring, ringW, height, ratio, amp, waves, intensity, gap, free, flip,
@@ -1955,7 +2186,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     const outerK = 1.25;
     const gapR = Hh * 0.12, ringW = Math.max(1, Hh * (sh.ringW || 8) / 100);
     let f = null, frame = null, perSpan = null;
-    const info = {};
+    const info = {}, panels = [];
     if (type === 'arc' || type === 'arcInv' || type === 'circle') {
       let ang, down = type === 'arcInv';
       if (type === 'circle') { ang = TAU * Math.min(1, Math.max(0.2, (sh.cover || 100) / 100)); down = sh.side === 'bottom'; }
@@ -2057,6 +2288,174 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
         const rr = (R + (up0 - dn0) / 2 + R + lift + (dn1 - up1) / 2) / 2, os = lineH * 0.16;
         extra.push(ornament(sh.sep, cx - rr, cy, os), ornament(sh.sep, cx + rr, cy, os));
       }
+    } else if (type === 'fill') {
+      // remplir une forme : chaque ligne occupe la largeur de la forme à sa hauteur
+      const G = lineGroups(c, sp, tinfo).filter(Boolean);
+      const P = fillLoop(sh.fillShape || 'oval', sh.fratio);
+      const R = fitRows(G.map(g => ({ w: g.w, h: g.h })), P, { lead: (sh.lead == null ? 18 : sh.lead) / 100, grow: (sh.grow == null ? 40 : sh.grow) / 100, stretch: (sh.stretch == null ? 10 : sh.stretch) / 100 });
+      if (R) {
+        const Q = 1 / R.scale, fns = new Map();
+        let hm = 0;
+        G.forEach((g, i) => {
+          const r = R.rows[i], xm = (g.x0 + g.x1) / 2;
+          hm += r.s * Q * g.h / G.length;
+          const fn = (x, y) => [(r.cx + (x - xm) * r.s * r.sx) * Q, (r.y + (y - g.y0) * r.s) * Q];
+          for (const k of g.idx) fns.set(k, fn);
+        });
+        perSpan = (part, s, k) => { const fn = fns.get(k); return fn ? eachPoint(part, fn) : part; };
+        info.rows = G.length;
+        if (sh.ring && sh.ring !== 'none') {
+          const PQ = P.map(v => v * Q), w = Math.max(1, hm * (sh.ringW || 8) / 100 * 1.2), g0 = hm * 0.04;
+          extra.push(band(offsetLoop(PQ, g0 + w), offsetLoop(PQ, g0)));
+          if (sh.ring === 'double') extra.push(band(offsetLoop(PQ, g0 + w * 2.6), offsetLoop(PQ, g0 + w * 2)));
+        }
+      }
+    } else if (type === 'rings') {
+      // médaillon : les premières lignes au centre, les suivantes en anneaux concentriques
+      const G = lineGroups(c, sp, tinfo).filter(Boolean);
+      const nc = Math.max(1, Math.min(G.length, Math.round(sh.center || 1)));
+      const C = G.slice(0, nc), RL = G.slice(nc);
+      let bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity, hRef = 0;
+      for (const g of C) { bx0 = Math.min(bx0, g.x0); by0 = Math.min(by0, g.y0); bx1 = Math.max(bx1, g.x1); by1 = Math.max(by1, g.y1); hRef = Math.max(hRef, g.h); }
+      const bcx = (bx0 + bx1) / 2, bcy = (by0 + by1) / 2;
+      // rayon du bloc central : son point le plus éloigné du centre
+      let rC = 0;
+      for (const g of C) for (const k of g.idx) eachPoint(c.slice(sp[k].i0, sp[k].i1), (x, y) => { const d = Math.hypot(x - bcx, y - bcy); if (d > rC) rC = d; return [x, y]; });
+      rC *= 1.04;
+      const gap = (sh.rgap == null ? 14 : sh.rgap) / 100 * hRef, sepOn = !!(sh.sep && sh.sep !== 'none');
+      const lines = sh.rlines === 'thin', lw = Math.max(0.6, hRef * 0.035);
+      const fns = new Map();
+      for (const g of C) for (const k of g.idx) fns.set(k, part => eachPoint(part, (x, y) => [x - bcx, y - bcy]));
+      let Pr = rC, prevT = hRef * 0.5, cover = 1;
+      RL.forEach((g, j) => {
+        if (lines) extra.push(ring(0, 0, Pr + gap * 0.5 - lw / 2, lw));
+        const dUp = Math.max(1e-6, g.lb - g.y0), dDn = Math.max(0, g.y1 - g.lb), th = dUp + dDn, w = g.w;
+        const inner = Pr + gap, sepW = (sepOn ? 1.1 : 0.45) * th;
+        const cap = (j === 0 ? hRef * 0.55 : prevT * 1.15) / th;
+        const den1 = w + sepW - TAU * dDn;
+        let s = den1 > 0.08 * (w + sepW) ? TAU * inner / den1 : Infinity, m = 1;
+        if (s > cap) {
+          if (sh.rfill === 'off') s = cap;
+          else {
+            m = Math.max(1, Math.ceil(TAU * (inner + cap * dDn) / (cap * (w + sepW))));
+            const den = m * (w + sepW) - TAU * dDn;
+            s = den > 0 ? TAU * inner / den : cap;
+          }
+        }
+        const R = inner + s * dDn, fr = circleFrame(0, 0, R, 0, false, 0), xm = (g.x0 + g.x1) / 2, step = (w + sepW) * s;
+        cover = Math.min(cover, m * step / (TAU * R));
+        for (const k of g.idx) fns.set(k, (part, span) => {
+          const adj = { lb: 0, raised: span.raised, mark: span.mark };
+          let o = [];
+          for (let q = 0; q < m; q++) o = o.concat(mapSpanAlong(eachPoint(part, (x, y) => [(x - xm) * s + q * step, (y - g.lb) * s]), adj, fr, 0, size * s, seg, rigid));
+          return o;
+        });
+        if (sepOn) {
+          const rr = R + s * (dUp - dDn) / 2, os = th * s * 0.2;
+          for (let q = 0; q < m; q++) { const a = (q + 0.5) * step / R; extra.push(ornament(sh.sep, rr * Math.sin(a), -rr * Math.cos(a), os)); }
+        }
+        Pr = R + s * dUp; prevT = th * s;
+      });
+      info.coverage = cover;
+      if (sh.ring && sh.ring !== 'none') {
+        const rw = Math.max(1, hRef * (sh.ringW || 8) / 100), r0 = Pr + gap * 0.8;
+        extra.push(ring(0, 0, r0, rw));
+        if (sh.ring === 'double') extra.push(ring(0, 0, r0 + rw * 2.2, rw * 0.5));
+      }
+      perSpan = (part, s, k) => { const fn = fns.get(k); return fn ? fn(part, s) : part; };
+    } else if (type === 'tiles') {
+      // mosaïque : chaque ligne (ou chaque paragraphe, s'il y a des lignes vides) devient une tuile ; la 1re peut servir de titre
+      const GL = lineGroups(c, sp, tinfo);
+      const fi = GL.findIndex(Boolean);
+      let li = GL.length - 1;
+      while (li > 0 && !GL[li]) li--;
+      let para = false;
+      for (let i = Math.max(0, fi); i <= li; i++) if (!GL[i]) { para = true; break; }
+      let blocks = [];
+      if (para) { let cur = []; for (const g of GL) { if (g) cur.push(g); else if (cur.length) { blocks.push(cur); cur = []; } } if (cur.length) blocks.push(cur); }
+      else blocks = GL.filter(Boolean).map(g => [g]);
+      const tmode = blocks.length > 1 ? (sh.title || 'top') : 'none';
+      const title = tmode !== 'none' ? blocks.shift() : null;
+      const kind = sh.tile || 'capsule';
+      const TP = fillLoop(kind === 'cartouche' ? 'capsule' : kind, sh.fratio);
+      let tx0 = Infinity, tx1 = -Infinity;
+      for (let i = 0; i < TP.length; i += 2) { if (TP[i] < tx0) tx0 = TP[i]; if (TP[i] > tx1) tx1 = TP[i]; }
+      const asp = (tx1 - tx0) / 2;
+      const fopt = { lead: 0.14, grow: 1, stretch: 0.15, pad: 0.2 };
+      const fits = blocks.map(b => fitRows(b.map(g => ({ w: g.w, h: g.h })), TP, fopt));
+      const scs = fits.map(f => f ? f.scale : 0).filter(v => v > 0).sort((a, b) => a - b);
+      const med = scs.length ? scs[Math.floor(scs.length / 2)] : 1;
+      const T = 2 / med, cw = asp * T, gp = (sh.tgap == null ? 10 : sh.tgap) / 100 * T;
+      const n = blocks.length, center = tmode === 'center';
+      const gridOf = cols => {
+        let cs = 0;
+        if (center) cs = cols % 2 ? (cols >= 7 ? 3 : 1) : 2;
+        let rows = Math.max(1, Math.ceil((n + cs * cs) / cols));
+        if (center) { if (rows < cs) rows = cs; if ((rows - cs) % 2) rows++; }
+        return { cols, rows, cs, empty: rows * cols - cs * cs - n, W: cols * cw + (cols - 1) * gp, H: rows * T + (rows - 1) * gp };
+      };
+      let grid;
+      if (sh.cols > 0) grid = gridOf(Math.max(center ? 2 : 1, Math.round(sh.cols)));
+      else {
+        const target = tmode === 'top' ? 1.25 : 1.05;
+        for (let cols = center ? 2 : 1; cols <= Math.max(center ? 2 : 1, Math.min(12, n)); cols++) {
+          const g = gridOf(cols), e = Math.abs(Math.log(g.W / g.H / target)) + 0.06 * g.empty;
+          if (!grid || e < grid.e - 1e-9) grid = Object.assign(g, { e });
+        }
+      }
+      // cases dans l'ordre de lecture (de droite à gauche), sans le bloc central réservé au titre
+      const r0 = (grid.rows - grid.cs) / 2, c0 = (grid.cols - grid.cs) / 2, cells = [];
+      for (let r = 0; r < grid.rows && cells.length < n; r++) {
+        const row = [];
+        for (let q = 0; q < grid.cols; q++) {
+          if (center && r >= r0 && r < r0 + grid.cs && q >= c0 && q < c0 + grid.cs) continue;
+          row.push(q);
+        }
+        const take = row.slice(0, n - cells.length);
+        // dernière rangée incomplète : centrée
+        const shift = take.length < row.length && cells.length + take.length === n ? (row.length - take.length) / 2 : 0;
+        for (const q of take) cells.push({ r, q: q + shift, x: (grid.cols - 1 - (q + shift)) * (cw + gp) + cw / 2, y: r * (T + gp) + T / 2 });
+      }
+      const pal = PALETTES[sh.palette] || PALETTES.pastel, fns = new Map();
+      const tileRing = sh.ring && sh.ring !== 'none', rw = T * 0.028;
+      const place = (b, f, cx, cy, k0) => b.forEach((g, i) => {
+        const rr = f.rows[i], xm = (g.x0 + g.x1) / 2;
+        const fn = (x, y) => [cx + (rr.cx + (x - xm) * rr.s * rr.sx) * k0, cy + (rr.y + (y - g.y0) * rr.s) * k0];
+        for (const k of g.idx) fns.set(k, fn);
+      });
+      const tileLoop = (L, cx, cy, k0) => L.map((v, i) => i % 2 ? cy + v * k0 : cx + v * k0);
+      blocks.forEach((b, t) => {
+        const f = fits[t], cell = cells[t];
+        if (!f || !cell) return;
+        place(b, f, cell.x, cell.y, T / 2 * Math.min(1, med * 1.15 / f.scale));
+        const L = tileLoop(TP, cell.x, cell.y, T / 2);
+        const col = pal.tiles.length ? pal.tiles[Math.round(cell.q + 2 * cell.r) % pal.tiles.length] : null;
+        if (col) panels.push({ path: loopToCmds(L), color: col });
+        if (tileRing) { const B = band(offsetLoop(L, rw), L); if (col) panels.push({ path: B, color: shade(col, 0.35) }); else extra.push(B); }
+      });
+      if (title) {
+        const tf = b => fitRows(b.map(g => ({ w: g.w, h: g.h })), b === title ? TL : TP, fopt);
+        let TL, cx, cy, k0, Wt, Ht;
+        if (center) {
+          Wt = grid.cs * cw + (grid.cs - 1) * gp; Ht = grid.cs * T + (grid.cs - 1) * gp;
+          TL = loopAspect(TP, Wt / Ht);
+          cx = (grid.cols - 1 - (c0 + (grid.cs - 1) / 2)) * (cw + gp) + cw / 2; cy = (r0 + (grid.cs - 1) / 2) * (T + gp) + T / 2;
+        } else {
+          Wt = grid.W; Ht = T * 1.35;
+          TL = loopAspect(fillLoop('rect', 100), Wt / Ht);
+          cx = grid.W / 2; cy = -gp * 1.4 - Ht / 2;
+        }
+        k0 = Ht / 2;
+        const f = tf(title);
+        if (f) {
+          place(title, f, cx, cy, k0);
+          const L = tileLoop(TL, cx, cy, k0);
+          if (center && pal.accent) panels.push({ path: loopToCmds(L), color: pal.accent });
+          if (center && tileRing) { const B = band(offsetLoop(L, rw * 1.3), L); if (pal.accent) panels.push({ path: B, color: shade(pal.accent, 0.35) }); else extra.push(B); }
+        }
+      }
+      info.tiles = n;
+      perSpan = (part, s, k) => { const fn = fns.get(k); return fn ? eachPoint(part, fn) : part; };
     } else if (type === 'bridge') {
       const A = Hh * (sh.height == null ? 50 : sh.height) / 100;
       f = (x, y) => { const u = (x - xc) / (W / 2); return [x, y - A * (1 - u * u)]; };
@@ -2183,10 +2582,10 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
       }
     }
     const out = [], ranges = [];
-    for (const s of sp) {
-      const part = c.slice(s.i0, s.i1);
+    for (let k = 0; k < sp.length; k++) {
+      const s = sp[k], part = c.slice(s.i0, s.i1);
       let m;
-      if (perSpan) m = perSpan(part, s);
+      if (perSpan) m = perSpan(part, s, k);
       else if (frame) m = mapSpanAlong(part, s, frame, yc, size, seg, rigid);
       else if (f) m = eachPoint(subdivide(part, seg), f);
       else m = part;
@@ -2200,9 +2599,9 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     if (rot) {
       const bb = bbox(out.concat(rings)), cx = bb.x + bb.w / 2, cy = bb.y + bb.h / 2, cr = Math.cos(rot), sr = Math.sin(rot);
       const R = (x, y) => { const dx = x - cx, dy = y - cy; return [cx + dx * cr - dy * sr, cy + dx * sr + dy * cr]; };
-      return { cmds: eachPoint(out, R), ranges, rings: eachPoint(rings, R), info };
+      return { cmds: eachPoint(out, R), ranges, rings: eachPoint(rings, R), panels: panels.map(p => ({ path: eachPoint(p.path, R), color: p.color })), info };
     }
-    return { cmds: out, ranges, rings, info };
+    return { cmds: out, ranges, rings, panels, info };
   }
 
   // ---------------------------------------------------------------------------
@@ -2237,7 +2636,8 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
   // parts : tableaux de cmds (lettres, signes, calques…) transformés ensemble
   function compose(parts, sh) {
     const rep = sh && sh.repeat;
-    if (!rep || rep === 'none') return parts;
+    // anneaux et mosaïque organisent déjà tout le tableau : pas de répétition par-dessus
+    if (!rep || rep === 'none' || sh.type === 'rings' || sh.type === 'tiles') return parts;
     let all = [];
     for (const p of parts) all = all.concat(p);
     if (!all.length) return parts;
@@ -2247,17 +2647,38 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
       const a = B.x - gap / 2;
       return parts.map(p => p.length ? p.concat(reversePath(eachPoint(p, (x, y) => [2 * a - x, y]))) : p);
     }
+    if (rep === 'kaleido') {
+      const N = 2 * Math.max(2, Math.min(8, Math.round((sh.copies || 8) / 2)));
+      const spread = Math.max(0.4, (sh.spread == null ? 110 : sh.spread) / 100);
+      const cxT = B.x + B.w / 2, cyT = B.y + B.h / 2;
+      const r0 = Math.max(B.h * 0.55, (B.h / 2) / Math.tan(Math.PI / N)) * spread;
+      // quart de tour : le début de la phrase vers l'extérieur, la fin près du centre (0, 0)
+      const toRadial = (x, y) => [y - cyT, -(x - cxT) - B.w / 2 - r0];
+      return parts.map(p => {
+        if (!p.length) return p;
+        const base = eachPoint(p, toRadial), mir = reversePath(eachPoint(base, (x, y) => [-x, y]));
+        let o = [];
+        for (let k = 0; k < N; k++) {
+          const a = TAU * k / N, ca = Math.cos(a), sa = Math.sin(a), src = k % 2 ? mir : base;
+          o = o.concat(k ? eachPoint(src, (x, y) => [x * ca - y * sa, x * sa + y * ca]) : src);
+        }
+        return o;
+      });
+    }
     if (rep === 'rosette') {
+      const kal = false;
       const N = Math.max(2, Math.min(16, Math.round(sh.copies || 6)));
       const spread = Math.max(0.4, (sh.spread == null ? 110 : sh.spread) / 100);
       const d = Math.max(B.h * 0.2, (B.w / 2) / Math.tan(Math.PI / N)) * spread;
       const cx = B.x + B.w / 2, cy = B.y + B.h + d;
       return parts.map(p => {
         if (!p.length) return p;
+        // reflet par l'axe vertical du texte : tourné d'un cran, il devient le miroir de sa voisine (symétrie d'ordre 2N)
+        const mir = kal ? reversePath(eachPoint(p, (x, y) => [2 * cx - x, y])) : null;
         let o = p;
         for (let k = 1; k < N; k++) {
-          const a = TAU * k / N, ca = Math.cos(a), sa = Math.sin(a);
-          o = o.concat(eachPoint(p, (x, y) => { const dx = x - cx, dy = y - cy; return [cx + dx * ca - dy * sa, cy + dx * sa + dy * ca]; }));
+          const a = TAU * k / N, ca = Math.cos(a), sa = Math.sin(a), src = kal && k % 2 ? mir : p;
+          o = o.concat(eachPoint(src, (x, y) => { const dx = x - cx, dy = y - cy; return [cx + dx * ca - dy * sa, cy + dx * sa + dy * ca]; }));
         }
         return o;
       });
@@ -2265,7 +2686,8 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     return parts;
   }
 
-  root.KhattShape = { applyShape, compose, reversePath, normalizeFree, subdivide, follower, eachPoint, DEFAULT_FREE, roundedPolygon, offsetLoop, HEART };
+  root.KhattShape = { applyShape, compose, reversePath, normalizeFree, subdivide, follower, eachPoint, DEFAULT_FREE, roundedPolygon, offsetLoop, HEART,
+    fillLoop, fitRows, chordAt, FILL_KINDS, PALETTES };
 })(typeof self !== 'undefined' ? self : globalThis);
 </script>
 <script>/* Effets géométriques sur les contours (bibliothèque Clipper) : épaisseur, liseré, lettres creuses, relief.
@@ -2442,11 +2864,13 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
         const a = Math.max(0, A - 0.3);
         return poly([arcPts(a, 0, 1, -Math.PI / 2, Math.PI / 2), arcPts(-a, 0, 1, Math.PI / 2, 1.5 * Math.PI)]);
       }
+      case 'triangle': { const w = 1.155 * Math.max(1, A); return [0, -1.25, w * 1.08, 0.95, -w * 1.08, 0.95]; }
+      case 'egg': { const o = []; for (let i = 0; i < 240; i++) { const t = -Math.PI / 2 + TAU * i / 240; o.push(0.78 * Math.cos(t) * (1 + 0.2 * Math.sin(t)), Math.sin(t)); } return o; }
       case 'scallop': { const o = []; for (let i = 0; i < 360; i++) { const a = -Math.PI / 2 + TAU * i / 360, r = 1 + 0.045 * Math.cos(18 * (a + Math.PI / 2)); o.push(r * Math.cos(a), r * Math.sin(a)); } return o; }
     }
     return null;
   }
-  const STRETCH = { oval: 1, rect: 1, round: 1, diamond: 1, hexagon: 1, octagon: 1, arch: 1, shield: 1, cartouche: 1 };
+  const STRETCH = { oval: 1, rect: 1, round: 1, diamond: 1, hexagon: 1, octagon: 1, arch: 1, shield: 1, cartouche: 1, triangle: 1 };
 
   // nombre d'enroulement (point dans polygone)
   function inside(p, x, y) {
@@ -2508,6 +2932,36 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     const sh = SH();
     return loopCmds(sh.offsetLoop(loop, b)).concat(loopCmds(sh.offsetLoop(loop, a), true));
   }
+  // filet pointillé : tirets réguliers entre les décalages 0 et lw de la boucle (vers l'extérieur)
+  function dashedRing(loop, lw) {
+    const sh = SH(), P = [];
+    // boucle densifiée pour suivre les courbes
+    for (let i = 0, n = loop.length; i < n; i += 2) {
+      const j = (i + 2) % n, x0 = loop[i], y0 = loop[i + 1], x1 = loop[j], y1 = loop[j + 1];
+      const k = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / Math.max(0.5, lw * 0.6)));
+      for (let t = 0; t < k; t++) P.push(x0 + (x1 - x0) * t / k, y0 + (y1 - y0) * t / k);
+    }
+    const O = sh.offsetLoop(P, lw), n = P.length / 2, cum = [0];
+    for (let i = 1; i <= n; i++) { const a = (i - 1) % n, b = i % n; cum.push(cum[i - 1] + Math.hypot(P[2 * b] - P[2 * a], P[2 * b + 1] - P[2 * a + 1])); }
+    const per = cum[n], np = Math.max(8, Math.round(per / (lw * 4.2))), period = per / np, dash = period * 0.58;
+    const at = (A, s) => {
+      let i = 0;
+      while (i < n && cum[i + 1] < s) i++;
+      const a = i % n, b = (i + 1) % n, f = (s - cum[i]) / ((cum[i + 1] - cum[i]) || 1);
+      return [A[2 * a] + (A[2 * b] - A[2 * a]) * f, A[2 * a + 1] + (A[2 * b + 1] - A[2 * a + 1]) * f];
+    };
+    const out = [];
+    for (let k = 0; k < np; k++) {
+      const s0 = k * period, s1 = s0 + dash, inner = [], outer = [];
+      const steps = Math.max(2, Math.ceil(dash / Math.max(0.5, lw * 0.5)));
+      for (let q = 0; q <= steps; q++) { const s = s0 + (s1 - s0) * q / steps; inner.push(at(P, s)); outer.push(at(O, s)); }
+      out.push(0, inner[0][0], inner[0][1]);
+      for (let q = 1; q < inner.length; q++) out.push(1, inner[q][0], inner[q][1]);
+      for (let q = outer.length - 1; q >= 0; q--) out.push(1, outer[q][0], outer[q][1]);
+      out.push(4);
+    }
+    return out;
+  }
   // inverse les contours polygonaux (M/L/Z) pour creuser une bande
   function reversePolys(c) {
     const out = [];
@@ -2545,7 +2999,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
       const cx = content.x + content.w / 2, cy = content.y + content.h / 2 - s * fit.yo;
       loop = unit.map((v, i) => i % 2 ? cy + v * s : cx + v * s);
     }
-    const rings = ringOf(loop, 0, lw, tol);
+    const rings = o.dash ? dashedRing(loop, lw) : ringOf(loop, 0, lw, tol);
     let all = rings;
     if (o.double) {
       const g = Math.max(lw * 1.2, 2);
@@ -2629,6 +3083,22 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
         for (let x = -s, k = 0; x <= W + s; x += h, k++) c.push(1, x + h, y + (k % 2 ? 0 : h * 0.7));
       }
       return { cmds: c, fill: false };
+    }
+    if (type === 'nuqat') {
+      // losanges (points du calame) semés sur une grille décalée, graine fixe : le motif ne bouge pas d'un rendu à l'autre
+      let seed = 7;
+      const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+      const multi = [[], [], [], [], []], step = s * 0.95;
+      for (let j = -1, y = -step; y <= H + step; j++, y += step * 0.82) {
+        for (let x = (j % 2 ? step / 2 : 0) - step; x <= W + step; x += step) {
+          const cx = x + (rnd() - 0.5) * step * 0.7, cy = y + (rnd() - 0.5) * step * 0.5, r = s * (0.06 + 0.05 * rnd());
+          const a = Math.PI / 4 + (rnd() - 0.5) * 0.6, g = multi[Math.floor(rnd() * 5) % 5];
+          g.push(0, cx + r * Math.cos(a), cy + r * Math.sin(a));
+          for (let q = 1; q < 4; q++) g.push(1, cx + r * Math.cos(a + q * Math.PI / 2), cy + r * Math.sin(a + q * Math.PI / 2));
+          g.push(4);
+        }
+      }
+      return { cmds: [].concat(...multi), fill: true, multi };
     }
     if (type === 'dots') {
       const r = s * 0.11;
@@ -2806,39 +3276,90 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     return out;
   }
 
+  // Lignes automatiques : la phrase (sur une seule ligne) est coupée entre les mots pour remplir la forme ;
+  // on essaie de 1 à 9 lignes, réparties selon la largeur de la forme à leur hauteur, et on garde le plus grand texte
+  // (anneaux : une phrase d'une seule ligne donne un mot au centre et deux ou trois anneaux de plus en plus longs)
+  function splitWords(ww, sp, words, tg) {
+    const total = ww.reduce((a, b) => a + b, 0) + sp * (ww.length - 1);
+    const T = tg.reduce((a, b) => a + b, 0), rows = [];
+    let cum = 0, ti = 0, bound = tg[0] / T;
+    for (let i = 0; i < ww.length; i++) {
+      const mid = (cum + ww[i] / 2) / total;
+      while (ti < tg.length - 1 && mid > bound) { ti++; bound += tg[ti] / T; }
+      const r = rows[ti] || (rows[ti] = { words: [], w: 0 });
+      if (r.words.length) r.w += sp;
+      r.words.push(words[i]); r.w += ww[i];
+      cum += ww[i] + sp;
+    }
+    return rows.filter(Boolean);
+  }
+  function wrapForShape(font, text, st, features) {
+    const sh = st.shape, S = SHP();
+    if (!sh || !S || !((sh.type === 'fill' && sh.wrap !== 'off') || sh.type === 'rings')) return text;
+    const src = String(text).replace(/\r/g, '');
+    if (src.trim().includes('\n')) return text;
+    const words = src.trim().split(/\s+/).filter(Boolean);
+    if (words.length < (sh.type === 'rings' ? 3 : 2)) return text;
+    const s = (st.size || 100) / font.upem, opt = { features, wordSpace: st.wordSpace };
+    const ww = words.map(w => K.layoutText(font, w, opt)[0].width * s);
+    const sp = Math.max(0, K.layoutText(font, words[0] + ' ' + words[0], opt)[0].width * s - 2 * ww[0]);
+    if (sh.type === 'rings') {
+      const rest = words.slice(1), nr = rest.length <= 3 ? 1 : rest.length <= 8 ? 2 : 3;
+      return [words[0]].concat(splitWords(ww.slice(1), sp, rest, [1, 1.7, 2.4].slice(0, nr)).map(r => r.words.join(' '))).join('\n');
+    }
+    const h = (font.ascender - font.descender) * s * 0.8;
+    const P = S.fillLoop(sh.fillShape || 'oval', sh.fratio);
+    const fo = { lead: (sh.lead == null ? 18 : sh.lead) / 100, grow: (sh.grow == null ? 40 : sh.grow) / 100, stretch: (sh.stretch == null ? 10 : sh.stretch) / 100 };
+    let best = null;
+    for (let k = 1; k <= Math.min(9, words.length); k++) {
+      const tg = [];
+      for (let i = 0; i < k; i++) { const c = S.chordAt(P, -0.85 + 1.7 * (i + 0.5) / k, 0); tg.push(c ? Math.max(0.05, c[1] - c[0]) : 0.05); }
+      const R = splitWords(ww, sp, words, tg), fit = S.fitRows(R.map(r => ({ w: r.w, h })), P, fo);
+      if (fit && (!best || fit.scale > best.score * 1.03)) best = { score: fit.scale, rows: R };
+    }
+    return best ? best.rows.map(r => r.words.join(' ')).join('\n') : text;
+  }
+
   function buildScene(font, text, st, features, opts) {
     opts = opts || {};
     const size = st.size, fx = st.fx || {};
+    text = wrapForShape(font, text, st, features);
     const fine = opts.quality === 'export';
     const tol = Math.max(0.03, size * (fine ? 0.0006 : 0.0018));
     const t = K.buildText(font, text, { size, lineHeight: st.lineHeight, align: st.align, features, wordSpace: st.wordSpace, color: st.colorFont !== false });
     // 1. forme
-    let cmds = t.cmds, ranges = t.spans.map(s => [s.i0, s.i1]), rings = [], shapeInfo = {};
+    let cmds = t.cmds, ranges = t.spans.map(s => [s.i0, s.i1]), rings = [], shapeInfo = {}, panels = [];
     if (st.shape && SHP() && cmds.length) {
       const r = SHP().applyShape(t.cmds, st.shape, size, t.baseline, t.spans, t);
-      cmds = r.cmds; ranges = r.ranges; rings = r.rings || []; shapeInfo = r.info || {};
+      cmds = r.cmds; ranges = r.ranges; rings = r.rings || []; shapeInfo = r.info || {}; panels = r.panels || [];
     }
     // 2. parties : encre, harakat, points, calques d'une police en couleur
     const wantMarks = !!(fx.marks && fx.marks.on), wantDots = !!(fx.dots && fx.dots.on);
-    const base = [], marks = [], dots = [], colors = new Map();
+    const base = [], marks = [], dots = [], colors = new Map(), lineParts = new Map();
+    const lineInk = Array.isArray(st.lineInk) ? st.lineInk : null;
     t.spans.forEach((s, i) => {
       const r = ranges[i];
       if (!r || r[1] <= r[0]) return;
       const seg = cmds.slice(r[0], r[1]);
       if (s.color) { if (!colors.has(s.color)) colors.set(s.color, []); pushAll(colors.get(s.color), seg); return; }
       if (s.mark && wantMarks) { pushAll(marks, seg); return; }
+      // couleur propre à la ligne
+      const lc = lineInk && lineInk[s.line] ? lineInk[s.line] : null;
+      let target = base;
+      if (lc) { if (!lineParts.has(lc)) lineParts.set(lc, []); target = lineParts.get(lc); }
       if (wantDots && !s.mark) {
         const flags = K.dotContours(K.splitContours(t.cmds, s.i0, s.i1), size);
         if (flags.some(Boolean)) {
+          // une forme peut répéter le glyphe (anneau complété) : les drapeaux se répètent avec lui
           const ctrs = K.splitContours(seg);
-          if (ctrs.length === flags.length) { ctrs.forEach((c, k) => pushAll(flags[k] ? dots : base, c)); return; }
+          if (ctrs.length && ctrs.length % flags.length === 0) { ctrs.forEach((c, k) => pushAll(flags[k % flags.length] ? dots : target, c)); return; }
         }
       }
-      pushAll(base, seg);
+      pushAll(target, seg);
     });
     pushAll(base, rings);
-    const colorKeys = Array.from(colors.keys());
-    let parts = [base, marks, dots].concat(colorKeys.map(k => colors.get(k)));
+    const colorKeys = Array.from(colors.keys()), lineKeys = Array.from(lineParts.keys());
+    let parts = [base, marks, dots].concat(colorKeys.map(k => colors.get(k)), lineKeys.map(k => lineParts.get(k)));
     // 3. composition (miroir, rosace)
     if (st.shape && SHP()) parts = SHP().compose(parts, st.shape);
     // 4. épaisseur
@@ -2886,6 +3407,11 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
       L.push({ role: 'extrude', path: ext, fill: paint, box: K.pathBBox(ext) });
     }
     if (band && band.length) L.push({ role: 'outline', path: band, fill: solid(fx.outline.color || '#ffffff') });
+    // contre-formes : l'intérieur des boucles des lettres (ه، و، م…) rempli d'une couleur, sous le contour et l'encre
+    if (fx.counters && fx.counters.on && !empty) {
+      const holes = counterHoles(textAll, tol);
+      if (holes.length) L.push({ role: 'counter', path: holes, fill: solid(fx.counters.color || '#ffffff') });
+    }
     if (sw && !empty) L.push({ role: 'stroke', path: textAll, stroke: { color: st.stroke.color, width: sw * 2 } });
     let hollowW = 0;
     if (fx.hollow && fx.hollow.on) { if (fxReady) hollowW = Math.max(0.4, (fx.hollow.width == null ? 3 : fx.hollow.width) / 100 * size); else pending = true; }
@@ -2894,6 +3420,9 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     if (parts[1].length) L.push({ role: 'marks', path: body(parts[1]), fill: solid(fx.marks.color || '#c62828') });
     if (parts[2].length) L.push({ role: 'dots', path: body(parts[2]), fill: solid(fx.dots.color || '#c62828') });
     colorKeys.forEach((k, i) => { const p = parts[3 + i]; if (p && p.length) L.push({ role: 'color', path: body(p), fill: solid(k) }); });
+    lineKeys.forEach((k, i) => { const p = parts[3 + colorKeys.length + i]; if (p && p.length) L.push({ role: 'text', path: body(p), fill: solid(k) }); });
+    // tuiles colorées de la forme (mosaïque), sous les effets et le texte
+    const PL = panels.filter(p => p.path && p.path.length).map(p => ({ role: 'tile', path: p.path, fill: solid(p.color) }));
     // 6. cadre autour du texte et de ses effets pleins
     const fr = st.frame || {};
     const fm = st.format || { id: 'auto', margin: 40 };
@@ -2904,12 +3433,12 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     if (frameOn && !pageFit) {
       let solidBox = tb;
       for (const l of L) if (l.role === 'extrude' || l.role === 'outline' || l.role === 'stroke') solidBox = boxUnion(solidBox, layerExtent(l));
-      F = ORN().frame({ type: fr.type, pad: (fr.pad == null ? 14 : fr.pad) / 100 * size, width: fw, double: !!fr.double }, solidBox, tol);
+      F = ORN().frame({ type: fr.type, pad: (fr.pad == null ? 14 : fr.pad) / 100 * size, width: fw, double: !!fr.double, dash: !!fr.dash }, solidBox, tol);
       if (F) FL = frameLayers(F, fr, ink);
     }
     // 7. étendue du contenu et plan de travail
     let ex = null;
-    for (const l of FL.concat(L)) ex = boxUnion(ex, layerExtent(l));
+    for (const l of FL.concat(PL, L)) ex = boxUnion(ex, layerExtent(l));
     if (!ex) ex = { x: 0, y: 0, w: 1, h: 1 };
     const cw = ex.w, ch = ex.h;
     let W, H, tx, ty;
@@ -2918,10 +3447,10 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
       W = Math.max(1, Math.ceil(cw + 2 * m)); H = Math.max(1, Math.ceil(ch + 2 * m));
     } else { W = fm.w; H = fm.h; }
     tx = (W - cw) / 2 - ex.x; ty = (H - ch) / 2 - ex.y;
-    for (const l of FL.concat(L)) moveLayer(l, tx, ty);
+    for (const l of FL.concat(PL, L)) moveLayer(l, tx, ty);
     if (pageFit) {
       const m = Math.min(W, H) * 0.045;
-      F = ORN().frame({ type: fr.type, width: fw, double: !!fr.double, page: { x: m + fw, y: m + fw, w: W - 2 * (m + fw), h: H - 2 * (m + fw) } }, null, tol);
+      F = ORN().frame({ type: fr.type, width: fw, double: !!fr.double, dash: !!fr.dash, page: { x: m + fw, y: m + fw, w: W - 2 * (m + fw), h: H - 2 * (m + fw) } }, null, tol);
       if (F) FL = frameLayers(F, fr, ink);
     }
     // 8. fond et motif
@@ -2932,16 +3461,24 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     else if (isGrad(bg)) layers.push({ role: 'bg', path: rect, fill: bg, box: { x: 0, y: 0, w: W, h: H } });
     else if (bg.type === 'image') layers.push({ role: 'bg', image: true, path: rect });
     const pt = st.pattern;
-    if (pt && pt.type && pt.type !== 'none' && ORN()) {
+    if (pt && pt.type === 'words') {
+      const P = wordsPattern(font, pt, text, W, H, features);
+      if (P.length) layers.push({ role: 'pattern', path: P, fill: solid(pt.color || '#c9a227'), opacity: pt.opacity == null ? 0.25 : pt.opacity });
+    } else if (pt && pt.type && pt.type !== 'none' && ORN()) {
       const cell = Math.max(8, (pt.scale == null ? 12 : pt.scale) / 100 * Math.min(W, H));
       const P = ORN().pattern(pt.type, W, H, cell);
       if (P && P.cmds.length) {
         const lw = Math.max(0.3, cell * 0.03 * ((pt.width == null ? 100 : pt.width) / 100));
-        layers.push(P.fill ? { role: 'pattern', path: P.cmds, fill: solid(pt.color || '#c9a227'), opacity: pt.opacity == null ? 0.25 : pt.opacity }
-          : { role: 'pattern', path: P.cmds, stroke: { color: pt.color || '#c9a227', width: lw }, opacity: pt.opacity == null ? 0.25 : pt.opacity });
+        const op = pt.opacity == null ? 0.25 : pt.opacity;
+        if (P.multi && pt.colorful) {
+          // points en couleurs : la couleur du motif, puis rouge, bleu, vert et or
+          const cols = [pt.color || '#c9a227', '#C62828', '#1E5AA8', '#2E7D32', '#E0A21B'];
+          P.multi.forEach((m, k) => { if (m.length) layers.push({ role: 'pattern', path: m, fill: solid(cols[k % cols.length]), opacity: op }); });
+        } else layers.push(P.fill ? { role: 'pattern', path: P.cmds, fill: solid(pt.color || '#c9a227'), opacity: op }
+          : { role: 'pattern', path: P.cmds, stroke: { color: pt.color || '#c9a227', width: lw }, opacity: op });
       }
     }
-    pushAll(layers, FL); pushAll(layers, L);
+    pushAll(layers, FL); pushAll(layers, PL); pushAll(layers, L);
     const path = K.transformPath(textAll, 1, tx, ty);
     let cutPath = path;
     if (F && F.rings.length) cutPath = path.concat(FL.find(l => l.role === 'frame').path);
@@ -2951,6 +3488,37 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     // échelle physique : 96 px par pouce, ou largeur réelle imposée (en mm)
     const mmPerPx = st.phys && st.phys.on && st.phys.widthMm > 0 ? st.phys.widthMm / W : PX2MM;
     return { W, H, layers, path, cutPath, box, content, overflow, st, mmPerPx, shapeInfo, empty, pending, bgSolid: bgAverage(bg) };
+  }
+  // trous des lettres (contre-formes) : contours d'orientation contraire à celle des contours extérieurs
+  function counterHoles(c, tol) {
+    const info = K.splitContours(c).map(k => { const p = K.flatten(k, Math.max(0.2, tol * 4))[0] || []; return { c: k, a: p.length >= 6 ? K.polyArea(p) : 0 }; });
+    let sum = 0;
+    for (const x of info) sum += x.a;
+    const sg = sum < 0 ? -1 : 1, out = [];
+    for (const x of info) if (x.a * sg < 0 && Math.abs(x.a) > 1e-6) pushAll(out, x.c);
+    return out;
+  }
+  // fond d'écriture : un mot (ou la phrase) répété en rangées décalées, légèrement incliné une rangée sur deux
+  function wordsPattern(font, pt, text, W, H, features) {
+    let w = String(pt.text || '').trim();
+    if (!w) w = String(text).split('\n').map(l => l.trim()).filter(Boolean)[0] || '';
+    w = w.split(/\s+/).slice(0, 3).join(' ');
+    if (!w) return [];
+    const cell = Math.max(8, (pt.scale == null ? 12 : pt.scale) / 100 * Math.min(W, H));
+    const t = K.buildText(font, w, { size: cell * 0.62, features, color: false });
+    if (!t.cmds.length) return [];
+    const b = K.pathBBox(t.cmds), stepX = b.w + cell * 0.55, stepY = b.h + cell * 0.35;
+    const nx = Math.ceil(W / stepX) + 2, ny = Math.ceil(H / stepY) + 2;
+    if (nx * ny > 900) return [];
+    const out = [], S = SHP();
+    for (let j = -1; j < ny; j++) {
+      const a = (j % 2 ? -6 : 5) * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a);
+      for (let i = -1; i < nx; i++) {
+        const cx = i * stepX + (j % 2 ? stepX / 2 : 0), cy = j * stepY;
+        pushAll(out, S.eachPoint(t.cmds, (x, y) => { const dx = x - b.x - b.w / 2, dy = y - b.y - b.h / 2; return [cx + dx * ca - dy * sa, cy + dx * sa + dy * ca]; }));
+      }
+    }
+    return out;
   }
   // taille maximale pour faire tenir le contenu dans un format fixe
   function fitSize(font, text, st, features, ratio) {
@@ -2977,7 +3545,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
       return pt.color;
     };
     // calques nommés (Illustrator, Inkscape) ; dans la page : attribut data-layer
-    const ROLE = { bg: 'fond', pattern: 'motif', panel: 'fond-cadre', frame: 'cadre', glow: 'halo', shadow: 'ombre', extrude: 'relief', outline: 'lisere', stroke: 'contour', text: 'texte', marks: 'harakat', dots: 'points', color: 'couleurs' };
+    const ROLE = { bg: 'fond', pattern: 'motif', panel: 'fond-cadre', tile: 'tuiles', counter: 'contre-formes', frame: 'cadre', glow: 'halo', shadow: 'ombre', extrude: 'relief', outline: 'lisere', stroke: 'contour', text: 'texte', marks: 'harakat', dots: 'points', color: 'couleurs' };
     const seen = new Map();
     const label = r => { const b = ROLE[r] || 'calque', n = (seen.get(b) || 0) + 1; seen.set(b, n); return opt.inline ? ` data-layer="${b}"` : ` id="${b}${n > 1 ? '-' + n : ''}"`; };
     for (const l of sc.layers) {
@@ -3474,7 +4042,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     return bytes;
   }
 
-  root.KhattExport = { setPngDpi, setJpegDpi, cutPolygons, sceneToCutSVG, buildScene, fitSize, sceneToSVG, drawScene, sceneToPDF, sheetToPDF, sceneToEPS, sceneToDXF, makeZip, gradLine, gradStops, sampleStops, isGrad, hex2rgb, mix, PX2PT, PX2MM };
+  root.KhattExport = { setPngDpi, setJpegDpi, cutPolygons, sceneToCutSVG, buildScene, wrapForShape, fitSize, sceneToSVG, drawScene, sceneToPDF, sheetToPDF, sceneToEPS, sceneToDXF, makeZip, gradLine, gradStops, sampleStops, isGrad, hex2rgb, mix, PX2PT, PX2MM };
 })(typeof self !== 'undefined' ? self : globalThis);
 </script>
 <script>/* Mises en situation : la calligraphie (SVG vectoriel) placée dans des décors dessinés en SVG. */
@@ -3966,7 +4534,10 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
   }
   // outils de l'atelier (barre verticale sur ordinateur, barre du bas sur téléphone)
   const TOOLS = ['texte', 'styles', 'modeles', 'forme', 'couleurs', 'effets', 'cadre', 'fond', 'format'];
-  const SHAPE_GROUPS = [['line', 'Lignes'], ['closed', 'Formes fermées'], ['warp', 'Déformations']];
+  const SHAPE_GROUPS = [['line', 'Lignes'], ['closed', 'Formes fermées'], ['compo', 'Compositions'], ['warp', 'Déformations']];
+  const FILL_OPTS = [['tri', 'Pyramide'], ['oval', 'Ovale'], ['egg', 'Œuf'], ['circle', 'Cercle'], ['capsule', 'Cartouche'], ['drop', 'Goutte'], ['arch', 'Mihrab'], ['diamond', 'Losange'], ['hexagon', 'Hexagone'], ['octagon', 'Octogone'], ['heart', 'Cœur']];
+  const TILE_OPTS = [['capsule', 'Cartouche'], ['arch', 'Arc'], ['round', 'Arrondi'], ['circle', 'Rond'], ['hexagon', 'Hexagone'], ['octagon', 'Octogone'], ['diamond', 'Losange'], ['drop', 'Goutte']];
+  const SEP_OPTS = [['none', 'Aucun'], ['star', 'Étoile'], ['dot', 'Point'], ['diamond', 'Losange']];
   const SHAPES = [
     { id: 'straight', g: 'line', name: 'Droite', params: [] },
     { id: 'arc', g: 'line', name: 'Arc', params: [['bend', 'Courbure', 10, 270, 5, '°']] },
@@ -3981,6 +4552,9 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     { id: 'seal', g: 'closed', name: 'Sceau', params: [['cover', 'Couverture', 30, 95, 1, ' %'], ['ring', 'Bordure', RING_OPTS], ['ringW', 'Épaisseur', 2, 25, 1, ' %', ringW], ['sep', 'Séparateurs', [['none', 'Aucun'], ['star', 'Étoile'], ['dot', 'Point'], ['diamond', 'Losange']]]], hint: 'Sceau : écrivez 2 ou 3 lignes. La 1re suit le haut du cercle, la dernière le bas, celle du milieu reste au centre.' },
     { id: 'heart', g: 'closed', name: 'Cœur', params: [['cover', 'Couverture', 20, 100, 1, ' %'], ['ring', 'Bordure', RING_OPTS], ['ringW', 'Épaisseur', 2, 25, 1, ' %', ringW]] },
     { id: 'polygon', g: 'closed', name: 'Polygone', params: [['sides', 'Côtés', 3, 12, 1, ''], ['round', 'Arrondi', 0, 100, 1, ' %'], ['cover', 'Couverture', 20, 100, 1, ' %'], ['ring', 'Bordure', RING_OPTS], ['ringW', 'Épaisseur', 2, 25, 1, ' %', ringW]] },
+    { id: 'fill', g: 'compo', name: 'Remplir une forme', params: [['fillShape', 'Forme', FILL_OPTS], ['wrap', 'Lignes', [['auto', 'Automatiques'], ['off', 'Comme écrites']]], ['fratio', 'Proportion', 40, 250, 5, ' %'], ['grow', 'Remplissage', 0, 100, 5, ' %'], ['stretch', 'Étirement', 0, 60, 5, ' %'], ['lead', 'Interligne', 0, 80, 1, ' %'], ['ring', 'Bordure', RING_OPTS], ['ringW', 'Épaisseur', 2, 25, 1, ' %', ringW]], hint: 'La phrase remplit la forme ligne par ligne. « Automatiques » coupe une phrase écrite sur une seule ligne ; sinon, vos retours à la ligne sont gardés.' },
+    { id: 'rings', g: 'compo', name: 'Anneaux', params: [['center', 'Lignes au centre', 1, 4, 1, ''], ['rgap', 'Écart', 0, 60, 1, ' %'], ['rfill', 'Anneaux', [['on', 'Complétés'], ['off', 'Tels quels']]], ['rlines', 'Filets', [['none', 'Aucun'], ['thin', 'Fins']]], ['sep', 'Séparateurs', SEP_OPTS], ['ring', 'Bordure', RING_OPTS], ['ringW', 'Épaisseur', 2, 25, 1, ' %', ringW]], hint: 'Médaillon : la 1re ligne (ou les premières) au centre, chaque ligne suivante en anneau autour. Un anneau trop court est complété en répétant sa ligne.' },
+    { id: 'tiles', g: 'compo', name: 'Mosaïque', params: [['tile', 'Tuile', TILE_OPTS], ['title', 'Titre', [['top', 'En haut'], ['center', 'Au centre'], ['none', 'Aucun']]], ['palette', 'Couleurs', [['pastel', 'Pastel'], ['jewel', 'Émaux'], ['earth', 'Terre'], ['gold', 'Or'], ['none', 'Sans']]], ['cols', 'Colonnes', 0, 12, 1, '', null, x => x ? String(x) : 'auto'], ['fratio', 'Proportion', 40, 250, 5, ' %'], ['tgap', 'Écart', 0, 40, 1, ' %'], ['ring', 'Bordure', [['none', 'Aucune'], ['single', 'Filet']]]], hint: 'Chaque ligne devient une tuile ; séparez des paragraphes par une ligne vide pour mettre plusieurs lignes par tuile. La 1re ligne sert de titre.' },
     { id: 'flag', g: 'warp', name: 'Drapeau', params: [['amp', 'Amplitude', 0, 120, 1, ' %'], ['waves', 'Ondulations', 0.5, 5, 0.5, '']] },
     { id: 'bulge', g: 'warp', name: 'Bombé', params: [['intensity', 'Intensité', -80, 150, 1, ' %']] },
     { id: 'dome', g: 'warp', name: 'Dôme', params: [['intensity', 'Intensité', -80, 150, 1, ' %']] },
@@ -3989,15 +4563,16 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     { id: 'cylinder', g: 'warp', name: 'Cylindre', params: [['intensity', 'Courbure', 10, 95, 1, ' %']] },
     { id: 'fisheye', g: 'warp', name: 'Loupe', params: [['intensity', 'Grossissement', -60, 120, 1, ' %']] }
   ];
-  const REPEATS = [['none', 'Simple'], ['mirror', 'Miroir'], ['rosette', 'Rosace']];
-  const FRAMES = [['none', 'Aucun'], ['rect', 'Rectangle'], ['round', 'Arrondi'], ['oval', 'Ovale'], ['circle', 'Cercle'], ['cartouche', 'Cartouche'], ['arch', 'Mihrab'], ['octagon', 'Octogone'], ['hexagon', 'Hexagone'], ['diamond', 'Losange'], ['star8', 'Étoile'], ['drop', 'Goutte'], ['heart', 'Cœur'], ['shield', 'Écu'], ['scallop', 'Festonné']];
-  const PATTERNS = [['none', 'Aucun'], ['stars8', 'Étoiles à 8'], ['stars6', 'Étoiles à 6'], ['hex', 'Nid d’abeille'], ['diamonds', 'Losanges'], ['circles', 'Cercles'], ['chevrons', 'Chevrons'], ['dots', 'Points']];
+  const REPEATS = [['none', 'Simple'], ['mirror', 'Miroir'], ['rosette', 'Rosace'], ['kaleido', 'Kaléidoscope']];
+  const FRAMES = [['none', 'Aucun'], ['rect', 'Rectangle'], ['round', 'Arrondi'], ['oval', 'Ovale'], ['circle', 'Cercle'], ['cartouche', 'Cartouche'], ['arch', 'Mihrab'], ['octagon', 'Octogone'], ['hexagon', 'Hexagone'], ['diamond', 'Losange'], ['star8', 'Étoile'], ['drop', 'Goutte'], ['egg', 'Œuf'], ['triangle', 'Triangle'], ['heart', 'Cœur'], ['shield', 'Écu'], ['scallop', 'Festonné']];
+  const PATTERNS = [['none', 'Aucun'], ['stars8', 'Étoiles à 8'], ['stars6', 'Étoiles à 6'], ['hex', 'Nid d’abeille'], ['diamonds', 'Losanges'], ['circles', 'Cercles'], ['chevrons', 'Chevrons'], ['dots', 'Points'], ['nuqat', 'Points du calame'], ['words', 'Écriture répétée']];
   // effets : réglages [clé, libellé, min, max, pas, unité] ou [clé, libellé, 'color'|'check']
   const FX_UI = [
     { k: 'outline', label: 'Liseré', note: 'bordure détachée autour des lettres, effet autocollant', fields: [['color', 'Couleur', 'color'], ['gap', 'Écart', 0, 15, 0.5, ' %'], ['width', 'Épaisseur', 0.5, 20, 0.5, ' %']] },
     { k: 'extrude', label: 'Relief 3D', note: 'volume en profondeur sous les lettres', fields: [['color', 'Couleur', 'color'], ['depth', 'Profondeur', 1, 40, 0.5, ' %'], ['angle', 'Direction', 0, 355, 5, '°'], ['shade', 'Dégradé d’ombre', 'check']] },
     { k: 'glow', label: 'Néon', note: 'halo lumineux autour des lettres', fields: [['color', 'Couleur', 'color'], ['size', 'Rayonnement', 2, 40, 1, ' %'], ['strength', 'Intensité', 0.1, 1, 0.05, '']] },
     { k: 'hollow', label: 'Lettres creuses', note: 'seul le contour des lettres est tracé', fields: [['width', 'Trait', 0.5, 12, 0.25, ' %']] },
+    { k: 'counters', label: 'Contre-formes', note: 'remplit l’intérieur des boucles des lettres (ه، و، م، ص…)', fields: [['color', 'Couleur', 'color']] },
     { k: 'marks', label: 'Harakat en couleur', note: 'voyelles et chadda d’une autre couleur, comme dans les manuscrits', fields: [['color', 'Couleur', 'color']] },
     { k: 'dots', label: 'Points en couleur', note: 'points des lettres d’une autre couleur', fields: [['color', 'Couleur', 'color']] }
   ];
@@ -4081,6 +4656,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     ['all', 'Tous', 'Toutes les compositions : chaque aperçu est dessiné par l’atelier avec votre phrase ou avec l’exemple du modèle.'],
     ['classique', 'Tableaux classiques', 'Les grands genres de la calligraphie : shamsa, levha, musanna, mihrab, qitʿa, page enluminée.'],
     ['medaillon', 'Médaillons et sceaux', 'Compositions circulaires et fermées : médaillons, sceaux, rosaces, étoiles, couronnes.'],
+    ['compositions', 'Compositions', 'La phrase organise tout le tableau : pyramide, œuf, goutte, médaillons en anneaux, mosaïques de tuiles, rosaces en miroir.'],
     ['versets', 'Versets et invocations', 'Pour une invocation ou un verset court, avec des compositions sobres et lisibles.'],
     ['prenoms', 'Prénoms', 'Pour un prénom : cœur, relief, néon, miroir, autocollant, pastel.'],
     ['fetes', 'Fêtes et vœux', 'Cartes de vœux : Aïd, Ramadan, anniversaire, nouvel an, félicitations.'],
@@ -4129,6 +4705,44 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     { font: 'reem-kufi-bold', shape: { type: 'polygon', sides: 6, round: 25, cover: 85, ring: 'single', ringW: 6 }, fill: SOL('#1E3A8A'), bg: SOL('#F6F1E7'), format: 'square' });
   M('medaillon', 'ovale', 'Cartouche ovale', 'Une invocation qui fait le tour d’un ovale à double bordure, blanc sur lapis.', 'الحمد لله رب العالمين الرحمن الرحيم مالك يوم الدين',
     { font: 'aref-ruqaa', shape: { type: 'oval', cover: 90, ratio: 60, ring: 'double', ringW: 6 }, fill: SOL('#FFFFFF'), bg: SOL('#1E3A8A'), format: 'landscape' });
+  // Compositions : la phrase organise tout le tableau
+  M('compositions', 'pyramide', 'Pyramide', 'Les lignes s’empilent dans un triangle, de plus en plus larges vers la base : chacune prend toute la largeur disponible à sa hauteur.', 'وَمَا تَوْفِيقِي\nإِلَّا بِاللَّهِ\nعَلَيْهِ تَوَكَّلْتُ\nوَإِلَيْهِ أُنِيبُ',
+    { font: 'layla-thuluth', shape: { type: 'fill', fillShape: 'tri', grow: 100, stretch: 25, lead: 12, ring: 'single', ringW: 5 }, fill: LIN(GOLD2), bg: SOL('#0B3B2E'), harakat: true, format: 'portrait' });
+  M('compositions', 'oeuf', 'Œuf', '« Avec la difficulté vient la facilité », deux fois, dans un œuf à double bordure : la forme se remplit ligne par ligne.', 'فَإِنَّ مَعَ الْعُسْرِ يُسْرًا\nإِنَّ مَعَ الْعُسْرِ يُسْرًا',
+    { font: 'aref-ruqaa-bold', shape: { type: 'fill', fillShape: 'egg', grow: 60, stretch: 10, lead: 18, ring: 'double', ringW: 5 }, fill: SOL('#1E3A8A'), bg: SOL('#FBF6EA'), harakat: true, format: 'portrait' });
+  M('compositions', 'ovale-rempli', 'Ovale rempli', 'Trois lignes qui épousent un ovale : la ligne du milieu, la plus large, porte le cœur du verset.', 'كُلُّ مَنْ عَلَيْهَا فَانٍ\nوَيَبْقَىٰ وَجْهُ رَبِّكَ\nذُو الْجَلَالِ وَالْإِكْرَامِ',
+    { font: 'amiri-bold', shape: { type: 'fill', fillShape: 'oval', grow: 50, stretch: 10, lead: 16, ring: 'double', ringW: 5 }, fill: LIN(GOLD2), bg: SOL('#14274E'), harakat: true, format: 'landscape' });
+  M('compositions', 'goutte', 'Goutte', 'La forme en poire des compositions ottomanes : le texte se loge dans la partie ronde, la pointe s’élève au-dessus.', 'وَلَقَدْ كَرَّمْنَا\nبَنِي آدَمَ\nوَحَمَلْنَاهُمْ فِي الْبَرِّ وَالْبَحْرِ',
+    { font: 'mirza-bold', shape: { type: 'fill', fillShape: 'drop', grow: 60, stretch: 10, ring: 'single', ringW: 6 }, fill: SOL('#5B3A1E'), bg: LIN(['#F6EBD3', '#E9D3A6']), harakat: true, format: 'portrait' });
+  M('compositions', 'cercle-louanges', 'Cercle de louanges', 'Une longue formule répartie toute seule en lignes qui remplissent un cercle.', 'سبحان الله والحمد لله ولا إله إلا الله والله أكبر',
+    { font: 'aref-ruqaa-bold', shape: { type: 'fill', fillShape: 'circle', wrap: 'auto', grow: 50, stretch: 10, lead: 14, ring: 'single', ringW: 5 }, fill: SOL('#7A1F3D'), bg: SOL('#FFF7EC'), format: 'square' });
+  M('compositions', 'medaillon-noms', 'Médaillon des noms', 'Le nom de Dieu au centre, des noms divins en anneaux concentriques, séparés par des étoiles et des filets d’or.', 'الله\nالرحمن الرحيم الملك القدوس السلام\nالمؤمن المهيمن العزيز الجبار المتكبر الخالق البارئ المصور\nالغفار القهار الوهاب الرزاق الفتاح العليم القابض الباسط الخافض الرافع',
+    { font: 'amiri-bold', shape: { type: 'rings', center: 1, rgap: 14, rlines: 'thin', sep: 'star', ring: 'double', ringW: 5 }, fill: LIN(GOLD2), bg: SOL('#0E1A3A'), format: 'square' });
+  M('compositions', 'couronne-trone', 'Couronne du Trône', 'Le verset du Trône : son début au centre, la suite en trois anneaux qui l’entourent.', 'الله لا إله إلا هو\nالحي القيوم\nلا تأخذه سنة ولا نوم له ما في السماوات وما في الأرض\nمن ذا الذي يشفع عنده إلا بإذنه يعلم ما بين أيديهم وما خلفهم\nولا يحيطون بشيء من علمه إلا بما شاء وسع كرسيه السماوات والأرض ولا يئوده حفظهما وهو العلي العظيم',
+    { font: 'amiri-bold', shape: { type: 'rings', center: 2, rgap: 12, rlines: 'thin', sep: 'dot', ring: 'single', ringW: 5 }, fill: SOL('#14341F'), bg: LIN(['#F6EEDB', '#E8D8B4']), format: 'square' });
+  M('compositions', 'vertus', 'Mosaïque des vertus', 'Un titre, puis une phrase par tuile, aux couleurs pastel : ici, des préceptes du Coran sur le bon comportement.', 'مكارم الأخلاق في القرآن\nوقولوا للناس حسنا\nولا تجسسوا\nوأوفوا الكيل\nادفع بالتي هي أحسن\nولا تمش في الأرض مرحا\nواخفض جناحك للمؤمنين\nوتعاونوا على البر والتقوى\nاعدلوا هو أقرب للتقوى\nوقولوا قولا سديدا\nخذ العفو',
+    { font: 'amiri-bold', shape: { type: 'tiles', tile: 'capsule', title: 'top', palette: 'pastel', tgap: 12, ring: 'single' }, fill: SOL('#3B2A20'), bg: SOL('#FFFDF7'), format: 'portrait' });
+  M('compositions', 'beaux-noms', 'Les beaux noms', 'Des noms divins dans des arcs pastel, le nom de Dieu dans le grand arc du centre.', 'الله\nالرحمن\nالرحيم\nالملك\nالقدوس\nالسلام\nالمؤمن\nالمهيمن\nالعزيز\nالجبار\nالمتكبر\nالخالق\nالبارئ\nالمصور\nالغفار\nالقهار\nالوهاب\nالرزاق\nالفتاح\nالعليم\nالقابض\nالباسط\nالخافض\nالرافع\nالمعز',
+    { font: 'aref-ruqaa-bold', shape: { type: 'tiles', tile: 'arch', title: 'center', palette: 'pastel', fratio: 70, tgap: 10, ring: 'single' }, fill: SOL('#2C2A4A'), bg: SOL('#FFFFFF'), format: 'square' });
+  M('compositions', 'jumelles', 'Cartouches jumelles', 'Deux versets, chacun dans son cartouche : séparez les paragraphes par une ligne vide.', 'الحمد لله الذي له ما في السماوات\nوما في الأرض وله الحمد في الآخرة\nوهو الحكيم الخبير\n\nيعلم ما يلج في الأرض وما يخرج منها\nوما ينزل من السماء وما يعرج فيها\nوهو الرحيم الغفور',
+    { font: 'layla-thuluth', shape: { type: 'tiles', tile: 'capsule', title: 'none', palette: 'none', cols: 1, tgap: 14, ring: 'single' }, fill: SOL('#111111'), bg: SOL('#FFFFFF'), format: 'landscape' });
+  M('compositions', 'rosace-miroir', 'Rosace en miroir', 'La phrase rayonne depuis le centre, une copie sur deux en miroir : une fleur à huit pétales.', 'يا الله',
+    { font: 'layla-thuluth', shape: { repeat: 'kaleido', copies: 8, spread: 75 }, fill: SOL('#FFFFFF'), bg: SOL('#8FA38A'), format: 'square' });
+  M('compositions', 'contre-formes', 'Contre-formes', 'Un mot en grand, l’intérieur de ses boucles en blanc, sur un semis de points du calame en couleurs.', 'هو',
+    { font: 'layla-diwani', fx: { counters: { on: true, color: '#FFFFFF' } }, fill: SOL('#111111'), bg: SOL('#E8D5B0'), pattern: { type: 'nuqat', color: '#111111', opacity: 0.85, scale: 9, colorful: true }, format: 'square' });
+  // Versets : couleurs et fonds
+  M('versets', 'iqra', 'Iqraʾ', '« Lis, au nom de ton Seigneur » : thuluth d’or aux voyelles turquoise, sur nuit.', 'اقْرَأْ\nبِاسْمِ رَبِّكَ',
+    { font: 'layla-thuluth', fill: LIN(GOLD2), bg: RAD(['#14234A', '#060B1C']), fx: { marks: { on: true, color: '#2BB3A8' } }, lineHeight: 1.1, harakat: true, shadow: SHADOW(0.45, 3, 6), format: 'portrait' });
+  M('versets', 'savoir', 'Rabbi zidni ʿilma', '« Seigneur, accrois ma science » en dégradé de nuit étoilée, dans un cercle blanc au filet pointillé.', 'وَقُل\nرَّبِّ زِدْنِي عِلْمًا',
+    { font: 'layla-thuluth', lineHeight: 0.95, fill: LIN(['#3B1E6E', '#6A3FB3', '#2E5FD0', '#22A6D8'], 0), bg: SOL('#F4ECD8'), frame: { type: 'circle', width: 2.6, pad: 10, ink: false, color: '#B9AE96', panelOn: true, panel: '#ffffff', dash: true }, harakat: true, format: 'square' });
+  M('versets', 'fond-partage', 'Fond partagé', 'Diwani noir sur un fond coupé en deux, or et gris bleuté.', 'أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ',
+    { font: 'layla-diwani', fx: { weight: 0.8 }, fill: SOL('#111111'), bg: { type: 'linear', stops: [{ c: '#D9B65C', p: 0 }, { c: '#D9B65C', p: 0.5 }, { c: '#9AA7B6', p: 0.5 }, { c: '#9AA7B6', p: 1 }], angle: 120 }, harakat: true, format: 'landscape' });
+  M('versets', 'nuit-et-or', 'Nuit et or', 'Thuluth blanc sur un fond noir et or, semé de points colorés.', 'لَا إِلَٰهَ إِلَّا أَنتَ سُبْحَانَكَ\nإِنِّي كُنتُ مِنَ الظَّالِمِينَ',
+    { font: 'layla-thuluth', fill: SOL('#FFFFFF'), bg: { type: 'linear', stops: [{ c: '#111111', p: 0 }, { c: '#111111', p: 0.62 }, { c: '#C9A227', p: 0.62 }, { c: '#E3C06A', p: 1 }], angle: 160 }, pattern: { type: 'nuqat', color: '#E3C06A', opacity: 0.9, scale: 8, colorful: true }, shadow: SHADOW(0.5, 3, 6), harakat: true, format: 'landscape' });
+  M('versets', 'bandeau', 'Bandeau émeraude et or', '« Quiconque place sa confiance en Dieu, Il lui suffit » : or sur émeraude, cartouche doré sur nuit.', 'وَمَن يَتَوَكَّلْ عَلَى اللَّهِ فَهُوَ حَسْبُهُ',
+    { font: 'layla-thuluth', fill: LIN(GOLD2), bg: SOL('#0E1A3A'), frame: { type: 'cartouche', width: 1.8, double: true, pad: 16, ink: false, color: '#D4A537', panelOn: true, panel: '#0B4F3C' }, pattern: { type: 'nuqat', color: '#D4A537', opacity: 0.35, scale: 7 }, harakat: true, format: 'banner' });
+  M('versets', 'adam', 'Fond d’écriture', '« Nous avons honoré les fils d’Adam » sur un fond où le mot آدم se répète, à l’encre sépia.', 'وَلَقَدْ كَرَّمْنَا\nبَنِي آدَمَ',
+    { font: 'layla-thuluth', fill: SOL('#2B1D12'), bg: LIN(['#F4E7CC', '#E7D0A3']), pattern: { type: 'words', text: 'آدم', color: '#9C6B2E', opacity: 0.3, scale: 9 }, harakat: true, format: 'portrait' });
   // Versets et invocations
   M('versets', 'basmala-arc', 'Basmala en arc', 'La basmala en arc doré sur noir, pour l’entrée d’une maison ou un frontispice.', 'بسم الله الرحمن الرحيم',
     { font: 'layla-thuluth', shape: { type: 'arc', bend: 80 }, fx: { weight: 0.6 }, fill: LIN(GOLD2), bg: SOL('#0A0A0A'), shadow: SHADOW(0.5, 3, 6), format: 'landscape' });
@@ -4246,14 +4860,18 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
       outline: { on: false, color: '#ffffff', gap: 3, width: 4 },
       extrude: { on: false, angle: 45, depth: 8, color: '#6b4f1d', shade: true },
       glow: { on: false, color: '#00f5d4', size: 12, strength: 0.8 },
+      counters: { on: false, color: '#ffffff' },
       marks: { on: false, color: '#c62828' },
       dots: { on: false, color: '#c62828' }
     },
-    frame: { type: 'none', width: 2.5, double: false, pad: 14, ink: true, color: '#c9a227', panelOn: false, panel: '#ffffff', fit: 'text' },
-    pattern: { type: 'none', color: '#c9a227', opacity: 0.25, scale: 12, width: 100 },
+    frame: { type: 'none', width: 2.5, double: false, dash: false, pad: 14, ink: true, color: '#c9a227', panelOn: false, panel: '#ffffff', fit: 'text' },
+    pattern: { type: 'none', color: '#c9a227', opacity: 0.25, scale: 12, width: 100, colorful: false, text: '' },
+    // une couleur par ligne (médaillon et ailes, titres, mosaïques…)
+    lineInk: { on: false, colors: ['#7a3b1e', '#1f7a7a', '#1f7a7a', '#8e3b5e', '#0f4c81', '#9a7420', '#2e7d32', '#b3261e'] },
     bg: { type: 'solid', color: '#0e1a3a', stops: stopsOf(PARCH), angle: 90, gk: 'linear', veil: 0.3, veilColor: 'dark' },
     format: { id: 'auto', margin: 56, w: 1200, h: 800 },
-    shape: { type: 'straight', bend: 90, cover: 60, side: 'top', spin: 0, ring: 'none', ringW: 8, height: 50, ratio: 60, amp: 30, waves: 1.5, intensity: 40, gap: 130, sides: 6, round: 35, sep: 'star', free: null, flip: false, width: 100, rotate: 0, repeat: 'none', copies: 6, spread: 110, mgap: 8 },
+    shape: { type: 'straight', bend: 90, cover: 60, side: 'top', spin: 0, ring: 'none', ringW: 8, height: 50, ratio: 60, amp: 30, waves: 1.5, intensity: 40, gap: 130, sides: 6, round: 35, sep: 'star', free: null, flip: false, width: 100, rotate: 0, repeat: 'none', copies: 6, spread: 110, mgap: 8,
+      fillShape: 'oval', wrap: 'auto', fratio: 100, grow: 40, stretch: 10, lead: 18, center: 1, rgap: 14, rfill: 'on', rlines: 'none', tile: 'capsule', title: 'top', palette: 'pastel', cols: 0, tgap: 10 },
     phys: { on: false, value: 60, unit: 'cm' },
     // réglages d'interface (hors historique)
     scale: 2, filter: 'all', tab: 'ecr', tool: 'texte', favs: [], cardColors: false, pvBg: 'check', dims: false, gtab: 'styles', mdTheme: 'all', mdSrc: 'mine'
@@ -4312,7 +4930,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     s.stroke.width = clampN(s.stroke.width, 0, 200, 6);
     s.shadow.color = normHex(s.shadow.color) || DEFAULT.shadow.color;
     s.shadow.opacity = clampN(s.shadow.opacity, 0, 1, 0.45);
-    for (const k of ['outline', 'extrude', 'glow', 'marks', 'dots']) s.fx[k].color = normHex(s.fx[k].color) || DEFAULT.fx[k].color;
+    for (const k of ['outline', 'extrude', 'glow', 'counters', 'marks', 'dots']) s.fx[k].color = normHex(s.fx[k].color) || DEFAULT.fx[k].color;
     s.fx.weight = clampN(s.fx.weight, -10, 20, 0);
     s.fill = cleanPaint(s.fill, o && o.fill, DEFAULT.fill, ['solid', 'linear', 'radial']);
     s.bg = cleanPaint(s.bg, o && o.bg, DEFAULT.bg, ['none', 'solid', 'linear', 'radial', 'image']);
@@ -4325,6 +4943,8 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     s.pattern.type = oneOf(s.pattern.type, PATTERNS.map(p => p[0]), 'none');
     s.pattern.color = normHex(s.pattern.color) || DEFAULT.pattern.color;
     s.pattern.opacity = clampN(s.pattern.opacity, 0.02, 1, 0.25);
+    s.pattern.text = String(s.pattern.text || '').slice(0, 60);
+    s.lineInk.colors = DEFAULT.lineInk.colors.map((d, i) => normHex(s.lineInk.colors[i]) || d);
     const sh = s.shape;
     sh.type = oneOf(sh.type, SHAPES.map(x => x.id), 'straight');
     sh.side = oneOf(sh.side, ['top', 'bottom'], 'top');
@@ -4334,6 +4954,17 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     sh.copies = Math.round(clampN(sh.copies, 2, 16, 6));
     sh.sides = Math.round(clampN(sh.sides, 3, 12, 6));
     sh.width = clampN(sh.width, 20, 400, 100);
+    sh.fillShape = oneOf(sh.fillShape, FILL_OPTS.map(x => x[0]), 'oval');
+    sh.wrap = oneOf(sh.wrap, ['auto', 'off'], 'auto');
+    sh.rfill = oneOf(sh.rfill, ['on', 'off'], 'on');
+    sh.rlines = oneOf(sh.rlines, ['none', 'thin'], 'none');
+    sh.tile = oneOf(sh.tile, TILE_OPTS.map(x => x[0]), 'capsule');
+    sh.title = oneOf(sh.title, ['top', 'center', 'none'], 'top');
+    sh.palette = oneOf(sh.palette, ['pastel', 'jewel', 'earth', 'gold', 'none'], 'pastel');
+    sh.cols = Math.round(clampN(sh.cols, 0, 12, 0));
+    sh.center = Math.round(clampN(sh.center, 1, 4, 1));
+    sh.fratio = clampN(sh.fratio, 40, 250, 100);
+    for (const [k, a, b, d] of [['grow', 0, 100, 40], ['stretch', 0, 60, 10], ['lead', 0, 80, 18], ['rgap', 0, 60, 14], ['tgap', 0, 40, 10]]) sh[k] = clampN(sh[k], a, b, d);
     sh.free = Array.isArray(sh.free) && sh.free.length >= 4 && sh.free.length <= 4000 && sh.free.every(v => typeof v === 'number' && isFinite(v)) ? sh.free : null;
     s.format.id = oneOf(s.format.id, FORMATS.map(f => f.id), 'auto');
     s.format.w = clampN(s.format.w, 50, 12000, 1200);
@@ -4805,7 +5436,8 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
       stroke: { on: st.stroke.on, color: st.stroke.color, width: st.stroke.width },
       shadow: { on: sh.on, color: sh.color, opacity: sh.opacity, dx: d, dy: d, blur: sh.blur },
       fx: clone(st.fx),
-      frame: { type: fr.type, width: fr.width, double: fr.double, pad: fr.pad, color: fr.ink ? 'ink' : fr.color, panel: fr.panelOn ? fr.panel : 'none', fit: fr.fit },
+      frame: { type: fr.type, width: fr.width, double: fr.double, dash: fr.dash, pad: fr.pad, color: fr.ink ? 'ink' : fr.color, panel: fr.panelOn ? fr.panel : 'none', fit: fr.fit },
+      lineInk: st.lineInk && st.lineInk.on ? st.lineInk.colors.slice() : null,
       pattern: Object.assign({}, st.pattern),
       bg, format: opt.format || resolveFormat(st.format),
       shape: Object.assign({}, st.shape),
@@ -5339,18 +5971,25 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     thumbKey = key;
     const one = K.buildText(hb, chk.text, { size: 40, lineHeight: 1.05, align: 'center' });
     const many = K.buildText(hb, chkM.text, { size: 40, lineHeight: 1.05, align: 'center' });
+    // compositions : une phrase d'une seule ligne est répartie (forme remplie) ou découpée en mots (anneaux, mosaïque)
+    const words = chk.text.split(/\s+/).filter(Boolean).slice(0, 7);
+    const multiText = lines.length > 1 ? chkM.text : words.length > 1 ? words.join('\n') : chk.text;
+    const fillText = lines.length > 1 ? chkM.text : KX.wrapForShape(hb, chk.text, { size: 40, shape: Object.assign({}, S.shape, { type: 'fill', wrap: 'auto' }) });
+    const ringText = lines.length > 1 ? chkM.text : KX.wrapForShape(hb, chk.text, { size: 40, shape: { type: 'rings' } });
+    const compo = { fill: K.buildText(hb, fillText, { size: 40, lineHeight: 1.05, align: 'center' }), rings: K.buildText(hb, ringText, { size: 40, lineHeight: 1.05, align: 'center' }), tiles: K.buildText(hb, multiText, { size: 40, lineHeight: 1.05, align: 'center' }) };
     const shapeOf = (t, type) => {
       if (!t.cmds.length) return [];
       if (type === 'straight' && S.shape.width === 100) return t.cmds;
       const r = KSH.applyShape(t.cmds, Object.assign({}, S.shape, { type, rotate: 0 }), 40, t.baseline, t.spans, t);
       return r.cmds.concat(r.rings);
     };
+    const thumbSrc = id => compo[id] || (id === 'seal' && lines.length > 1 ? many : one);
     for (const d of SHAPES) {
       const art = thumbEls[d.id] && thumbEls[d.id].querySelector('.art');
-      if (art) art.innerHTML = thumbSVG(shapeOf(d.id === 'seal' && lines.length > 1 ? many : one, d.id));
+      if (art) art.innerHTML = thumbSVG(shapeOf(thumbSrc(d.id), d.id));
     }
     // compositions avec la forme courante
-    const base = shapeOf(S.shape.type === 'seal' && lines.length > 1 ? many : one, S.shape.type);
+    const base = shapeOf(thumbSrc(S.shape.type), S.shape.type);
     for (const [id] of REPEATS) {
       const art = compEls[id] && compEls[id].querySelector('.art');
       if (!art) continue;
@@ -5368,12 +6007,12 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
         box.appendChild(row);
         seg(row.querySelector('.seg'), p[2], () => obj()[key], v => { obj()[key] = v; rebuild(); changed(); }, true);
       } else {
-        const min = p[2], max = p[3], step = p[4], unit = p[5], cond = p[6];
+        const min = p[2], max = p[3], step = p[4], unit = p[5], cond = p[6], show = p[7];
         if (cond && !cond(obj())) continue;
         row.innerHTML = '<label for="sh-' + key + '">' + esc(label) + '</label><div class="ctl"><input type="range" id="sh-' + key + '" min="' + min + '" max="' + max + '" step="' + step + '"><span class="val"></span></div>';
         box.appendChild(row);
         const r = row.querySelector('input'), v = row.querySelector('.val');
-        const fmt = x => (step < 1 ? nf1.format(x) : nf0.format(x)) + unit;
+        const fmt = x => show ? show(x) : (step < 1 ? nf1.format(x) : nf0.format(x)) + unit;
         const cur = Math.min(max, Math.max(min, +obj()[key]));
         r.value = cur; v.textContent = fmt(cur);
         r.addEventListener('input', () => { obj()[key] = +r.value; v.textContent = fmt(obj()[key]); changed(); });
@@ -5386,6 +6025,9 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     const d = SHAPES.find(x => x.id === S.shape.type) || SHAPES[0];
     $('#shapeTitle').textContent = d.id === 'straight' ? 'Écriture droite : choisissez une forme ci-dessus, ou réglez ici la largeur, l’inclinaison et la composition.' : 'Réglages de la forme : ' + d.name;
     paramRows(box, d.params, () => S.shape, buildShapeParams);
+    // anneaux et mosaïque : la composition (miroir, rosace…) ne s'applique pas
+    $('#compThumbs').hidden = d.id === 'rings' || d.id === 'tiles';
+    $('#compParams').hidden = $('#compThumbs').hidden;
     if (d.id === 'free') {
       const wrap = document.createElement('div');
       wrap.className = 'tp-inner';
@@ -5404,6 +6046,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     const rep = S.shape.repeat;
     if (rep === 'mirror') paramRows(box, [['mgap', 'Écart du miroir', -20, 60, 1, ' %']], () => S.shape, buildCompParams);
     else if (rep === 'rosette') paramRows(box, [['copies', 'Copies', 2, 16, 1, ''], ['spread', 'Écartement', 40, 250, 5, ' %']], () => S.shape, buildCompParams);
+    else if (rep === 'kaleido') paramRows(box, [['copies', 'Copies', 4, 16, 2, ''], ['spread', 'Écartement', 40, 250, 5, ' %']], () => S.shape, buildCompParams);
   }
   function updateShapeHint(sc) {
     const h = $('#shapeHint'), t = S.shape.type, info = sc.shapeInfo || {};
@@ -5414,8 +6057,12 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     } else if ((t === 'arc' || t === 'arcInv') && info.clamped) {
       msg = 'Courbure limitée à ' + Math.round(info.angle) + '° pour garder les lettres lisibles. Augmentez la largeur pour courber davantage.';
     } else if (t === 'spiral') msg = 'La phrase part du bord extérieur et s’enroule vers le centre.';
+    else if (t === 'fill') msg = 'La phrase remplit la forme' + (info.rows ? ' en ' + info.rows + ' ligne' + (info.rows > 1 ? 's' : '') : '') + ' : chaque ligne prend la largeur disponible à sa hauteur.';
+    else if (t === 'rings') msg = 'Médaillon : la 1re ligne au centre, les suivantes en anneaux.' + (info.coverage != null && info.coverage < 0.98 ? ' Un anneau ne fait pas tout le tour : choisissez « Complétés » ou allongez sa ligne.' : '');
+    else if (t === 'tiles') msg = 'Mosaïque de ' + (info.tiles || 0) + ' tuile' + ((info.tiles || 0) > 1 ? 's' : '') + ' : une par ligne, ou une par paragraphe si vous séparez par une ligne vide.';
     if (S.shape.repeat === 'mirror') msg += ' Miroir : la phrase est doublée par son reflet (musanna).';
     else if (S.shape.repeat === 'rosette') msg += ' Rosace : la phrase est répétée autour d’un centre.';
+    else if (S.shape.repeat === 'kaleido') msg += ' Kaléidoscope : la phrase rayonne depuis le centre, une copie sur deux en miroir.';
     h.textContent = msg;
   }
   function startDraw() {
@@ -5516,7 +6163,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
   function syncFxWait() { $('#fxWait').hidden = !(fxNeedsClipper() && !window.ClipperLib); }
   function syncTabDots() {
     const fx = S.fx;
-    $('#fxDot').hidden = !(fx.weight !== 0 || ['hollow', 'outline', 'extrude', 'glow', 'marks', 'dots'].some(k => fx[k].on));
+    $('#fxDot').hidden = !(fx.weight !== 0 || ['hollow', 'outline', 'extrude', 'glow', 'counters', 'marks', 'dots'].some(k => fx[k].on));
     $('#frDot').hidden = S.frame.type === 'none';
   }
 
@@ -5541,6 +6188,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     bindRange('frW', () => S.frame.width, v => { S.frame.width = v; }, v => nf1.format(v) + ' %', 'frWVal');
     bindRange('frPad', () => S.frame.pad, v => { S.frame.pad = v; }, v => nf0.format(v) + ' %', 'frPadVal');
     bindCheck('frDouble', () => S.frame.double, v => { S.frame.double = v; });
+    bindCheck('frDash', () => S.frame.dash, v => { S.frame.dash = v; });
     seg($('#frInk'), [[true, 'Comme l’encre'], [false, 'Autre']], () => S.frame.ink, v => { S.frame.ink = v; syncFrameUI(); changed(); });
     bindColor('frColor', () => S.frame.color, v => { S.frame.color = v; S.frame.ink = false; syncFrameUI(); });
     bindCheck('frPanelOn', () => S.frame.panelOn, v => { S.frame.panelOn = v; }, syncFrameUI);
@@ -5584,12 +6232,38 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     bindRange('patOp', () => S.pattern.opacity, v => { S.pattern.opacity = v; }, v => Math.round(v * 100) + ' %', 'patOpVal');
     bindRange('patScale', () => S.pattern.scale, v => { S.pattern.scale = v; }, v => v + ' %', 'patScaleVal');
     bindRange('patW', () => S.pattern.width, v => { S.pattern.width = v; }, v => v + ' %', 'patWVal');
+    bindCheck('patColorful', () => S.pattern.colorful, v => { S.pattern.colorful = v; });
+    const pt = $('#patText');
+    pt.addEventListener('input', () => { S.pattern.text = pt.value.slice(0, 60); changed(); });
     reg(syncPatternUI);
     syncPatternUI();
   }
   function syncPatternUI() {
     syncSeg($('#patThumbs'), S.pattern.type);
     $('#patCtl').hidden = S.pattern.type === 'none';
+    $('#patColorfulRow').hidden = S.pattern.type !== 'nuqat';
+    $('#patTextRow').hidden = S.pattern.type !== 'words';
+    $('#patColorful').checked = !!S.pattern.colorful;
+    if ($('#patText').value !== S.pattern.text) $('#patText').value = S.pattern.text || '';
+  }
+  // couleur par ligne : une pastille par ligne du texte (8 au plus)
+  let lineInkN = -1;
+  function buildLineInkUI(force) {
+    const n = Math.max(1, Math.min(8, S.text.split('\n').length));
+    $('#lineInkOn').checked = S.lineInk.on;
+    $('#lineInkCtl').hidden = !S.lineInk.on;
+    if (n === lineInkN && !force) { $$('#lineInkList input').forEach((inp, i) => { inp.value = S.lineInk.colors[i]; }); return; }
+    lineInkN = n;
+    const box = $('#lineInkList');
+    box.innerHTML = '';
+    for (let i = 0; i < n; i++) {
+      const l = document.createElement('label');
+      l.innerHTML = 'Ligne ' + (i + 1) + ' <input type="color">';
+      const inp = l.querySelector('input');
+      inp.value = S.lineInk.colors[i];
+      inp.addEventListener('input', () => { S.lineInk.colors[i] = inp.value.toLowerCase(); changed(); });
+      box.appendChild(l);
+    }
   }
 
   // ------------------------------------------------------------------ écriture, couleurs, format
@@ -5697,7 +6371,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     updateTextUI(); syncSize(); updateWeightUI();
     for (const fn of REG) fn();
     buildShapeParams(); buildCompParams();
-    updateColorUI(); updateBgUI(); updateFormatUI(); syncPatternUI(); syncFrameUI(); syncFxWait(); syncTabDots();
+    updateColorUI(); updateBgUI(); updateFormatUI(); syncPatternUI(); syncFrameUI(); syncFxWait(); syncTabDots(); buildLineInkUI();
     syncCardSelection();
     renderAllCardsSoon();
     if (tkOpen()) buildTashkilPanel();
@@ -5804,6 +6478,8 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     bindRange('shadowOp', () => S.shadow.opacity, v => { S.shadow.opacity = v; }, v => Math.round(v * 100) + ' %', 'shadowOpVal');
     bindRange('shadowDist', () => S.shadow.dist, v => { S.shadow.dist = v; }, v => v + ' px', 'shadowDistVal');
     bindRange('shadowBlur', () => S.shadow.blur, v => { S.shadow.blur = v; }, v => v + ' px', 'shadowBlurVal');
+    $('#lineInkOn').addEventListener('change', () => { S.lineInk.on = $('#lineInkOn').checked; buildLineInkUI(); changed(); });
+    buildLineInkUI(true);
     updateColorUI();
 
     // effets, cadre
@@ -5909,7 +6585,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
   let textT = 0;
   function textChanged(now) {
     clearTimeout(textT);
-    const run = () => { prepareText(); renderAllCards(); updateTextUI(); scheduleBench(); saveSoon(); record(); renderModelsSoon(); if (tkOpen()) buildTashkilPanel(); };
+    const run = () => { prepareText(); renderAllCards(); updateTextUI(); buildLineInkUI(); scheduleBench(); saveSoon(); record(); renderModelsSoon(); if (tkOpen()) buildTashkilPanel(); };
     if (now) run(); else textT = setTimeout(run, 110);
   }
   txt.value = S.text;
@@ -6658,6 +7334,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     st.fx = mergeDeep(FX_OFF, L.fx || {});
     st.frame = Object.assign(clone(DEFAULT.frame), L.frame || {});
     st.pattern = Object.assign(clone(DEFAULT.pattern), L.pattern || {});
+    st.lineInk = Array.isArray(L.lineInk) ? { on: true, colors: DEFAULT.lineInk.colors.map((d, i) => normHex(L.lineInk[i]) || d) } : clone(DEFAULT.lineInk);
     st.format = Object.assign({}, st.format || DEFAULT.format, { id: L.format || 'auto' });
     st.lineHeight = L.lineHeight || DEFAULT.lineHeight;
     st.kashida = L.kashida || 0;
@@ -6670,7 +7347,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
   function currentLook() {
     return {
       font: S.fontId, wght: S.wght, shape: clone(S.shape), fill: clone(S.fill), bg: S.bg.type === 'image' ? { type: 'none' } : clone(S.bg),
-      stroke: clone(S.stroke), shadow: clone(S.shadow), fx: clone(S.fx), frame: clone(S.frame), pattern: clone(S.pattern),
+      stroke: clone(S.stroke), shadow: clone(S.shadow), fx: clone(S.fx), frame: clone(S.frame), pattern: clone(S.pattern), lineInk: S.lineInk.on ? S.lineInk.colors.slice() : null,
       format: S.format.id === 'custom' ? 'auto' : S.format.id, lineHeight: S.lineHeight, kashida: S.kashida, wordSpace: S.wordSpace, align: S.align, harakat: S.harakat
     };
   }

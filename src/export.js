@@ -159,39 +159,90 @@
     return out;
   }
 
+  // Lignes automatiques : la phrase (sur une seule ligne) est coupée entre les mots pour remplir la forme ;
+  // on essaie de 1 à 9 lignes, réparties selon la largeur de la forme à leur hauteur, et on garde le plus grand texte
+  // (anneaux : une phrase d'une seule ligne donne un mot au centre et deux ou trois anneaux de plus en plus longs)
+  function splitWords(ww, sp, words, tg) {
+    const total = ww.reduce((a, b) => a + b, 0) + sp * (ww.length - 1);
+    const T = tg.reduce((a, b) => a + b, 0), rows = [];
+    let cum = 0, ti = 0, bound = tg[0] / T;
+    for (let i = 0; i < ww.length; i++) {
+      const mid = (cum + ww[i] / 2) / total;
+      while (ti < tg.length - 1 && mid > bound) { ti++; bound += tg[ti] / T; }
+      const r = rows[ti] || (rows[ti] = { words: [], w: 0 });
+      if (r.words.length) r.w += sp;
+      r.words.push(words[i]); r.w += ww[i];
+      cum += ww[i] + sp;
+    }
+    return rows.filter(Boolean);
+  }
+  function wrapForShape(font, text, st, features) {
+    const sh = st.shape, S = SHP();
+    if (!sh || !S || !((sh.type === 'fill' && sh.wrap !== 'off') || sh.type === 'rings')) return text;
+    const src = String(text).replace(/\r/g, '');
+    if (src.trim().includes('\n')) return text;
+    const words = src.trim().split(/\s+/).filter(Boolean);
+    if (words.length < (sh.type === 'rings' ? 3 : 2)) return text;
+    const s = (st.size || 100) / font.upem, opt = { features, wordSpace: st.wordSpace };
+    const ww = words.map(w => K.layoutText(font, w, opt)[0].width * s);
+    const sp = Math.max(0, K.layoutText(font, words[0] + ' ' + words[0], opt)[0].width * s - 2 * ww[0]);
+    if (sh.type === 'rings') {
+      const rest = words.slice(1), nr = rest.length <= 3 ? 1 : rest.length <= 8 ? 2 : 3;
+      return [words[0]].concat(splitWords(ww.slice(1), sp, rest, [1, 1.7, 2.4].slice(0, nr)).map(r => r.words.join(' '))).join('\n');
+    }
+    const h = (font.ascender - font.descender) * s * 0.8;
+    const P = S.fillLoop(sh.fillShape || 'oval', sh.fratio);
+    const fo = { lead: (sh.lead == null ? 18 : sh.lead) / 100, grow: (sh.grow == null ? 40 : sh.grow) / 100, stretch: (sh.stretch == null ? 10 : sh.stretch) / 100 };
+    let best = null;
+    for (let k = 1; k <= Math.min(9, words.length); k++) {
+      const tg = [];
+      for (let i = 0; i < k; i++) { const c = S.chordAt(P, -0.85 + 1.7 * (i + 0.5) / k, 0); tg.push(c ? Math.max(0.05, c[1] - c[0]) : 0.05); }
+      const R = splitWords(ww, sp, words, tg), fit = S.fitRows(R.map(r => ({ w: r.w, h })), P, fo);
+      if (fit && (!best || fit.scale > best.score * 1.03)) best = { score: fit.scale, rows: R };
+    }
+    return best ? best.rows.map(r => r.words.join(' ')).join('\n') : text;
+  }
+
   function buildScene(font, text, st, features, opts) {
     opts = opts || {};
     const size = st.size, fx = st.fx || {};
+    text = wrapForShape(font, text, st, features);
     const fine = opts.quality === 'export';
     const tol = Math.max(0.03, size * (fine ? 0.0006 : 0.0018));
     const t = K.buildText(font, text, { size, lineHeight: st.lineHeight, align: st.align, features, wordSpace: st.wordSpace, color: st.colorFont !== false });
     // 1. forme
-    let cmds = t.cmds, ranges = t.spans.map(s => [s.i0, s.i1]), rings = [], shapeInfo = {};
+    let cmds = t.cmds, ranges = t.spans.map(s => [s.i0, s.i1]), rings = [], shapeInfo = {}, panels = [];
     if (st.shape && SHP() && cmds.length) {
       const r = SHP().applyShape(t.cmds, st.shape, size, t.baseline, t.spans, t);
-      cmds = r.cmds; ranges = r.ranges; rings = r.rings || []; shapeInfo = r.info || {};
+      cmds = r.cmds; ranges = r.ranges; rings = r.rings || []; shapeInfo = r.info || {}; panels = r.panels || [];
     }
     // 2. parties : encre, harakat, points, calques d'une police en couleur
     const wantMarks = !!(fx.marks && fx.marks.on), wantDots = !!(fx.dots && fx.dots.on);
-    const base = [], marks = [], dots = [], colors = new Map();
+    const base = [], marks = [], dots = [], colors = new Map(), lineParts = new Map();
+    const lineInk = Array.isArray(st.lineInk) ? st.lineInk : null;
     t.spans.forEach((s, i) => {
       const r = ranges[i];
       if (!r || r[1] <= r[0]) return;
       const seg = cmds.slice(r[0], r[1]);
       if (s.color) { if (!colors.has(s.color)) colors.set(s.color, []); pushAll(colors.get(s.color), seg); return; }
       if (s.mark && wantMarks) { pushAll(marks, seg); return; }
+      // couleur propre à la ligne
+      const lc = lineInk && lineInk[s.line] ? lineInk[s.line] : null;
+      let target = base;
+      if (lc) { if (!lineParts.has(lc)) lineParts.set(lc, []); target = lineParts.get(lc); }
       if (wantDots && !s.mark) {
         const flags = K.dotContours(K.splitContours(t.cmds, s.i0, s.i1), size);
         if (flags.some(Boolean)) {
+          // une forme peut répéter le glyphe (anneau complété) : les drapeaux se répètent avec lui
           const ctrs = K.splitContours(seg);
-          if (ctrs.length === flags.length) { ctrs.forEach((c, k) => pushAll(flags[k] ? dots : base, c)); return; }
+          if (ctrs.length && ctrs.length % flags.length === 0) { ctrs.forEach((c, k) => pushAll(flags[k % flags.length] ? dots : target, c)); return; }
         }
       }
-      pushAll(base, seg);
+      pushAll(target, seg);
     });
     pushAll(base, rings);
-    const colorKeys = Array.from(colors.keys());
-    let parts = [base, marks, dots].concat(colorKeys.map(k => colors.get(k)));
+    const colorKeys = Array.from(colors.keys()), lineKeys = Array.from(lineParts.keys());
+    let parts = [base, marks, dots].concat(colorKeys.map(k => colors.get(k)), lineKeys.map(k => lineParts.get(k)));
     // 3. composition (miroir, rosace)
     if (st.shape && SHP()) parts = SHP().compose(parts, st.shape);
     // 4. épaisseur
@@ -239,6 +290,11 @@
       L.push({ role: 'extrude', path: ext, fill: paint, box: K.pathBBox(ext) });
     }
     if (band && band.length) L.push({ role: 'outline', path: band, fill: solid(fx.outline.color || '#ffffff') });
+    // contre-formes : l'intérieur des boucles des lettres (ه، و، م…) rempli d'une couleur, sous le contour et l'encre
+    if (fx.counters && fx.counters.on && !empty) {
+      const holes = counterHoles(textAll, tol);
+      if (holes.length) L.push({ role: 'counter', path: holes, fill: solid(fx.counters.color || '#ffffff') });
+    }
     if (sw && !empty) L.push({ role: 'stroke', path: textAll, stroke: { color: st.stroke.color, width: sw * 2 } });
     let hollowW = 0;
     if (fx.hollow && fx.hollow.on) { if (fxReady) hollowW = Math.max(0.4, (fx.hollow.width == null ? 3 : fx.hollow.width) / 100 * size); else pending = true; }
@@ -247,6 +303,9 @@
     if (parts[1].length) L.push({ role: 'marks', path: body(parts[1]), fill: solid(fx.marks.color || '#c62828') });
     if (parts[2].length) L.push({ role: 'dots', path: body(parts[2]), fill: solid(fx.dots.color || '#c62828') });
     colorKeys.forEach((k, i) => { const p = parts[3 + i]; if (p && p.length) L.push({ role: 'color', path: body(p), fill: solid(k) }); });
+    lineKeys.forEach((k, i) => { const p = parts[3 + colorKeys.length + i]; if (p && p.length) L.push({ role: 'text', path: body(p), fill: solid(k) }); });
+    // tuiles colorées de la forme (mosaïque), sous les effets et le texte
+    const PL = panels.filter(p => p.path && p.path.length).map(p => ({ role: 'tile', path: p.path, fill: solid(p.color) }));
     // 6. cadre autour du texte et de ses effets pleins
     const fr = st.frame || {};
     const fm = st.format || { id: 'auto', margin: 40 };
@@ -257,12 +316,12 @@
     if (frameOn && !pageFit) {
       let solidBox = tb;
       for (const l of L) if (l.role === 'extrude' || l.role === 'outline' || l.role === 'stroke') solidBox = boxUnion(solidBox, layerExtent(l));
-      F = ORN().frame({ type: fr.type, pad: (fr.pad == null ? 14 : fr.pad) / 100 * size, width: fw, double: !!fr.double }, solidBox, tol);
+      F = ORN().frame({ type: fr.type, pad: (fr.pad == null ? 14 : fr.pad) / 100 * size, width: fw, double: !!fr.double, dash: !!fr.dash }, solidBox, tol);
       if (F) FL = frameLayers(F, fr, ink);
     }
     // 7. étendue du contenu et plan de travail
     let ex = null;
-    for (const l of FL.concat(L)) ex = boxUnion(ex, layerExtent(l));
+    for (const l of FL.concat(PL, L)) ex = boxUnion(ex, layerExtent(l));
     if (!ex) ex = { x: 0, y: 0, w: 1, h: 1 };
     const cw = ex.w, ch = ex.h;
     let W, H, tx, ty;
@@ -271,10 +330,10 @@
       W = Math.max(1, Math.ceil(cw + 2 * m)); H = Math.max(1, Math.ceil(ch + 2 * m));
     } else { W = fm.w; H = fm.h; }
     tx = (W - cw) / 2 - ex.x; ty = (H - ch) / 2 - ex.y;
-    for (const l of FL.concat(L)) moveLayer(l, tx, ty);
+    for (const l of FL.concat(PL, L)) moveLayer(l, tx, ty);
     if (pageFit) {
       const m = Math.min(W, H) * 0.045;
-      F = ORN().frame({ type: fr.type, width: fw, double: !!fr.double, page: { x: m + fw, y: m + fw, w: W - 2 * (m + fw), h: H - 2 * (m + fw) } }, null, tol);
+      F = ORN().frame({ type: fr.type, width: fw, double: !!fr.double, dash: !!fr.dash, page: { x: m + fw, y: m + fw, w: W - 2 * (m + fw), h: H - 2 * (m + fw) } }, null, tol);
       if (F) FL = frameLayers(F, fr, ink);
     }
     // 8. fond et motif
@@ -285,16 +344,24 @@
     else if (isGrad(bg)) layers.push({ role: 'bg', path: rect, fill: bg, box: { x: 0, y: 0, w: W, h: H } });
     else if (bg.type === 'image') layers.push({ role: 'bg', image: true, path: rect });
     const pt = st.pattern;
-    if (pt && pt.type && pt.type !== 'none' && ORN()) {
+    if (pt && pt.type === 'words') {
+      const P = wordsPattern(font, pt, text, W, H, features);
+      if (P.length) layers.push({ role: 'pattern', path: P, fill: solid(pt.color || '#c9a227'), opacity: pt.opacity == null ? 0.25 : pt.opacity });
+    } else if (pt && pt.type && pt.type !== 'none' && ORN()) {
       const cell = Math.max(8, (pt.scale == null ? 12 : pt.scale) / 100 * Math.min(W, H));
       const P = ORN().pattern(pt.type, W, H, cell);
       if (P && P.cmds.length) {
         const lw = Math.max(0.3, cell * 0.03 * ((pt.width == null ? 100 : pt.width) / 100));
-        layers.push(P.fill ? { role: 'pattern', path: P.cmds, fill: solid(pt.color || '#c9a227'), opacity: pt.opacity == null ? 0.25 : pt.opacity }
-          : { role: 'pattern', path: P.cmds, stroke: { color: pt.color || '#c9a227', width: lw }, opacity: pt.opacity == null ? 0.25 : pt.opacity });
+        const op = pt.opacity == null ? 0.25 : pt.opacity;
+        if (P.multi && pt.colorful) {
+          // points en couleurs : la couleur du motif, puis rouge, bleu, vert et or
+          const cols = [pt.color || '#c9a227', '#C62828', '#1E5AA8', '#2E7D32', '#E0A21B'];
+          P.multi.forEach((m, k) => { if (m.length) layers.push({ role: 'pattern', path: m, fill: solid(cols[k % cols.length]), opacity: op }); });
+        } else layers.push(P.fill ? { role: 'pattern', path: P.cmds, fill: solid(pt.color || '#c9a227'), opacity: op }
+          : { role: 'pattern', path: P.cmds, stroke: { color: pt.color || '#c9a227', width: lw }, opacity: op });
       }
     }
-    pushAll(layers, FL); pushAll(layers, L);
+    pushAll(layers, FL); pushAll(layers, PL); pushAll(layers, L);
     const path = K.transformPath(textAll, 1, tx, ty);
     let cutPath = path;
     if (F && F.rings.length) cutPath = path.concat(FL.find(l => l.role === 'frame').path);
@@ -304,6 +371,37 @@
     // échelle physique : 96 px par pouce, ou largeur réelle imposée (en mm)
     const mmPerPx = st.phys && st.phys.on && st.phys.widthMm > 0 ? st.phys.widthMm / W : PX2MM;
     return { W, H, layers, path, cutPath, box, content, overflow, st, mmPerPx, shapeInfo, empty, pending, bgSolid: bgAverage(bg) };
+  }
+  // trous des lettres (contre-formes) : contours d'orientation contraire à celle des contours extérieurs
+  function counterHoles(c, tol) {
+    const info = K.splitContours(c).map(k => { const p = K.flatten(k, Math.max(0.2, tol * 4))[0] || []; return { c: k, a: p.length >= 6 ? K.polyArea(p) : 0 }; });
+    let sum = 0;
+    for (const x of info) sum += x.a;
+    const sg = sum < 0 ? -1 : 1, out = [];
+    for (const x of info) if (x.a * sg < 0 && Math.abs(x.a) > 1e-6) pushAll(out, x.c);
+    return out;
+  }
+  // fond d'écriture : un mot (ou la phrase) répété en rangées décalées, légèrement incliné une rangée sur deux
+  function wordsPattern(font, pt, text, W, H, features) {
+    let w = String(pt.text || '').trim();
+    if (!w) w = String(text).split('\n').map(l => l.trim()).filter(Boolean)[0] || '';
+    w = w.split(/\s+/).slice(0, 3).join(' ');
+    if (!w) return [];
+    const cell = Math.max(8, (pt.scale == null ? 12 : pt.scale) / 100 * Math.min(W, H));
+    const t = K.buildText(font, w, { size: cell * 0.62, features, color: false });
+    if (!t.cmds.length) return [];
+    const b = K.pathBBox(t.cmds), stepX = b.w + cell * 0.55, stepY = b.h + cell * 0.35;
+    const nx = Math.ceil(W / stepX) + 2, ny = Math.ceil(H / stepY) + 2;
+    if (nx * ny > 900) return [];
+    const out = [], S = SHP();
+    for (let j = -1; j < ny; j++) {
+      const a = (j % 2 ? -6 : 5) * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a);
+      for (let i = -1; i < nx; i++) {
+        const cx = i * stepX + (j % 2 ? stepX / 2 : 0), cy = j * stepY;
+        pushAll(out, S.eachPoint(t.cmds, (x, y) => { const dx = x - b.x - b.w / 2, dy = y - b.y - b.h / 2; return [cx + dx * ca - dy * sa, cy + dx * sa + dy * ca]; }));
+      }
+    }
+    return out;
   }
   // taille maximale pour faire tenir le contenu dans un format fixe
   function fitSize(font, text, st, features, ratio) {
@@ -330,7 +428,7 @@
       return pt.color;
     };
     // calques nommés (Illustrator, Inkscape) ; dans la page : attribut data-layer
-    const ROLE = { bg: 'fond', pattern: 'motif', panel: 'fond-cadre', frame: 'cadre', glow: 'halo', shadow: 'ombre', extrude: 'relief', outline: 'lisere', stroke: 'contour', text: 'texte', marks: 'harakat', dots: 'points', color: 'couleurs' };
+    const ROLE = { bg: 'fond', pattern: 'motif', panel: 'fond-cadre', tile: 'tuiles', counter: 'contre-formes', frame: 'cadre', glow: 'halo', shadow: 'ombre', extrude: 'relief', outline: 'lisere', stroke: 'contour', text: 'texte', marks: 'harakat', dots: 'points', color: 'couleurs' };
     const seen = new Map();
     const label = r => { const b = ROLE[r] || 'calque', n = (seen.get(b) || 0) + 1; seen.set(b, n); return opt.inline ? ` data-layer="${b}"` : ` id="${b}${n > 1 ? '-' + n : ''}"`; };
     for (const l of sc.layers) {
@@ -827,5 +925,5 @@
     return bytes;
   }
 
-  root.KhattExport = { setPngDpi, setJpegDpi, cutPolygons, sceneToCutSVG, buildScene, fitSize, sceneToSVG, drawScene, sceneToPDF, sheetToPDF, sceneToEPS, sceneToDXF, makeZip, gradLine, gradStops, sampleStops, isGrad, hex2rgb, mix, PX2PT, PX2MM };
+  root.KhattExport = { setPngDpi, setJpegDpi, cutPolygons, sceneToCutSVG, buildScene, wrapForShape, fitSize, sceneToSVG, drawScene, sceneToPDF, sheetToPDF, sceneToEPS, sceneToDXF, makeZip, gradLine, gradStops, sampleStops, isGrad, hex2rgb, mix, PX2PT, PX2MM };
 })(typeof self !== 'undefined' ? self : globalThis);

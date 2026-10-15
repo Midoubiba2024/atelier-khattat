@@ -333,18 +333,25 @@
     thumbKey = key;
     const one = K.buildText(hb, chk.text, { size: 40, lineHeight: 1.05, align: 'center' });
     const many = K.buildText(hb, chkM.text, { size: 40, lineHeight: 1.05, align: 'center' });
+    // compositions : une phrase d'une seule ligne est répartie (forme remplie) ou découpée en mots (anneaux, mosaïque)
+    const words = chk.text.split(/\s+/).filter(Boolean).slice(0, 7);
+    const multiText = lines.length > 1 ? chkM.text : words.length > 1 ? words.join('\n') : chk.text;
+    const fillText = lines.length > 1 ? chkM.text : KX.wrapForShape(hb, chk.text, { size: 40, shape: Object.assign({}, S.shape, { type: 'fill', wrap: 'auto' }) });
+    const ringText = lines.length > 1 ? chkM.text : KX.wrapForShape(hb, chk.text, { size: 40, shape: { type: 'rings' } });
+    const compo = { fill: K.buildText(hb, fillText, { size: 40, lineHeight: 1.05, align: 'center' }), rings: K.buildText(hb, ringText, { size: 40, lineHeight: 1.05, align: 'center' }), tiles: K.buildText(hb, multiText, { size: 40, lineHeight: 1.05, align: 'center' }) };
     const shapeOf = (t, type) => {
       if (!t.cmds.length) return [];
       if (type === 'straight' && S.shape.width === 100) return t.cmds;
       const r = KSH.applyShape(t.cmds, Object.assign({}, S.shape, { type, rotate: 0 }), 40, t.baseline, t.spans, t);
       return r.cmds.concat(r.rings);
     };
+    const thumbSrc = id => compo[id] || (id === 'seal' && lines.length > 1 ? many : one);
     for (const d of SHAPES) {
       const art = thumbEls[d.id] && thumbEls[d.id].querySelector('.art');
-      if (art) art.innerHTML = thumbSVG(shapeOf(d.id === 'seal' && lines.length > 1 ? many : one, d.id));
+      if (art) art.innerHTML = thumbSVG(shapeOf(thumbSrc(d.id), d.id));
     }
     // compositions avec la forme courante
-    const base = shapeOf(S.shape.type === 'seal' && lines.length > 1 ? many : one, S.shape.type);
+    const base = shapeOf(thumbSrc(S.shape.type), S.shape.type);
     for (const [id] of REPEATS) {
       const art = compEls[id] && compEls[id].querySelector('.art');
       if (!art) continue;
@@ -362,12 +369,12 @@
         box.appendChild(row);
         seg(row.querySelector('.seg'), p[2], () => obj()[key], v => { obj()[key] = v; rebuild(); changed(); }, true);
       } else {
-        const min = p[2], max = p[3], step = p[4], unit = p[5], cond = p[6];
+        const min = p[2], max = p[3], step = p[4], unit = p[5], cond = p[6], show = p[7];
         if (cond && !cond(obj())) continue;
         row.innerHTML = '<label for="sh-' + key + '">' + esc(label) + '</label><div class="ctl"><input type="range" id="sh-' + key + '" min="' + min + '" max="' + max + '" step="' + step + '"><span class="val"></span></div>';
         box.appendChild(row);
         const r = row.querySelector('input'), v = row.querySelector('.val');
-        const fmt = x => (step < 1 ? nf1.format(x) : nf0.format(x)) + unit;
+        const fmt = x => show ? show(x) : (step < 1 ? nf1.format(x) : nf0.format(x)) + unit;
         const cur = Math.min(max, Math.max(min, +obj()[key]));
         r.value = cur; v.textContent = fmt(cur);
         r.addEventListener('input', () => { obj()[key] = +r.value; v.textContent = fmt(obj()[key]); changed(); });
@@ -380,6 +387,9 @@
     const d = SHAPES.find(x => x.id === S.shape.type) || SHAPES[0];
     $('#shapeTitle').textContent = d.id === 'straight' ? 'Écriture droite : choisissez une forme ci-dessus, ou réglez ici la largeur, l’inclinaison et la composition.' : 'Réglages de la forme : ' + d.name;
     paramRows(box, d.params, () => S.shape, buildShapeParams);
+    // anneaux et mosaïque : la composition (miroir, rosace…) ne s'applique pas
+    $('#compThumbs').hidden = d.id === 'rings' || d.id === 'tiles';
+    $('#compParams').hidden = $('#compThumbs').hidden;
     if (d.id === 'free') {
       const wrap = document.createElement('div');
       wrap.className = 'tp-inner';
@@ -398,6 +408,7 @@
     const rep = S.shape.repeat;
     if (rep === 'mirror') paramRows(box, [['mgap', 'Écart du miroir', -20, 60, 1, ' %']], () => S.shape, buildCompParams);
     else if (rep === 'rosette') paramRows(box, [['copies', 'Copies', 2, 16, 1, ''], ['spread', 'Écartement', 40, 250, 5, ' %']], () => S.shape, buildCompParams);
+    else if (rep === 'kaleido') paramRows(box, [['copies', 'Copies', 4, 16, 2, ''], ['spread', 'Écartement', 40, 250, 5, ' %']], () => S.shape, buildCompParams);
   }
   function updateShapeHint(sc) {
     const h = $('#shapeHint'), t = S.shape.type, info = sc.shapeInfo || {};
@@ -408,8 +419,12 @@
     } else if ((t === 'arc' || t === 'arcInv') && info.clamped) {
       msg = 'Courbure limitée à ' + Math.round(info.angle) + '° pour garder les lettres lisibles. Augmentez la largeur pour courber davantage.';
     } else if (t === 'spiral') msg = 'La phrase part du bord extérieur et s’enroule vers le centre.';
+    else if (t === 'fill') msg = 'La phrase remplit la forme' + (info.rows ? ' en ' + info.rows + ' ligne' + (info.rows > 1 ? 's' : '') : '') + ' : chaque ligne prend la largeur disponible à sa hauteur.';
+    else if (t === 'rings') msg = 'Médaillon : la 1re ligne au centre, les suivantes en anneaux.' + (info.coverage != null && info.coverage < 0.98 ? ' Un anneau ne fait pas tout le tour : choisissez « Complétés » ou allongez sa ligne.' : '');
+    else if (t === 'tiles') msg = 'Mosaïque de ' + (info.tiles || 0) + ' tuile' + ((info.tiles || 0) > 1 ? 's' : '') + ' : une par ligne, ou une par paragraphe si vous séparez par une ligne vide.';
     if (S.shape.repeat === 'mirror') msg += ' Miroir : la phrase est doublée par son reflet (musanna).';
     else if (S.shape.repeat === 'rosette') msg += ' Rosace : la phrase est répétée autour d’un centre.';
+    else if (S.shape.repeat === 'kaleido') msg += ' Kaléidoscope : la phrase rayonne depuis le centre, une copie sur deux en miroir.';
     h.textContent = msg;
   }
   function startDraw() {
@@ -510,7 +525,7 @@
   function syncFxWait() { $('#fxWait').hidden = !(fxNeedsClipper() && !window.ClipperLib); }
   function syncTabDots() {
     const fx = S.fx;
-    $('#fxDot').hidden = !(fx.weight !== 0 || ['hollow', 'outline', 'extrude', 'glow', 'marks', 'dots'].some(k => fx[k].on));
+    $('#fxDot').hidden = !(fx.weight !== 0 || ['hollow', 'outline', 'extrude', 'glow', 'counters', 'marks', 'dots'].some(k => fx[k].on));
     $('#frDot').hidden = S.frame.type === 'none';
   }
 
@@ -535,6 +550,7 @@
     bindRange('frW', () => S.frame.width, v => { S.frame.width = v; }, v => nf1.format(v) + ' %', 'frWVal');
     bindRange('frPad', () => S.frame.pad, v => { S.frame.pad = v; }, v => nf0.format(v) + ' %', 'frPadVal');
     bindCheck('frDouble', () => S.frame.double, v => { S.frame.double = v; });
+    bindCheck('frDash', () => S.frame.dash, v => { S.frame.dash = v; });
     seg($('#frInk'), [[true, 'Comme l’encre'], [false, 'Autre']], () => S.frame.ink, v => { S.frame.ink = v; syncFrameUI(); changed(); });
     bindColor('frColor', () => S.frame.color, v => { S.frame.color = v; S.frame.ink = false; syncFrameUI(); });
     bindCheck('frPanelOn', () => S.frame.panelOn, v => { S.frame.panelOn = v; }, syncFrameUI);
@@ -578,12 +594,38 @@
     bindRange('patOp', () => S.pattern.opacity, v => { S.pattern.opacity = v; }, v => Math.round(v * 100) + ' %', 'patOpVal');
     bindRange('patScale', () => S.pattern.scale, v => { S.pattern.scale = v; }, v => v + ' %', 'patScaleVal');
     bindRange('patW', () => S.pattern.width, v => { S.pattern.width = v; }, v => v + ' %', 'patWVal');
+    bindCheck('patColorful', () => S.pattern.colorful, v => { S.pattern.colorful = v; });
+    const pt = $('#patText');
+    pt.addEventListener('input', () => { S.pattern.text = pt.value.slice(0, 60); changed(); });
     reg(syncPatternUI);
     syncPatternUI();
   }
   function syncPatternUI() {
     syncSeg($('#patThumbs'), S.pattern.type);
     $('#patCtl').hidden = S.pattern.type === 'none';
+    $('#patColorfulRow').hidden = S.pattern.type !== 'nuqat';
+    $('#patTextRow').hidden = S.pattern.type !== 'words';
+    $('#patColorful').checked = !!S.pattern.colorful;
+    if ($('#patText').value !== S.pattern.text) $('#patText').value = S.pattern.text || '';
+  }
+  // couleur par ligne : une pastille par ligne du texte (8 au plus)
+  let lineInkN = -1;
+  function buildLineInkUI(force) {
+    const n = Math.max(1, Math.min(8, S.text.split('\n').length));
+    $('#lineInkOn').checked = S.lineInk.on;
+    $('#lineInkCtl').hidden = !S.lineInk.on;
+    if (n === lineInkN && !force) { $$('#lineInkList input').forEach((inp, i) => { inp.value = S.lineInk.colors[i]; }); return; }
+    lineInkN = n;
+    const box = $('#lineInkList');
+    box.innerHTML = '';
+    for (let i = 0; i < n; i++) {
+      const l = document.createElement('label');
+      l.innerHTML = 'Ligne ' + (i + 1) + ' <input type="color">';
+      const inp = l.querySelector('input');
+      inp.value = S.lineInk.colors[i];
+      inp.addEventListener('input', () => { S.lineInk.colors[i] = inp.value.toLowerCase(); changed(); });
+      box.appendChild(l);
+    }
   }
 
   // ------------------------------------------------------------------ écriture, couleurs, format
@@ -691,7 +733,7 @@
     updateTextUI(); syncSize(); updateWeightUI();
     for (const fn of REG) fn();
     buildShapeParams(); buildCompParams();
-    updateColorUI(); updateBgUI(); updateFormatUI(); syncPatternUI(); syncFrameUI(); syncFxWait(); syncTabDots();
+    updateColorUI(); updateBgUI(); updateFormatUI(); syncPatternUI(); syncFrameUI(); syncFxWait(); syncTabDots(); buildLineInkUI();
     syncCardSelection();
     renderAllCardsSoon();
     if (tkOpen()) buildTashkilPanel();
@@ -798,6 +840,8 @@
     bindRange('shadowOp', () => S.shadow.opacity, v => { S.shadow.opacity = v; }, v => Math.round(v * 100) + ' %', 'shadowOpVal');
     bindRange('shadowDist', () => S.shadow.dist, v => { S.shadow.dist = v; }, v => v + ' px', 'shadowDistVal');
     bindRange('shadowBlur', () => S.shadow.blur, v => { S.shadow.blur = v; }, v => v + ' px', 'shadowBlurVal');
+    $('#lineInkOn').addEventListener('change', () => { S.lineInk.on = $('#lineInkOn').checked; buildLineInkUI(); changed(); });
+    buildLineInkUI(true);
     updateColorUI();
 
     // effets, cadre

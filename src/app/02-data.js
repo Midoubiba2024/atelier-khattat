@@ -75,6 +75,7 @@
     ['all', 'Tous', 'Toutes les compositions : chaque aperçu est dessiné par l’atelier avec votre phrase ou avec l’exemple du modèle.'],
     ['classique', 'Tableaux classiques', 'Les grands genres de la calligraphie : shamsa, levha, musanna, mihrab, qitʿa, page enluminée.'],
     ['medaillon', 'Médaillons et sceaux', 'Compositions circulaires et fermées : médaillons, sceaux, rosaces, étoiles, couronnes.'],
+    ['compositions', 'Compositions', 'La phrase organise tout le tableau : pyramide, œuf, goutte, médaillons en anneaux, mosaïques de tuiles, rosaces en miroir.'],
     ['versets', 'Versets et invocations', 'Pour une invocation ou un verset court, avec des compositions sobres et lisibles.'],
     ['prenoms', 'Prénoms', 'Pour un prénom : cœur, relief, néon, miroir, autocollant, pastel.'],
     ['fetes', 'Fêtes et vœux', 'Cartes de vœux : Aïd, Ramadan, anniversaire, nouvel an, félicitations.'],
@@ -123,6 +124,44 @@
     { font: 'reem-kufi-bold', shape: { type: 'polygon', sides: 6, round: 25, cover: 85, ring: 'single', ringW: 6 }, fill: SOL('#1E3A8A'), bg: SOL('#F6F1E7'), format: 'square' });
   M('medaillon', 'ovale', 'Cartouche ovale', 'Une invocation qui fait le tour d’un ovale à double bordure, blanc sur lapis.', 'الحمد لله رب العالمين الرحمن الرحيم مالك يوم الدين',
     { font: 'aref-ruqaa', shape: { type: 'oval', cover: 90, ratio: 60, ring: 'double', ringW: 6 }, fill: SOL('#FFFFFF'), bg: SOL('#1E3A8A'), format: 'landscape' });
+  // Compositions : la phrase organise tout le tableau
+  M('compositions', 'pyramide', 'Pyramide', 'Les lignes s’empilent dans un triangle, de plus en plus larges vers la base : chacune prend toute la largeur disponible à sa hauteur.', 'وَمَا تَوْفِيقِي\nإِلَّا بِاللَّهِ\nعَلَيْهِ تَوَكَّلْتُ\nوَإِلَيْهِ أُنِيبُ',
+    { font: 'layla-thuluth', shape: { type: 'fill', fillShape: 'tri', grow: 100, stretch: 25, lead: 12, ring: 'single', ringW: 5 }, fill: LIN(GOLD2), bg: SOL('#0B3B2E'), harakat: true, format: 'portrait' });
+  M('compositions', 'oeuf', 'Œuf', '« Avec la difficulté vient la facilité », deux fois, dans un œuf à double bordure : la forme se remplit ligne par ligne.', 'فَإِنَّ مَعَ الْعُسْرِ يُسْرًا\nإِنَّ مَعَ الْعُسْرِ يُسْرًا',
+    { font: 'aref-ruqaa-bold', shape: { type: 'fill', fillShape: 'egg', grow: 60, stretch: 10, lead: 18, ring: 'double', ringW: 5 }, fill: SOL('#1E3A8A'), bg: SOL('#FBF6EA'), harakat: true, format: 'portrait' });
+  M('compositions', 'ovale-rempli', 'Ovale rempli', 'Trois lignes qui épousent un ovale : la ligne du milieu, la plus large, porte le cœur du verset.', 'كُلُّ مَنْ عَلَيْهَا فَانٍ\nوَيَبْقَىٰ وَجْهُ رَبِّكَ\nذُو الْجَلَالِ وَالْإِكْرَامِ',
+    { font: 'amiri-bold', shape: { type: 'fill', fillShape: 'oval', grow: 50, stretch: 10, lead: 16, ring: 'double', ringW: 5 }, fill: LIN(GOLD2), bg: SOL('#14274E'), harakat: true, format: 'landscape' });
+  M('compositions', 'goutte', 'Goutte', 'La forme en poire des compositions ottomanes : le texte se loge dans la partie ronde, la pointe s’élève au-dessus.', 'وَلَقَدْ كَرَّمْنَا\nبَنِي آدَمَ\nوَحَمَلْنَاهُمْ فِي الْبَرِّ وَالْبَحْرِ',
+    { font: 'mirza-bold', shape: { type: 'fill', fillShape: 'drop', grow: 60, stretch: 10, ring: 'single', ringW: 6 }, fill: SOL('#5B3A1E'), bg: LIN(['#F6EBD3', '#E9D3A6']), harakat: true, format: 'portrait' });
+  M('compositions', 'cercle-louanges', 'Cercle de louanges', 'Une longue formule répartie toute seule en lignes qui remplissent un cercle.', 'سبحان الله والحمد لله ولا إله إلا الله والله أكبر',
+    { font: 'aref-ruqaa-bold', shape: { type: 'fill', fillShape: 'circle', wrap: 'auto', grow: 50, stretch: 10, lead: 14, ring: 'single', ringW: 5 }, fill: SOL('#7A1F3D'), bg: SOL('#FFF7EC'), format: 'square' });
+  M('compositions', 'medaillon-noms', 'Médaillon des noms', 'Le nom de Dieu au centre, des noms divins en anneaux concentriques, séparés par des étoiles et des filets d’or.', 'الله\nالرحمن الرحيم الملك القدوس السلام\nالمؤمن المهيمن العزيز الجبار المتكبر الخالق البارئ المصور\nالغفار القهار الوهاب الرزاق الفتاح العليم القابض الباسط الخافض الرافع',
+    { font: 'amiri-bold', shape: { type: 'rings', center: 1, rgap: 14, rlines: 'thin', sep: 'star', ring: 'double', ringW: 5 }, fill: LIN(GOLD2), bg: SOL('#0E1A3A'), format: 'square' });
+  M('compositions', 'couronne-trone', 'Couronne du Trône', 'Le verset du Trône : son début au centre, la suite en trois anneaux qui l’entourent.', 'الله لا إله إلا هو\nالحي القيوم\nلا تأخذه سنة ولا نوم له ما في السماوات وما في الأرض\nمن ذا الذي يشفع عنده إلا بإذنه يعلم ما بين أيديهم وما خلفهم\nولا يحيطون بشيء من علمه إلا بما شاء وسع كرسيه السماوات والأرض ولا يئوده حفظهما وهو العلي العظيم',
+    { font: 'amiri-bold', shape: { type: 'rings', center: 2, rgap: 12, rlines: 'thin', sep: 'dot', ring: 'single', ringW: 5 }, fill: SOL('#14341F'), bg: LIN(['#F6EEDB', '#E8D8B4']), format: 'square' });
+  M('compositions', 'vertus', 'Mosaïque des vertus', 'Un titre, puis une phrase par tuile, aux couleurs pastel : ici, des préceptes du Coran sur le bon comportement.', 'مكارم الأخلاق في القرآن\nوقولوا للناس حسنا\nولا تجسسوا\nوأوفوا الكيل\nادفع بالتي هي أحسن\nولا تمش في الأرض مرحا\nواخفض جناحك للمؤمنين\nوتعاونوا على البر والتقوى\nاعدلوا هو أقرب للتقوى\nوقولوا قولا سديدا\nخذ العفو',
+    { font: 'amiri-bold', shape: { type: 'tiles', tile: 'capsule', title: 'top', palette: 'pastel', tgap: 12, ring: 'single' }, fill: SOL('#3B2A20'), bg: SOL('#FFFDF7'), format: 'portrait' });
+  M('compositions', 'beaux-noms', 'Les beaux noms', 'Des noms divins dans des arcs pastel, le nom de Dieu dans le grand arc du centre.', 'الله\nالرحمن\nالرحيم\nالملك\nالقدوس\nالسلام\nالمؤمن\nالمهيمن\nالعزيز\nالجبار\nالمتكبر\nالخالق\nالبارئ\nالمصور\nالغفار\nالقهار\nالوهاب\nالرزاق\nالفتاح\nالعليم\nالقابض\nالباسط\nالخافض\nالرافع\nالمعز',
+    { font: 'aref-ruqaa-bold', shape: { type: 'tiles', tile: 'arch', title: 'center', palette: 'pastel', fratio: 70, tgap: 10, ring: 'single' }, fill: SOL('#2C2A4A'), bg: SOL('#FFFFFF'), format: 'square' });
+  M('compositions', 'jumelles', 'Cartouches jumelles', 'Deux versets, chacun dans son cartouche : séparez les paragraphes par une ligne vide.', 'الحمد لله الذي له ما في السماوات\nوما في الأرض وله الحمد في الآخرة\nوهو الحكيم الخبير\n\nيعلم ما يلج في الأرض وما يخرج منها\nوما ينزل من السماء وما يعرج فيها\nوهو الرحيم الغفور',
+    { font: 'layla-thuluth', shape: { type: 'tiles', tile: 'capsule', title: 'none', palette: 'none', cols: 1, tgap: 14, ring: 'single' }, fill: SOL('#111111'), bg: SOL('#FFFFFF'), format: 'landscape' });
+  M('compositions', 'rosace-miroir', 'Rosace en miroir', 'La phrase rayonne depuis le centre, une copie sur deux en miroir : une fleur à huit pétales.', 'يا الله',
+    { font: 'layla-thuluth', shape: { repeat: 'kaleido', copies: 8, spread: 75 }, fill: SOL('#FFFFFF'), bg: SOL('#8FA38A'), format: 'square' });
+  M('compositions', 'contre-formes', 'Contre-formes', 'Un mot en grand, l’intérieur de ses boucles en blanc, sur un semis de points du calame en couleurs.', 'هو',
+    { font: 'layla-diwani', fx: { counters: { on: true, color: '#FFFFFF' } }, fill: SOL('#111111'), bg: SOL('#E8D5B0'), pattern: { type: 'nuqat', color: '#111111', opacity: 0.85, scale: 9, colorful: true }, format: 'square' });
+  // Versets : couleurs et fonds
+  M('versets', 'iqra', 'Iqraʾ', '« Lis, au nom de ton Seigneur » : thuluth d’or aux voyelles turquoise, sur nuit.', 'اقْرَأْ\nبِاسْمِ رَبِّكَ',
+    { font: 'layla-thuluth', fill: LIN(GOLD2), bg: RAD(['#14234A', '#060B1C']), fx: { marks: { on: true, color: '#2BB3A8' } }, lineHeight: 1.1, harakat: true, shadow: SHADOW(0.45, 3, 6), format: 'portrait' });
+  M('versets', 'savoir', 'Rabbi zidni ʿilma', '« Seigneur, accrois ma science » en dégradé de nuit étoilée, dans un cercle blanc au filet pointillé.', 'وَقُل\nرَّبِّ زِدْنِي عِلْمًا',
+    { font: 'layla-thuluth', lineHeight: 0.95, fill: LIN(['#3B1E6E', '#6A3FB3', '#2E5FD0', '#22A6D8'], 0), bg: SOL('#F4ECD8'), frame: { type: 'circle', width: 2.6, pad: 10, ink: false, color: '#B9AE96', panelOn: true, panel: '#ffffff', dash: true }, harakat: true, format: 'square' });
+  M('versets', 'fond-partage', 'Fond partagé', 'Diwani noir sur un fond coupé en deux, or et gris bleuté.', 'أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ',
+    { font: 'layla-diwani', fx: { weight: 0.8 }, fill: SOL('#111111'), bg: { type: 'linear', stops: [{ c: '#D9B65C', p: 0 }, { c: '#D9B65C', p: 0.5 }, { c: '#9AA7B6', p: 0.5 }, { c: '#9AA7B6', p: 1 }], angle: 120 }, harakat: true, format: 'landscape' });
+  M('versets', 'nuit-et-or', 'Nuit et or', 'Thuluth blanc sur un fond noir et or, semé de points colorés.', 'لَا إِلَٰهَ إِلَّا أَنتَ سُبْحَانَكَ\nإِنِّي كُنتُ مِنَ الظَّالِمِينَ',
+    { font: 'layla-thuluth', fill: SOL('#FFFFFF'), bg: { type: 'linear', stops: [{ c: '#111111', p: 0 }, { c: '#111111', p: 0.62 }, { c: '#C9A227', p: 0.62 }, { c: '#E3C06A', p: 1 }], angle: 160 }, pattern: { type: 'nuqat', color: '#E3C06A', opacity: 0.9, scale: 8, colorful: true }, shadow: SHADOW(0.5, 3, 6), harakat: true, format: 'landscape' });
+  M('versets', 'bandeau', 'Bandeau émeraude et or', '« Quiconque place sa confiance en Dieu, Il lui suffit » : or sur émeraude, cartouche doré sur nuit.', 'وَمَن يَتَوَكَّلْ عَلَى اللَّهِ فَهُوَ حَسْبُهُ',
+    { font: 'layla-thuluth', fill: LIN(GOLD2), bg: SOL('#0E1A3A'), frame: { type: 'cartouche', width: 1.8, double: true, pad: 16, ink: false, color: '#D4A537', panelOn: true, panel: '#0B4F3C' }, pattern: { type: 'nuqat', color: '#D4A537', opacity: 0.35, scale: 7 }, harakat: true, format: 'banner' });
+  M('versets', 'adam', 'Fond d’écriture', '« Nous avons honoré les fils d’Adam » sur un fond où le mot آدم se répète, à l’encre sépia.', 'وَلَقَدْ كَرَّمْنَا\nبَنِي آدَمَ',
+    { font: 'layla-thuluth', fill: SOL('#2B1D12'), bg: LIN(['#F4E7CC', '#E7D0A3']), pattern: { type: 'words', text: 'آدم', color: '#9C6B2E', opacity: 0.3, scale: 9 }, harakat: true, format: 'portrait' });
   // Versets et invocations
   M('versets', 'basmala-arc', 'Basmala en arc', 'La basmala en arc doré sur noir, pour l’entrée d’une maison ou un frontispice.', 'بسم الله الرحمن الرحيم',
     { font: 'layla-thuluth', shape: { type: 'arc', bend: 80 }, fx: { weight: 0.6 }, fill: LIN(GOLD2), bg: SOL('#0A0A0A'), shadow: SHADOW(0.5, 3, 6), format: 'landscape' });

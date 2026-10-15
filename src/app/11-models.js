@@ -21,6 +21,7 @@
     st.fx = mergeDeep(FX_OFF, L.fx || {});
     st.frame = Object.assign(clone(DEFAULT.frame), L.frame || {});
     st.pattern = Object.assign(clone(DEFAULT.pattern), L.pattern || {});
+    st.lineInk = Array.isArray(L.lineInk) ? { on: true, colors: DEFAULT.lineInk.colors.map((d, i) => normHex(L.lineInk[i]) || d) } : clone(DEFAULT.lineInk);
     st.format = Object.assign({}, st.format || DEFAULT.format, { id: L.format || 'auto' });
     st.lineHeight = L.lineHeight || DEFAULT.lineHeight;
     st.kashida = L.kashida || 0;
@@ -33,7 +34,7 @@
   function currentLook() {
     return {
       font: S.fontId, wght: S.wght, shape: clone(S.shape), fill: clone(S.fill), bg: S.bg.type === 'image' ? { type: 'none' } : clone(S.bg),
-      stroke: clone(S.stroke), shadow: clone(S.shadow), fx: clone(S.fx), frame: clone(S.frame), pattern: clone(S.pattern),
+      stroke: clone(S.stroke), shadow: clone(S.shadow), fx: clone(S.fx), frame: clone(S.frame), pattern: clone(S.pattern), lineInk: S.lineInk.on ? S.lineInk.colors.slice() : null,
       format: S.format.id === 'custom' ? 'auto' : S.format.id, lineHeight: S.lineHeight, kashida: S.kashida, wordSpace: S.wordSpace, align: S.align, harakat: S.harakat
     };
   }

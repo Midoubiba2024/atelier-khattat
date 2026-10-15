@@ -235,7 +235,10 @@
   }
   // outils de l'atelier (barre verticale sur ordinateur, barre du bas sur téléphone)
   const TOOLS = ['texte', 'styles', 'modeles', 'forme', 'couleurs', 'effets', 'cadre', 'fond', 'format'];
-  const SHAPE_GROUPS = [['line', 'Lignes'], ['closed', 'Formes fermées'], ['warp', 'Déformations']];
+  const SHAPE_GROUPS = [['line', 'Lignes'], ['closed', 'Formes fermées'], ['compo', 'Compositions'], ['warp', 'Déformations']];
+  const FILL_OPTS = [['tri', 'Pyramide'], ['oval', 'Ovale'], ['egg', 'Œuf'], ['circle', 'Cercle'], ['capsule', 'Cartouche'], ['drop', 'Goutte'], ['arch', 'Mihrab'], ['diamond', 'Losange'], ['hexagon', 'Hexagone'], ['octagon', 'Octogone'], ['heart', 'Cœur']];
+  const TILE_OPTS = [['capsule', 'Cartouche'], ['arch', 'Arc'], ['round', 'Arrondi'], ['circle', 'Rond'], ['hexagon', 'Hexagone'], ['octagon', 'Octogone'], ['diamond', 'Losange'], ['drop', 'Goutte']];
+  const SEP_OPTS = [['none', 'Aucun'], ['star', 'Étoile'], ['dot', 'Point'], ['diamond', 'Losange']];
   const SHAPES = [
     { id: 'straight', g: 'line', name: 'Droite', params: [] },
     { id: 'arc', g: 'line', name: 'Arc', params: [['bend', 'Courbure', 10, 270, 5, '°']] },
@@ -250,6 +253,9 @@
     { id: 'seal', g: 'closed', name: 'Sceau', params: [['cover', 'Couverture', 30, 95, 1, ' %'], ['ring', 'Bordure', RING_OPTS], ['ringW', 'Épaisseur', 2, 25, 1, ' %', ringW], ['sep', 'Séparateurs', [['none', 'Aucun'], ['star', 'Étoile'], ['dot', 'Point'], ['diamond', 'Losange']]]], hint: 'Sceau : écrivez 2 ou 3 lignes. La 1re suit le haut du cercle, la dernière le bas, celle du milieu reste au centre.' },
     { id: 'heart', g: 'closed', name: 'Cœur', params: [['cover', 'Couverture', 20, 100, 1, ' %'], ['ring', 'Bordure', RING_OPTS], ['ringW', 'Épaisseur', 2, 25, 1, ' %', ringW]] },
     { id: 'polygon', g: 'closed', name: 'Polygone', params: [['sides', 'Côtés', 3, 12, 1, ''], ['round', 'Arrondi', 0, 100, 1, ' %'], ['cover', 'Couverture', 20, 100, 1, ' %'], ['ring', 'Bordure', RING_OPTS], ['ringW', 'Épaisseur', 2, 25, 1, ' %', ringW]] },
+    { id: 'fill', g: 'compo', name: 'Remplir une forme', params: [['fillShape', 'Forme', FILL_OPTS], ['wrap', 'Lignes', [['auto', 'Automatiques'], ['off', 'Comme écrites']]], ['fratio', 'Proportion', 40, 250, 5, ' %'], ['grow', 'Remplissage', 0, 100, 5, ' %'], ['stretch', 'Étirement', 0, 60, 5, ' %'], ['lead', 'Interligne', 0, 80, 1, ' %'], ['ring', 'Bordure', RING_OPTS], ['ringW', 'Épaisseur', 2, 25, 1, ' %', ringW]], hint: 'La phrase remplit la forme ligne par ligne. « Automatiques » coupe une phrase écrite sur une seule ligne ; sinon, vos retours à la ligne sont gardés.' },
+    { id: 'rings', g: 'compo', name: 'Anneaux', params: [['center', 'Lignes au centre', 1, 4, 1, ''], ['rgap', 'Écart', 0, 60, 1, ' %'], ['rfill', 'Anneaux', [['on', 'Complétés'], ['off', 'Tels quels']]], ['rlines', 'Filets', [['none', 'Aucun'], ['thin', 'Fins']]], ['sep', 'Séparateurs', SEP_OPTS], ['ring', 'Bordure', RING_OPTS], ['ringW', 'Épaisseur', 2, 25, 1, ' %', ringW]], hint: 'Médaillon : la 1re ligne (ou les premières) au centre, chaque ligne suivante en anneau autour. Un anneau trop court est complété en répétant sa ligne.' },
+    { id: 'tiles', g: 'compo', name: 'Mosaïque', params: [['tile', 'Tuile', TILE_OPTS], ['title', 'Titre', [['top', 'En haut'], ['center', 'Au centre'], ['none', 'Aucun']]], ['palette', 'Couleurs', [['pastel', 'Pastel'], ['jewel', 'Émaux'], ['earth', 'Terre'], ['gold', 'Or'], ['none', 'Sans']]], ['cols', 'Colonnes', 0, 12, 1, '', null, x => x ? String(x) : 'auto'], ['fratio', 'Proportion', 40, 250, 5, ' %'], ['tgap', 'Écart', 0, 40, 1, ' %'], ['ring', 'Bordure', [['none', 'Aucune'], ['single', 'Filet']]]], hint: 'Chaque ligne devient une tuile ; séparez des paragraphes par une ligne vide pour mettre plusieurs lignes par tuile. La 1re ligne sert de titre.' },
     { id: 'flag', g: 'warp', name: 'Drapeau', params: [['amp', 'Amplitude', 0, 120, 1, ' %'], ['waves', 'Ondulations', 0.5, 5, 0.5, '']] },
     { id: 'bulge', g: 'warp', name: 'Bombé', params: [['intensity', 'Intensité', -80, 150, 1, ' %']] },
     { id: 'dome', g: 'warp', name: 'Dôme', params: [['intensity', 'Intensité', -80, 150, 1, ' %']] },
@@ -258,15 +264,16 @@
     { id: 'cylinder', g: 'warp', name: 'Cylindre', params: [['intensity', 'Courbure', 10, 95, 1, ' %']] },
     { id: 'fisheye', g: 'warp', name: 'Loupe', params: [['intensity', 'Grossissement', -60, 120, 1, ' %']] }
   ];
-  const REPEATS = [['none', 'Simple'], ['mirror', 'Miroir'], ['rosette', 'Rosace']];
-  const FRAMES = [['none', 'Aucun'], ['rect', 'Rectangle'], ['round', 'Arrondi'], ['oval', 'Ovale'], ['circle', 'Cercle'], ['cartouche', 'Cartouche'], ['arch', 'Mihrab'], ['octagon', 'Octogone'], ['hexagon', 'Hexagone'], ['diamond', 'Losange'], ['star8', 'Étoile'], ['drop', 'Goutte'], ['heart', 'Cœur'], ['shield', 'Écu'], ['scallop', 'Festonné']];
-  const PATTERNS = [['none', 'Aucun'], ['stars8', 'Étoiles à 8'], ['stars6', 'Étoiles à 6'], ['hex', 'Nid d’abeille'], ['diamonds', 'Losanges'], ['circles', 'Cercles'], ['chevrons', 'Chevrons'], ['dots', 'Points']];
+  const REPEATS = [['none', 'Simple'], ['mirror', 'Miroir'], ['rosette', 'Rosace'], ['kaleido', 'Kaléidoscope']];
+  const FRAMES = [['none', 'Aucun'], ['rect', 'Rectangle'], ['round', 'Arrondi'], ['oval', 'Ovale'], ['circle', 'Cercle'], ['cartouche', 'Cartouche'], ['arch', 'Mihrab'], ['octagon', 'Octogone'], ['hexagon', 'Hexagone'], ['diamond', 'Losange'], ['star8', 'Étoile'], ['drop', 'Goutte'], ['egg', 'Œuf'], ['triangle', 'Triangle'], ['heart', 'Cœur'], ['shield', 'Écu'], ['scallop', 'Festonné']];
+  const PATTERNS = [['none', 'Aucun'], ['stars8', 'Étoiles à 8'], ['stars6', 'Étoiles à 6'], ['hex', 'Nid d’abeille'], ['diamonds', 'Losanges'], ['circles', 'Cercles'], ['chevrons', 'Chevrons'], ['dots', 'Points'], ['nuqat', 'Points du calame'], ['words', 'Écriture répétée']];
   // effets : réglages [clé, libellé, min, max, pas, unité] ou [clé, libellé, 'color'|'check']
   const FX_UI = [
     { k: 'outline', label: 'Liseré', note: 'bordure détachée autour des lettres, effet autocollant', fields: [['color', 'Couleur', 'color'], ['gap', 'Écart', 0, 15, 0.5, ' %'], ['width', 'Épaisseur', 0.5, 20, 0.5, ' %']] },
     { k: 'extrude', label: 'Relief 3D', note: 'volume en profondeur sous les lettres', fields: [['color', 'Couleur', 'color'], ['depth', 'Profondeur', 1, 40, 0.5, ' %'], ['angle', 'Direction', 0, 355, 5, '°'], ['shade', 'Dégradé d’ombre', 'check']] },
     { k: 'glow', label: 'Néon', note: 'halo lumineux autour des lettres', fields: [['color', 'Couleur', 'color'], ['size', 'Rayonnement', 2, 40, 1, ' %'], ['strength', 'Intensité', 0.1, 1, 0.05, '']] },
     { k: 'hollow', label: 'Lettres creuses', note: 'seul le contour des lettres est tracé', fields: [['width', 'Trait', 0.5, 12, 0.25, ' %']] },
+    { k: 'counters', label: 'Contre-formes', note: 'remplit l’intérieur des boucles des lettres (ه، و، م، ص…)', fields: [['color', 'Couleur', 'color']] },
     { k: 'marks', label: 'Harakat en couleur', note: 'voyelles et chadda d’une autre couleur, comme dans les manuscrits', fields: [['color', 'Couleur', 'color']] },
     { k: 'dots', label: 'Points en couleur', note: 'points des lettres d’une autre couleur', fields: [['color', 'Couleur', 'color']] }
   ];

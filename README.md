@@ -1,17 +1,19 @@
 # Atelier Khattat
 
-Une phrase en arabe, près de 200 styles calligraphiques, 64 modèles de tableaux, le tashkīl, et des fichiers nets à toutes les tailles : SVG, PDF, EPS et DXF en vectoriel, PNG, JPG et WEBP en image.
+Une phrase en arabe, près de 200 styles calligraphiques, 82 modèles de tableaux, le tashkīl, et des fichiers nets à toutes les tailles : SVG, PDF, EPS et DXF en vectoriel, PNG, JPG et WEBP en image.
 
 ## Ce que fait l'atelier
 
 - **195 styles d'écriture** en 12 familles : naskh, thuluth, diwani, ruqʿa, kufi, maghribi, nastaʿlīq, soudani, décoratif, couleur, moderne. Toutes les polices sont sous licence libre.
-- **64 modèles de tableaux** en 10 thèmes : shamsa, levha, musanna, mihrab, sceaux, prénoms, fêtes, mariage, motifs géométriques, découpe…
+- **82 modèles de tableaux** en 10 thèmes : shamsa, levha, musanna, mihrab, sceaux, compositions (pyramide, œuf, goutte, médaillon en anneaux, mosaïque), prénoms, fêtes, mariage, motifs géométriques, découpe…
 - **Tashkīl** : éditeur lettre par lettre, retrait du tashkīl, harakat en couleur, et vocalisation automatique dans Claude.
 - **Mise en forme** :
-  - 20 formes : arc, cercle, sceau, cœur, vague, spirale, loupe… ;
-  - compositions en miroir et en rosace ;
+  - 23 formes : arc, cercle, sceau, cœur, vague, spirale, loupe… ;
+  - compositions par lignes : remplir une forme (pyramide, ovale, œuf, goutte, mihrab…), anneaux concentriques, mosaïque de tuiles colorées ;
+  - répétitions en miroir, en rosace et en kaléidoscope ;
+  - une couleur par ligne, contre-formes colorées ;
   - effets : relief 3D, néon, liseré, lettres creuses ;
-  - 14 cadres, 7 motifs de fond, dégradés.
+  - 16 cadres (dont filet pointillé), 9 motifs de fond (dont points du calame et écriture répétée), dégradés et fonds partagés.
 - **Téléchargements** :
   - SVG, PDF, EPS, DXF (découpe laser ou vinyle) ;
   - PNG jusqu'à ×8 ;

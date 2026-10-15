@@ -3,7 +3,7 @@
   let textT = 0;
   function textChanged(now) {
     clearTimeout(textT);
-    const run = () => { prepareText(); renderAllCards(); updateTextUI(); scheduleBench(); saveSoon(); record(); renderModelsSoon(); if (tkOpen()) buildTashkilPanel(); };
+    const run = () => { prepareText(); renderAllCards(); updateTextUI(); buildLineInkUI(); scheduleBench(); saveSoon(); record(); renderModelsSoon(); if (tkOpen()) buildTashkilPanel(); };
     if (now) run(); else textT = setTimeout(run, 110);
   }
   txt.value = S.text;

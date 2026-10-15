@@ -63,11 +63,13 @@
         const a = Math.max(0, A - 0.3);
         return poly([arcPts(a, 0, 1, -Math.PI / 2, Math.PI / 2), arcPts(-a, 0, 1, Math.PI / 2, 1.5 * Math.PI)]);
       }
+      case 'triangle': { const w = 1.155 * Math.max(1, A); return [0, -1.25, w * 1.08, 0.95, -w * 1.08, 0.95]; }
+      case 'egg': { const o = []; for (let i = 0; i < 240; i++) { const t = -Math.PI / 2 + TAU * i / 240; o.push(0.78 * Math.cos(t) * (1 + 0.2 * Math.sin(t)), Math.sin(t)); } return o; }
       case 'scallop': { const o = []; for (let i = 0; i < 360; i++) { const a = -Math.PI / 2 + TAU * i / 360, r = 1 + 0.045 * Math.cos(18 * (a + Math.PI / 2)); o.push(r * Math.cos(a), r * Math.sin(a)); } return o; }
     }
     return null;
   }
-  const STRETCH = { oval: 1, rect: 1, round: 1, diamond: 1, hexagon: 1, octagon: 1, arch: 1, shield: 1, cartouche: 1 };
+  const STRETCH = { oval: 1, rect: 1, round: 1, diamond: 1, hexagon: 1, octagon: 1, arch: 1, shield: 1, cartouche: 1, triangle: 1 };
 
   // nombre d'enroulement (point dans polygone)
   function inside(p, x, y) {
@@ -129,6 +131,36 @@
     const sh = SH();
     return loopCmds(sh.offsetLoop(loop, b)).concat(loopCmds(sh.offsetLoop(loop, a), true));
   }
+  // filet pointillé : tirets réguliers entre les décalages 0 et lw de la boucle (vers l'extérieur)
+  function dashedRing(loop, lw) {
+    const sh = SH(), P = [];
+    // boucle densifiée pour suivre les courbes
+    for (let i = 0, n = loop.length; i < n; i += 2) {
+      const j = (i + 2) % n, x0 = loop[i], y0 = loop[i + 1], x1 = loop[j], y1 = loop[j + 1];
+      const k = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / Math.max(0.5, lw * 0.6)));
+      for (let t = 0; t < k; t++) P.push(x0 + (x1 - x0) * t / k, y0 + (y1 - y0) * t / k);
+    }
+    const O = sh.offsetLoop(P, lw), n = P.length / 2, cum = [0];
+    for (let i = 1; i <= n; i++) { const a = (i - 1) % n, b = i % n; cum.push(cum[i - 1] + Math.hypot(P[2 * b] - P[2 * a], P[2 * b + 1] - P[2 * a + 1])); }
+    const per = cum[n], np = Math.max(8, Math.round(per / (lw * 4.2))), period = per / np, dash = period * 0.58;
+    const at = (A, s) => {
+      let i = 0;
+      while (i < n && cum[i + 1] < s) i++;
+      const a = i % n, b = (i + 1) % n, f = (s - cum[i]) / ((cum[i + 1] - cum[i]) || 1);
+      return [A[2 * a] + (A[2 * b] - A[2 * a]) * f, A[2 * a + 1] + (A[2 * b + 1] - A[2 * a + 1]) * f];
+    };
+    const out = [];
+    for (let k = 0; k < np; k++) {
+      const s0 = k * period, s1 = s0 + dash, inner = [], outer = [];
+      const steps = Math.max(2, Math.ceil(dash / Math.max(0.5, lw * 0.5)));
+      for (let q = 0; q <= steps; q++) { const s = s0 + (s1 - s0) * q / steps; inner.push(at(P, s)); outer.push(at(O, s)); }
+      out.push(0, inner[0][0], inner[0][1]);
+      for (let q = 1; q < inner.length; q++) out.push(1, inner[q][0], inner[q][1]);
+      for (let q = outer.length - 1; q >= 0; q--) out.push(1, outer[q][0], outer[q][1]);
+      out.push(4);
+    }
+    return out;
+  }
   // inverse les contours polygonaux (M/L/Z) pour creuser une bande
   function reversePolys(c) {
     const out = [];
@@ -166,7 +198,7 @@
       const cx = content.x + content.w / 2, cy = content.y + content.h / 2 - s * fit.yo;
       loop = unit.map((v, i) => i % 2 ? cy + v * s : cx + v * s);
     }
-    const rings = ringOf(loop, 0, lw, tol);
+    const rings = o.dash ? dashedRing(loop, lw) : ringOf(loop, 0, lw, tol);
     let all = rings;
     if (o.double) {
       const g = Math.max(lw * 1.2, 2);
@@ -250,6 +282,22 @@
         for (let x = -s, k = 0; x <= W + s; x += h, k++) c.push(1, x + h, y + (k % 2 ? 0 : h * 0.7));
       }
       return { cmds: c, fill: false };
+    }
+    if (type === 'nuqat') {
+      // losanges (points du calame) semés sur une grille décalée, graine fixe : le motif ne bouge pas d'un rendu à l'autre
+      let seed = 7;
+      const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+      const multi = [[], [], [], [], []], step = s * 0.95;
+      for (let j = -1, y = -step; y <= H + step; j++, y += step * 0.82) {
+        for (let x = (j % 2 ? step / 2 : 0) - step; x <= W + step; x += step) {
+          const cx = x + (rnd() - 0.5) * step * 0.7, cy = y + (rnd() - 0.5) * step * 0.5, r = s * (0.06 + 0.05 * rnd());
+          const a = Math.PI / 4 + (rnd() - 0.5) * 0.6, g = multi[Math.floor(rnd() * 5) % 5];
+          g.push(0, cx + r * Math.cos(a), cy + r * Math.sin(a));
+          for (let q = 1; q < 4; q++) g.push(1, cx + r * Math.cos(a + q * Math.PI / 2), cy + r * Math.sin(a + q * Math.PI / 2));
+          g.push(4);
+        }
+      }
+      return { cmds: [].concat(...multi), fill: true, multi };
     }
     if (type === 'dots') {
       const r = s * 0.11;

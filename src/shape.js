@@ -329,6 +329,226 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Compositions par lignes : remplir une forme, anneaux concentriques, mosaïque de tuiles
+  // ---------------------------------------------------------------------------
+  // lignes du texte : morceaux (spans) de chaque ligne, boîte serrée et ligne de base (null : ligne vide)
+  function lineGroups(c, sp, tinfo) {
+    let n = tinfo && tinfo.lines ? tinfo.lines : 0;
+    for (const s of sp) n = Math.max(n, (s.line || 0) + 1);
+    const G = new Array(n).fill(null);
+    sp.forEach((s, k) => {
+      const L = s.line || 0;
+      let g = G[L];
+      if (!g) g = G[L] = { line: L, idx: [], x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity, lb: tinfo && tinfo.lineBase ? tinfo.lineBase[L] : s.lb };
+      g.idx.push(k);
+      const b = bbox(c.slice(s.i0, s.i1));
+      if (!(b.w || b.h)) return;
+      if (b.x < g.x0) g.x0 = b.x;
+      if (b.y < g.y0) g.y0 = b.y;
+      if (b.x + b.w > g.x1) g.x1 = b.x + b.w;
+      if (b.y + b.h > g.y1) g.y1 = b.y + b.h;
+    });
+    return G.map(g => g && g.x1 > g.x0 && g.y1 > g.y0 ? Object.assign(g, { w: g.x1 - g.x0, h: g.y1 - g.y0 }) : null);
+  }
+  // polygone convexe (sommets en sens horaire à l'écran) aux coins arrondis : somme de Minkowski avec un disque de rayon r
+  function roundPoly(V, r) {
+    const o = [], n = V.length;
+    for (let i = 0; i < n; i++) {
+      const P = V[(i + n - 1) % n], C = V[i], N = V[(i + 1) % n];
+      const a0 = Math.atan2(-(C[0] - P[0]), C[1] - P[1]);
+      let a1 = Math.atan2(-(N[0] - C[0]), N[1] - C[1]);
+      while (a1 < a0) a1 += TAU;
+      const k = Math.max(1, Math.ceil((a1 - a0) / (Math.PI / 24)));
+      for (let j = 0; j <= k; j++) { const a = a0 + (a1 - a0) * j / k; o.push(C[0] + r * Math.cos(a), C[1] + r * Math.sin(a)); }
+    }
+    return o;
+  }
+  // contours à remplir : hauteur 2, centrés, sens horaire à l'écran ; ratio > 100 : plus haut (plus étroit)
+  const FILL_KINDS = ['tri', 'oval', 'egg', 'circle', 'capsule', 'drop', 'arch', 'diamond', 'hexagon', 'octagon', 'heart', 'rect', 'round'];
+  function fillLoop(kind, ratio) {
+    const k = Math.min(3, Math.max(0.33, (ratio || 100) / 100));
+    let p = [];
+    const ell = (A, f) => { for (let i = 0; i < 240; i++) { const t = TAU * i / 240; p.push(A * Math.cos(t) * (f ? f(t) : 1), Math.sin(t)); } };
+    switch (kind) {
+      case 'tri': p = roundPoly([[0, -1], [1.1547 / k, 1], [-1.1547 / k, 1]], 0.05); break;
+      case 'diamond': p = roundPoly([[0, -1], [1.2 / k, 0], [0, 1], [-1.2 / k, 0]], 0.04); break;
+      case 'hexagon': { const A = 1.1547 / k; p = roundPoly([[-A / 2, -1], [A / 2, -1], [A, 0], [A / 2, 1], [-A / 2, 1], [-A, 0]], 0.04); break; }
+      case 'octagon': {
+        const R = 1 / Math.cos(Math.PI / 8), V = [];
+        for (let j = 0; j < 8; j++) { const a = -Math.PI / 2 - Math.PI / 8 + j * Math.PI / 4; V.push([R * Math.cos(a) / k, R * Math.sin(a)]); }
+        p = roundPoly(V, 0.03); break;
+      }
+      case 'rect': { const A = 1.4 / k; p = roundPoly([[-A, -1], [A, -1], [A, 1], [-A, 1]], 0.03); break; }
+      case 'round': { const A = 1.4 / k, r = 0.34; p = roundPoly([[-A + r, -1 + r], [A - r, -1 + r], [A - r, 1 - r], [-A + r, 1 - r]], r); break; }
+      case 'circle': ell(1 / k); break;
+      case 'egg': ell(0.74 / k, t => 1 + 0.2 * Math.sin(t)); break;
+      case 'capsule': {
+        const a = Math.max(0, 3.2 / k - 1);
+        for (let i = 0; i <= 60; i++) { const t = -Math.PI / 2 + Math.PI * i / 60; p.push(a + Math.cos(t), Math.sin(t)); }
+        for (let i = 0; i <= 60; i++) { const t = Math.PI / 2 + Math.PI * i / 60; p.push(-a + Math.cos(t), Math.sin(t)); }
+        break;
+      }
+      case 'drop': {
+        const T = 1 + 1.6 * k, al = Math.acos(1 / T);
+        p.push(0, -T);
+        for (let i = 0; i <= 120; i++) { const t = -Math.PI / 2 + al + (TAU - 2 * al) * i / 120; p.push(Math.cos(t), Math.sin(t)); }
+        break;
+      }
+      case 'arch': {
+        const O = root.KhattOrn;
+        if (O) { p = O.unitShape('arch', 0.8 / k); break; }
+        ell(0.8 / k); break;
+      }
+      case 'heart': p = HEART.pts.map((v, i) => i % 2 ? v - HEART.cy : v); break;
+      default: ell(1.45 / k);
+    }
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (let i = 0; i < p.length; i += 2) {
+      if (p[i] < x0) x0 = p[i]; if (p[i] > x1) x1 = p[i];
+      if (p[i + 1] < y0) y0 = p[i + 1]; if (p[i + 1] > y1) y1 = p[i + 1];
+    }
+    const s = 2 / (y1 - y0), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+    return densify(p.map((v, i) => i % 2 ? (v - cy) * s : (v - cx) * s), 0.04);
+  }
+  // même contour, élargi ou resserré pour une proportion largeur / hauteur donnée
+  function loopAspect(P, aspect) {
+    let x0 = Infinity, x1 = -Infinity;
+    for (let i = 0; i < P.length; i += 2) { if (P[i] < x0) x0 = P[i]; if (P[i] > x1) x1 = P[i]; }
+    const k = 2 * aspect / Math.max(1e-6, x1 - x0);
+    return P.map((v, i) => i % 2 ? v : v * k);
+  }
+  // intervalle horizontal intérieur d'un contour à la hauteur y : celui qui contient xc, sinon le plus large
+  function chordAt(P, y, xc) {
+    const xs = [];
+    for (let i = 0, n = P.length; i < n; i += 2) {
+      const j = (i + 2) % n, ya = P[i + 1], yb = P[j + 1];
+      if ((ya <= y && yb > y) || (yb <= y && ya > y)) xs.push(P[i] + (P[j] - P[i]) * (y - ya) / (yb - ya));
+    }
+    if (xs.length < 2) return null;
+    xs.sort((a, b) => a - b);
+    let best = null;
+    for (let k = 0; k + 1 < xs.length; k += 2) {
+      const a = xs[k], b = xs[k + 1];
+      if (a <= xc && xc <= b) return [a, b];
+      if (!best || b - a > best[1] - best[0]) best = [a, b];
+    }
+    return best;
+  }
+  // cordes échantillonnées sur toute la hauteur : band(ya, yb, m) = intervalle commun à la bande, marge m comprise
+  function chordTable(P, xc, n) {
+    let y0 = Infinity, y1 = -Infinity;
+    for (let i = 1; i < P.length; i += 2) { if (P[i] < y0) y0 = P[i]; if (P[i] > y1) y1 = P[i]; }
+    const L = new Float64Array(n + 1), R = new Float64Array(n + 1), H = y1 - y0;
+    for (let k = 0; k <= n; k++) {
+      const y = Math.min(y1 - H * 1e-6, Math.max(y0 + H * 1e-6, y0 + H * k / n)), c = chordAt(P, y, xc);
+      L[k] = c ? c[0] : NaN; R[k] = c ? c[1] : NaN;
+    }
+    return {
+      y0, y1,
+      band(ya, yb, m) {
+        if (ya < y0 - 1e-9 || yb > y1 + 1e-9) return null;
+        const ka = Math.max(0, Math.floor((ya - y0) / H * n)), kb = Math.min(n, Math.ceil((yb - y0) / H * n));
+        let l = -Infinity, r = Infinity;
+        for (let k = ka; k <= kb; k++) { if (isNaN(L[k])) return null; if (L[k] > l) l = L[k]; if (R[k] < r) r = R[k]; }
+        l += m; r -= m;
+        return r > l ? [l, r] : null;
+      }
+    };
+  }
+  // place des lignes (boîtes w × h) dans un contour : chaque ligne remplit la largeur disponible à sa hauteur.
+  // o = { lead : écart entre lignes, grow : 0..1 (une ligne courte peut grandir jusqu'à ×4), stretch : 0..1 (étirement
+  // horizontal permis), pad : marge intérieure } ; écarts et marges en fraction de la hauteur moyenne des lignes.
+  // Renvoie { rows : [{ y (haut), s (échelle), sx (étirement), cx (centre) }], scale : échelle moyenne } en unités du contour
+  function fitRows(rows, P, o) {
+    o = o || {};
+    const n = rows.length;
+    if (!n) return null;
+    let x0 = Infinity, x1 = -Infinity;
+    for (let i = 0; i < P.length; i += 2) { if (P[i] < x0) x0 = P[i]; if (P[i] > x1) x1 = P[i]; }
+    const T = chordTable(P, (x0 + x1) / 2, 480), H0 = T.y1 - T.y0;
+    const grow = 1 + 3 * Math.min(1, Math.max(0, o.grow || 0));
+    const st = Math.min(1, Math.max(0, o.stretch || 0)), sxMin = 1 / (1 + st / 2), sxMax = 1 + st;
+    const lead = o.lead == null ? 0.18 : o.lead, padK = o.pad == null ? 0.14 : o.pad;
+    let al = 0.5;
+    const place = s => {
+      let hs = 0;
+      for (let i = 0; i < n; i++) hs += s[i] * rows[i].h;
+      const hm = hs / n, G = lead * hm, m = padK * hm, H = H0 - 2 * m, tot = hs + G * (n - 1);
+      let y = T.y0 + m + (H - tot) * al;
+      const out = [];
+      let ok = tot <= H + 1e-9;
+      for (let i = 0; i < n; i++) {
+        const hh = s[i] * rows[i].h, ch = T.band(y, y + hh, m);
+        out.push({ y, hh, ch });
+        if (!ch) ok = false;
+        y += hh + G;
+      }
+      return { out, ok };
+    };
+    function lay(sig) {
+      const s = rows.map(() => sig);
+      for (let it = 0; it < 16; it++) {
+        const { out } = place(s);
+        let diff = 0;
+        for (let i = 0; i < n; i++) {
+          const ch = out[i].ch, cw = ch ? ch[1] - ch[0] : 0;
+          const ns = ch ? Math.min(sig * grow, cw / (rows[i].w * sxMin)) : s[i] * 0.8;
+          diff = Math.max(diff, Math.abs(ns - s[i]) / sig);
+          s[i] = it < 3 ? ns : 0.5 * (s[i] + ns);
+        }
+        if (diff < 1e-3) break;
+      }
+      // contrôle final : chaque ligne tient dans sa corde
+      const { out, ok } = place(s);
+      let good = ok;
+      const res = out.map((q, i) => {
+        const cw = q.ch ? q.ch[1] - q.ch[0] : 0, nat = s[i] * rows[i].w;
+        let sx = nat > cw ? cw / nat : Math.min(sxMax, cw / nat);
+        if (sx < sxMin * 0.999) good = false;
+        sx = Math.max(sxMin, sx);
+        return { y: q.y, s: s[i], sx, cx: q.ch ? (q.ch[0] + q.ch[1]) / 2 : (x0 + x1) / 2 };
+      });
+      return { ok: good, rows: res };
+    }
+    const solve = () => {
+      let lo = 0, hi = H0 / Math.max(1e-9, Math.min(...rows.map(r => r.h))), best = null;
+      const top = lay(hi);
+      if (top.ok) best = top;
+      else {
+        for (let it = 0; it < 34; it++) {
+          const mid = (lo + hi) / 2, r = lay(mid);
+          if (r.ok) { lo = mid; best = r; } else hi = mid;
+        }
+      }
+      if (!best) best = lay(Math.max(lo, hi * 1e-3));
+      best.scale = best.rows.reduce((a, r) => a + r.s, 0) / n || 1;
+      return best;
+    };
+    // centré d'abord ; un autre alignement n'est retenu que s'il agrandit nettement le texte (pyramide, goutte…)
+    let win = solve();
+    for (const a of o.align == null ? [1, 0.75, 0.25, 0] : []) {
+      al = a;
+      const r = solve();
+      if (r.scale > win.scale * 1.02) win = r;
+    }
+    if (o.align != null) { al = o.align; win = solve(); }
+    return { rows: win.rows, scale: win.scale };
+  }
+  // couleurs des tuiles (mosaïque) ; accent : tuile du titre placée au centre
+  const PALETTES = {
+    pastel: { tiles: ['#F6D5C8', '#D6E7CF', '#F8E6B3', '#D2E2F1', '#E8D7EC', '#F2D2D9', '#D3ECE5', '#FBE2C6'], accent: '#EED9A0' },
+    jewel: { tiles: ['#1F5F8B', '#7A1F3D', '#1F6B4F', '#4B2E83', '#0F7173', '#8C4A12'], accent: '#B8892B' },
+    earth: { tiles: ['#D9C29E', '#C49A72', '#E6D5B8', '#B07F5A', '#D1B48C', '#E9DCC4'], accent: '#9C6B3C' },
+    gold: { tiles: ['#F1DFA8', '#E8CF86', '#F6E8C1'], accent: '#D4A537' },
+    none: { tiles: [], accent: '' }
+  };
+  function shade(hex, t) {
+    const h = String(hex).replace('#', ''), n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16) || 0;
+    const f = v => Math.round(v * (1 - t)).toString(16).padStart(2, '0');
+    return '#' + f((n >> 16) & 255) + f((n >> 8) & 255) + f(n & 255);
+  }
+
+  // ---------------------------------------------------------------------------
   // Application d'une forme
   // ---------------------------------------------------------------------------
   // shape = { type, bend, cover, side, spin, ring, ringW, height, ratio, amp, waves, intensity, gap, free, flip,
@@ -360,7 +580,7 @@
     const outerK = 1.25;
     const gapR = Hh * 0.12, ringW = Math.max(1, Hh * (sh.ringW || 8) / 100);
     let f = null, frame = null, perSpan = null;
-    const info = {};
+    const info = {}, panels = [];
     if (type === 'arc' || type === 'arcInv' || type === 'circle') {
       let ang, down = type === 'arcInv';
       if (type === 'circle') { ang = TAU * Math.min(1, Math.max(0.2, (sh.cover || 100) / 100)); down = sh.side === 'bottom'; }
@@ -462,6 +682,174 @@
         const rr = (R + (up0 - dn0) / 2 + R + lift + (dn1 - up1) / 2) / 2, os = lineH * 0.16;
         extra.push(ornament(sh.sep, cx - rr, cy, os), ornament(sh.sep, cx + rr, cy, os));
       }
+    } else if (type === 'fill') {
+      // remplir une forme : chaque ligne occupe la largeur de la forme à sa hauteur
+      const G = lineGroups(c, sp, tinfo).filter(Boolean);
+      const P = fillLoop(sh.fillShape || 'oval', sh.fratio);
+      const R = fitRows(G.map(g => ({ w: g.w, h: g.h })), P, { lead: (sh.lead == null ? 18 : sh.lead) / 100, grow: (sh.grow == null ? 40 : sh.grow) / 100, stretch: (sh.stretch == null ? 10 : sh.stretch) / 100 });
+      if (R) {
+        const Q = 1 / R.scale, fns = new Map();
+        let hm = 0;
+        G.forEach((g, i) => {
+          const r = R.rows[i], xm = (g.x0 + g.x1) / 2;
+          hm += r.s * Q * g.h / G.length;
+          const fn = (x, y) => [(r.cx + (x - xm) * r.s * r.sx) * Q, (r.y + (y - g.y0) * r.s) * Q];
+          for (const k of g.idx) fns.set(k, fn);
+        });
+        perSpan = (part, s, k) => { const fn = fns.get(k); return fn ? eachPoint(part, fn) : part; };
+        info.rows = G.length;
+        if (sh.ring && sh.ring !== 'none') {
+          const PQ = P.map(v => v * Q), w = Math.max(1, hm * (sh.ringW || 8) / 100 * 1.2), g0 = hm * 0.04;
+          extra.push(band(offsetLoop(PQ, g0 + w), offsetLoop(PQ, g0)));
+          if (sh.ring === 'double') extra.push(band(offsetLoop(PQ, g0 + w * 2.6), offsetLoop(PQ, g0 + w * 2)));
+        }
+      }
+    } else if (type === 'rings') {
+      // médaillon : les premières lignes au centre, les suivantes en anneaux concentriques
+      const G = lineGroups(c, sp, tinfo).filter(Boolean);
+      const nc = Math.max(1, Math.min(G.length, Math.round(sh.center || 1)));
+      const C = G.slice(0, nc), RL = G.slice(nc);
+      let bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity, hRef = 0;
+      for (const g of C) { bx0 = Math.min(bx0, g.x0); by0 = Math.min(by0, g.y0); bx1 = Math.max(bx1, g.x1); by1 = Math.max(by1, g.y1); hRef = Math.max(hRef, g.h); }
+      const bcx = (bx0 + bx1) / 2, bcy = (by0 + by1) / 2;
+      // rayon du bloc central : son point le plus éloigné du centre
+      let rC = 0;
+      for (const g of C) for (const k of g.idx) eachPoint(c.slice(sp[k].i0, sp[k].i1), (x, y) => { const d = Math.hypot(x - bcx, y - bcy); if (d > rC) rC = d; return [x, y]; });
+      rC *= 1.04;
+      const gap = (sh.rgap == null ? 14 : sh.rgap) / 100 * hRef, sepOn = !!(sh.sep && sh.sep !== 'none');
+      const lines = sh.rlines === 'thin', lw = Math.max(0.6, hRef * 0.035);
+      const fns = new Map();
+      for (const g of C) for (const k of g.idx) fns.set(k, part => eachPoint(part, (x, y) => [x - bcx, y - bcy]));
+      let Pr = rC, prevT = hRef * 0.5, cover = 1;
+      RL.forEach((g, j) => {
+        if (lines) extra.push(ring(0, 0, Pr + gap * 0.5 - lw / 2, lw));
+        const dUp = Math.max(1e-6, g.lb - g.y0), dDn = Math.max(0, g.y1 - g.lb), th = dUp + dDn, w = g.w;
+        const inner = Pr + gap, sepW = (sepOn ? 1.1 : 0.45) * th;
+        const cap = (j === 0 ? hRef * 0.55 : prevT * 1.15) / th;
+        const den1 = w + sepW - TAU * dDn;
+        let s = den1 > 0.08 * (w + sepW) ? TAU * inner / den1 : Infinity, m = 1;
+        if (s > cap) {
+          if (sh.rfill === 'off') s = cap;
+          else {
+            m = Math.max(1, Math.ceil(TAU * (inner + cap * dDn) / (cap * (w + sepW))));
+            const den = m * (w + sepW) - TAU * dDn;
+            s = den > 0 ? TAU * inner / den : cap;
+          }
+        }
+        const R = inner + s * dDn, fr = circleFrame(0, 0, R, 0, false, 0), xm = (g.x0 + g.x1) / 2, step = (w + sepW) * s;
+        cover = Math.min(cover, m * step / (TAU * R));
+        for (const k of g.idx) fns.set(k, (part, span) => {
+          const adj = { lb: 0, raised: span.raised, mark: span.mark };
+          let o = [];
+          for (let q = 0; q < m; q++) o = o.concat(mapSpanAlong(eachPoint(part, (x, y) => [(x - xm) * s + q * step, (y - g.lb) * s]), adj, fr, 0, size * s, seg, rigid));
+          return o;
+        });
+        if (sepOn) {
+          const rr = R + s * (dUp - dDn) / 2, os = th * s * 0.2;
+          for (let q = 0; q < m; q++) { const a = (q + 0.5) * step / R; extra.push(ornament(sh.sep, rr * Math.sin(a), -rr * Math.cos(a), os)); }
+        }
+        Pr = R + s * dUp; prevT = th * s;
+      });
+      info.coverage = cover;
+      if (sh.ring && sh.ring !== 'none') {
+        const rw = Math.max(1, hRef * (sh.ringW || 8) / 100), r0 = Pr + gap * 0.8;
+        extra.push(ring(0, 0, r0, rw));
+        if (sh.ring === 'double') extra.push(ring(0, 0, r0 + rw * 2.2, rw * 0.5));
+      }
+      perSpan = (part, s, k) => { const fn = fns.get(k); return fn ? fn(part, s) : part; };
+    } else if (type === 'tiles') {
+      // mosaïque : chaque ligne (ou chaque paragraphe, s'il y a des lignes vides) devient une tuile ; la 1re peut servir de titre
+      const GL = lineGroups(c, sp, tinfo);
+      const fi = GL.findIndex(Boolean);
+      let li = GL.length - 1;
+      while (li > 0 && !GL[li]) li--;
+      let para = false;
+      for (let i = Math.max(0, fi); i <= li; i++) if (!GL[i]) { para = true; break; }
+      let blocks = [];
+      if (para) { let cur = []; for (const g of GL) { if (g) cur.push(g); else if (cur.length) { blocks.push(cur); cur = []; } } if (cur.length) blocks.push(cur); }
+      else blocks = GL.filter(Boolean).map(g => [g]);
+      const tmode = blocks.length > 1 ? (sh.title || 'top') : 'none';
+      const title = tmode !== 'none' ? blocks.shift() : null;
+      const kind = sh.tile || 'capsule';
+      const TP = fillLoop(kind === 'cartouche' ? 'capsule' : kind, sh.fratio);
+      let tx0 = Infinity, tx1 = -Infinity;
+      for (let i = 0; i < TP.length; i += 2) { if (TP[i] < tx0) tx0 = TP[i]; if (TP[i] > tx1) tx1 = TP[i]; }
+      const asp = (tx1 - tx0) / 2;
+      const fopt = { lead: 0.14, grow: 1, stretch: 0.15, pad: 0.2 };
+      const fits = blocks.map(b => fitRows(b.map(g => ({ w: g.w, h: g.h })), TP, fopt));
+      const scs = fits.map(f => f ? f.scale : 0).filter(v => v > 0).sort((a, b) => a - b);
+      const med = scs.length ? scs[Math.floor(scs.length / 2)] : 1;
+      const T = 2 / med, cw = asp * T, gp = (sh.tgap == null ? 10 : sh.tgap) / 100 * T;
+      const n = blocks.length, center = tmode === 'center';
+      const gridOf = cols => {
+        let cs = 0;
+        if (center) cs = cols % 2 ? (cols >= 7 ? 3 : 1) : 2;
+        let rows = Math.max(1, Math.ceil((n + cs * cs) / cols));
+        if (center) { if (rows < cs) rows = cs; if ((rows - cs) % 2) rows++; }
+        return { cols, rows, cs, empty: rows * cols - cs * cs - n, W: cols * cw + (cols - 1) * gp, H: rows * T + (rows - 1) * gp };
+      };
+      let grid;
+      if (sh.cols > 0) grid = gridOf(Math.max(center ? 2 : 1, Math.round(sh.cols)));
+      else {
+        const target = tmode === 'top' ? 1.25 : 1.05;
+        for (let cols = center ? 2 : 1; cols <= Math.max(center ? 2 : 1, Math.min(12, n)); cols++) {
+          const g = gridOf(cols), e = Math.abs(Math.log(g.W / g.H / target)) + 0.06 * g.empty;
+          if (!grid || e < grid.e - 1e-9) grid = Object.assign(g, { e });
+        }
+      }
+      // cases dans l'ordre de lecture (de droite à gauche), sans le bloc central réservé au titre
+      const r0 = (grid.rows - grid.cs) / 2, c0 = (grid.cols - grid.cs) / 2, cells = [];
+      for (let r = 0; r < grid.rows && cells.length < n; r++) {
+        const row = [];
+        for (let q = 0; q < grid.cols; q++) {
+          if (center && r >= r0 && r < r0 + grid.cs && q >= c0 && q < c0 + grid.cs) continue;
+          row.push(q);
+        }
+        const take = row.slice(0, n - cells.length);
+        // dernière rangée incomplète : centrée
+        const shift = take.length < row.length && cells.length + take.length === n ? (row.length - take.length) / 2 : 0;
+        for (const q of take) cells.push({ r, q: q + shift, x: (grid.cols - 1 - (q + shift)) * (cw + gp) + cw / 2, y: r * (T + gp) + T / 2 });
+      }
+      const pal = PALETTES[sh.palette] || PALETTES.pastel, fns = new Map();
+      const tileRing = sh.ring && sh.ring !== 'none', rw = T * 0.028;
+      const place = (b, f, cx, cy, k0) => b.forEach((g, i) => {
+        const rr = f.rows[i], xm = (g.x0 + g.x1) / 2;
+        const fn = (x, y) => [cx + (rr.cx + (x - xm) * rr.s * rr.sx) * k0, cy + (rr.y + (y - g.y0) * rr.s) * k0];
+        for (const k of g.idx) fns.set(k, fn);
+      });
+      const tileLoop = (L, cx, cy, k0) => L.map((v, i) => i % 2 ? cy + v * k0 : cx + v * k0);
+      blocks.forEach((b, t) => {
+        const f = fits[t], cell = cells[t];
+        if (!f || !cell) return;
+        place(b, f, cell.x, cell.y, T / 2 * Math.min(1, med * 1.15 / f.scale));
+        const L = tileLoop(TP, cell.x, cell.y, T / 2);
+        const col = pal.tiles.length ? pal.tiles[Math.round(cell.q + 2 * cell.r) % pal.tiles.length] : null;
+        if (col) panels.push({ path: loopToCmds(L), color: col });
+        if (tileRing) { const B = band(offsetLoop(L, rw), L); if (col) panels.push({ path: B, color: shade(col, 0.35) }); else extra.push(B); }
+      });
+      if (title) {
+        const tf = b => fitRows(b.map(g => ({ w: g.w, h: g.h })), b === title ? TL : TP, fopt);
+        let TL, cx, cy, k0, Wt, Ht;
+        if (center) {
+          Wt = grid.cs * cw + (grid.cs - 1) * gp; Ht = grid.cs * T + (grid.cs - 1) * gp;
+          TL = loopAspect(TP, Wt / Ht);
+          cx = (grid.cols - 1 - (c0 + (grid.cs - 1) / 2)) * (cw + gp) + cw / 2; cy = (r0 + (grid.cs - 1) / 2) * (T + gp) + T / 2;
+        } else {
+          Wt = grid.W; Ht = T * 1.35;
+          TL = loopAspect(fillLoop('rect', 100), Wt / Ht);
+          cx = grid.W / 2; cy = -gp * 1.4 - Ht / 2;
+        }
+        k0 = Ht / 2;
+        const f = tf(title);
+        if (f) {
+          place(title, f, cx, cy, k0);
+          const L = tileLoop(TL, cx, cy, k0);
+          if (center && pal.accent) panels.push({ path: loopToCmds(L), color: pal.accent });
+          if (center && tileRing) { const B = band(offsetLoop(L, rw * 1.3), L); if (pal.accent) panels.push({ path: B, color: shade(pal.accent, 0.35) }); else extra.push(B); }
+        }
+      }
+      info.tiles = n;
+      perSpan = (part, s, k) => { const fn = fns.get(k); return fn ? eachPoint(part, fn) : part; };
     } else if (type === 'bridge') {
       const A = Hh * (sh.height == null ? 50 : sh.height) / 100;
       f = (x, y) => { const u = (x - xc) / (W / 2); return [x, y - A * (1 - u * u)]; };
@@ -588,10 +976,10 @@
       }
     }
     const out = [], ranges = [];
-    for (const s of sp) {
-      const part = c.slice(s.i0, s.i1);
+    for (let k = 0; k < sp.length; k++) {
+      const s = sp[k], part = c.slice(s.i0, s.i1);
       let m;
-      if (perSpan) m = perSpan(part, s);
+      if (perSpan) m = perSpan(part, s, k);
       else if (frame) m = mapSpanAlong(part, s, frame, yc, size, seg, rigid);
       else if (f) m = eachPoint(subdivide(part, seg), f);
       else m = part;
@@ -605,9 +993,9 @@
     if (rot) {
       const bb = bbox(out.concat(rings)), cx = bb.x + bb.w / 2, cy = bb.y + bb.h / 2, cr = Math.cos(rot), sr = Math.sin(rot);
       const R = (x, y) => { const dx = x - cx, dy = y - cy; return [cx + dx * cr - dy * sr, cy + dx * sr + dy * cr]; };
-      return { cmds: eachPoint(out, R), ranges, rings: eachPoint(rings, R), info };
+      return { cmds: eachPoint(out, R), ranges, rings: eachPoint(rings, R), panels: panels.map(p => ({ path: eachPoint(p.path, R), color: p.color })), info };
     }
-    return { cmds: out, ranges, rings, info };
+    return { cmds: out, ranges, rings, panels, info };
   }
 
   // ---------------------------------------------------------------------------
@@ -642,7 +1030,8 @@
   // parts : tableaux de cmds (lettres, signes, calques…) transformés ensemble
   function compose(parts, sh) {
     const rep = sh && sh.repeat;
-    if (!rep || rep === 'none') return parts;
+    // anneaux et mosaïque organisent déjà tout le tableau : pas de répétition par-dessus
+    if (!rep || rep === 'none' || sh.type === 'rings' || sh.type === 'tiles') return parts;
     let all = [];
     for (const p of parts) all = all.concat(p);
     if (!all.length) return parts;
@@ -652,17 +1041,38 @@
       const a = B.x - gap / 2;
       return parts.map(p => p.length ? p.concat(reversePath(eachPoint(p, (x, y) => [2 * a - x, y]))) : p);
     }
+    if (rep === 'kaleido') {
+      const N = 2 * Math.max(2, Math.min(8, Math.round((sh.copies || 8) / 2)));
+      const spread = Math.max(0.4, (sh.spread == null ? 110 : sh.spread) / 100);
+      const cxT = B.x + B.w / 2, cyT = B.y + B.h / 2;
+      const r0 = Math.max(B.h * 0.55, (B.h / 2) / Math.tan(Math.PI / N)) * spread;
+      // quart de tour : le début de la phrase vers l'extérieur, la fin près du centre (0, 0)
+      const toRadial = (x, y) => [y - cyT, -(x - cxT) - B.w / 2 - r0];
+      return parts.map(p => {
+        if (!p.length) return p;
+        const base = eachPoint(p, toRadial), mir = reversePath(eachPoint(base, (x, y) => [-x, y]));
+        let o = [];
+        for (let k = 0; k < N; k++) {
+          const a = TAU * k / N, ca = Math.cos(a), sa = Math.sin(a), src = k % 2 ? mir : base;
+          o = o.concat(k ? eachPoint(src, (x, y) => [x * ca - y * sa, x * sa + y * ca]) : src);
+        }
+        return o;
+      });
+    }
     if (rep === 'rosette') {
+      const kal = false;
       const N = Math.max(2, Math.min(16, Math.round(sh.copies || 6)));
       const spread = Math.max(0.4, (sh.spread == null ? 110 : sh.spread) / 100);
       const d = Math.max(B.h * 0.2, (B.w / 2) / Math.tan(Math.PI / N)) * spread;
       const cx = B.x + B.w / 2, cy = B.y + B.h + d;
       return parts.map(p => {
         if (!p.length) return p;
+        // reflet par l'axe vertical du texte : tourné d'un cran, il devient le miroir de sa voisine (symétrie d'ordre 2N)
+        const mir = kal ? reversePath(eachPoint(p, (x, y) => [2 * cx - x, y])) : null;
         let o = p;
         for (let k = 1; k < N; k++) {
-          const a = TAU * k / N, ca = Math.cos(a), sa = Math.sin(a);
-          o = o.concat(eachPoint(p, (x, y) => { const dx = x - cx, dy = y - cy; return [cx + dx * ca - dy * sa, cy + dx * sa + dy * ca]; }));
+          const a = TAU * k / N, ca = Math.cos(a), sa = Math.sin(a), src = kal && k % 2 ? mir : p;
+          o = o.concat(eachPoint(src, (x, y) => { const dx = x - cx, dy = y - cy; return [cx + dx * ca - dy * sa, cy + dx * sa + dy * ca]; }));
         }
         return o;
       });
@@ -670,5 +1080,6 @@
     return parts;
   }
 
-  root.KhattShape = { applyShape, compose, reversePath, normalizeFree, subdivide, follower, eachPoint, DEFAULT_FREE, roundedPolygon, offsetLoop, HEART };
+  root.KhattShape = { applyShape, compose, reversePath, normalizeFree, subdivide, follower, eachPoint, DEFAULT_FREE, roundedPolygon, offsetLoop, HEART,
+    fillLoop, fitRows, chordAt, FILL_KINDS, PALETTES };
 })(typeof self !== 'undefined' ? self : globalThis);
