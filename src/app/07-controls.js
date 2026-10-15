@@ -282,6 +282,8 @@
       b.innerHTML = '<span class="art"><span class="sk"></span></span>' + esc(d.name);
       b.addEventListener('click', () => {
         stopDraw();
+        // réglages de départ propres à la forme (le médaillon a besoin de son cercle…)
+        if (d.id !== S.shape.type && d.init) d.init(S.shape);
         S.shape.type = d.id;
         syncSeg(g, d.id); buildShapeParams();
         if (d.id !== 'straight' && showTabRef) showTabRef('forme');
@@ -338,12 +340,17 @@
     const multiText = lines.length > 1 ? chkM.text : words.length > 1 ? words.join('\n') : chk.text;
     const fillText = lines.length > 1 ? chkM.text : KX.wrapForShape(hb, chk.text, { size: 40, shape: Object.assign({}, S.shape, { type: 'fill', wrap: 'auto' }) });
     const ringText = lines.length > 1 ? chkM.text : KX.wrapForShape(hb, chk.text, { size: 40, shape: { type: 'rings' } });
-    const compo = { fill: K.buildText(hb, fillText, { size: 40, lineHeight: 1.05, align: 'center' }), rings: K.buildText(hb, ringText, { size: 40, lineHeight: 1.05, align: 'center' }), tiles: K.buildText(hb, multiText, { size: 40, lineHeight: 1.05, align: 'center' }) };
+    const wingText = lines.length > 1 ? chkM.text : KX.wrapForShape(hb, chk.text, { size: 40, shape: { type: 'wings' } });
+    const B = t => K.buildText(hb, t, { size: 40, lineHeight: 1.05, align: 'center' });
+    const multiB = B(multiText);
+    const compo = { fill: B(fillText), rings: B(ringText), tiles: multiB, wings: B(wingText), hilye: multiB };
     const shapeOf = (t, type) => {
       if (!t.cmds.length) return [];
       if (type === 'straight' && S.shape.width === 100) return t.cmds;
       const r = KSH.applyShape(t.cmds, Object.assign({}, S.shape, { type, rotate: 0 }), 40, t.baseline, t.spans, t);
-      return r.cmds.concat(r.rings);
+      let out = r.cmds.concat(r.rings);
+      if (r.lineRings) for (const v of r.lineRings.values()) out = out.concat(v);
+      return out;
     };
     const thumbSrc = id => compo[id] || (id === 'seal' && lines.length > 1 ? many : one);
     for (const d of SHAPES) {
@@ -388,7 +395,7 @@
     $('#shapeTitle').textContent = d.id === 'straight' ? 'Écriture droite : choisissez une forme ci-dessus, ou réglez ici la largeur, l’inclinaison et la composition.' : 'Réglages de la forme : ' + d.name;
     paramRows(box, d.params, () => S.shape, buildShapeParams);
     // anneaux et mosaïque : la composition (miroir, rosace…) ne s'applique pas
-    $('#compThumbs').hidden = d.id === 'rings' || d.id === 'tiles';
+    $('#compThumbs').hidden = ['rings', 'tiles', 'tughra', 'wings', 'hilye'].includes(d.id);
     $('#compParams').hidden = $('#compThumbs').hidden;
     if (d.id === 'free') {
       const wrap = document.createElement('div');
@@ -421,6 +428,9 @@
     } else if (t === 'spiral') msg = 'La phrase part du bord extérieur et s’enroule vers le centre.';
     else if (t === 'fill') msg = 'La phrase remplit la forme' + (info.rows ? ' en ' + info.rows + ' ligne' + (info.rows > 1 ? 's' : '') : '') + ' : chaque ligne prend la largeur disponible à sa hauteur.';
     else if (t === 'rings') msg = 'Médaillon : la 1re ligne au centre, les suivantes en anneaux.' + (info.coverage != null && info.coverage < 0.98 ? ' Un anneau ne fait pas tout le tour : choisissez « Complétés » ou allongez sa ligne.' : '');
+    else if (t === 'tughra') msg = 'Tughra : les hampes du nom s’élancent ; réglez leur hauteur.';
+    else if (t === 'wings') msg = 'Médaillon et ailes : la 1re ligne au centre, la 2e à droite, la 3e à gauche.';
+    else if (t === 'hilye') msg = 'Panneau hilye : ' + (info.compartments || 8) + ' compartiments, une ligne de texte chacun.';
     else if (t === 'tiles') msg = 'Mosaïque de ' + (info.tiles || 0) + ' tuile' + ((info.tiles || 0) > 1 ? 's' : '') + ' : une par ligne, ou une par paragraphe si vous séparez par une ligne vide.';
     if (S.shape.repeat === 'mirror') msg += ' Miroir : la phrase est doublée par son reflet (musanna).';
     else if (S.shape.repeat === 'rosette') msg += ' Rosace : la phrase est répétée autour d’un centre.';
@@ -525,7 +535,7 @@
   function syncFxWait() { $('#fxWait').hidden = !(fxNeedsClipper() && !window.ClipperLib); }
   function syncTabDots() {
     const fx = S.fx;
-    $('#fxDot').hidden = !(fx.weight !== 0 || ['hollow', 'outline', 'extrude', 'glow', 'counters', 'marks', 'dots'].some(k => fx[k].on));
+    $('#fxDot').hidden = !(fx.weight !== 0 || ['hollow', 'outline', 'extrude', 'glow', 'scatter', 'counters', 'marks', 'dots'].some(k => fx[k].on));
     $('#frDot').hidden = S.frame.type === 'none';
   }
 

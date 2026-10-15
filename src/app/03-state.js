@@ -13,6 +13,7 @@
       extrude: { on: false, angle: 45, depth: 8, color: '#6b4f1d', shade: true },
       glow: { on: false, color: '#00f5d4', size: 12, strength: 0.8 },
       counters: { on: false, color: '#ffffff' },
+      scatter: { on: false, color: '#9b2c4a', density: 50, size: 22, alpha: false },
       marks: { on: false, color: '#c62828' },
       dots: { on: false, color: '#c62828' }
     },
@@ -23,7 +24,7 @@
     bg: { type: 'solid', color: '#0e1a3a', stops: stopsOf(PARCH), angle: 90, gk: 'linear', veil: 0.3, veilColor: 'dark' },
     format: { id: 'auto', margin: 56, w: 1200, h: 800 },
     shape: { type: 'straight', bend: 90, cover: 60, side: 'top', spin: 0, ring: 'none', ringW: 8, height: 50, ratio: 60, amp: 30, waves: 1.5, intensity: 40, gap: 130, sides: 6, round: 35, sep: 'star', free: null, flip: false, width: 100, rotate: 0, repeat: 'none', copies: 6, spread: 110, mgap: 8,
-      fillShape: 'oval', wrap: 'auto', fratio: 100, grow: 40, stretch: 10, lead: 18, center: 1, rgap: 14, rfill: 'on', rlines: 'none', tile: 'capsule', title: 'top', palette: 'pastel', cols: 0, tgap: 10 },
+      fillShape: 'oval', wrap: 'auto', fratio: 100, grow: 40, stretch: 10, lead: 18, center: 1, rgap: 14, rfill: 'on', rlines: 'none', tile: 'capsule', title: 'top', palette: 'pastel', cols: 0, tgap: 10, swash: 'on' },
     phys: { on: false, value: 60, unit: 'cm' },
     // réglages d'interface (hors historique)
     scale: 2, filter: 'all', tab: 'ecr', tool: 'texte', favs: [], cardColors: false, pvBg: 'check', dims: false, gtab: 'styles', mdTheme: 'all', mdSrc: 'mine'
@@ -82,7 +83,7 @@
     s.stroke.width = clampN(s.stroke.width, 0, 200, 6);
     s.shadow.color = normHex(s.shadow.color) || DEFAULT.shadow.color;
     s.shadow.opacity = clampN(s.shadow.opacity, 0, 1, 0.45);
-    for (const k of ['outline', 'extrude', 'glow', 'counters', 'marks', 'dots']) s.fx[k].color = normHex(s.fx[k].color) || DEFAULT.fx[k].color;
+    for (const k of ['outline', 'extrude', 'glow', 'counters', 'scatter', 'marks', 'dots']) s.fx[k].color = normHex(s.fx[k].color) || DEFAULT.fx[k].color;
     s.fx.weight = clampN(s.fx.weight, -10, 20, 0);
     s.fill = cleanPaint(s.fill, o && o.fill, DEFAULT.fill, ['solid', 'linear', 'radial']);
     s.bg = cleanPaint(s.bg, o && o.bg, DEFAULT.bg, ['none', 'solid', 'linear', 'radial', 'image']);
@@ -109,6 +110,7 @@
     sh.fillShape = oneOf(sh.fillShape, FILL_OPTS.map(x => x[0]), 'oval');
     sh.wrap = oneOf(sh.wrap, ['auto', 'off'], 'auto');
     sh.rfill = oneOf(sh.rfill, ['on', 'off'], 'on');
+    sh.swash = oneOf(sh.swash, ['on', 'off'], 'on');
     sh.rlines = oneOf(sh.rlines, ['none', 'thin'], 'none');
     sh.tile = oneOf(sh.tile, TILE_OPTS.map(x => x[0]), 'capsule');
     sh.title = oneOf(sh.title, ['top', 'center', 'none'], 'top');

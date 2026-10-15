@@ -534,6 +534,8 @@
     if (o.align != null) { al = o.align; win = solve(); }
     return { rows: win.rows, scale: win.scale };
   }
+  function pushAllS(a, b) { for (let i = 0; i < b.length; i++) a.push(b[i]); return a; }
+  const tileLoopAt = (L, cx, cy, k0) => L.map((v, i) => i % 2 ? cy + v * k0 : cx + v * k0);
   // couleurs des tuiles (mosaïque) ; accent : tuile du titre placée au centre
   const PALETTES = {
     pastel: { tiles: ['#F6D5C8', '#D6E7CF', '#F8E6B3', '#D2E2F1', '#E8D7EC', '#F2D2D9', '#D3ECE5', '#FBE2C6'], accent: '#EED9A0' },
@@ -542,6 +544,16 @@
     gold: { tiles: ['#F1DFA8', '#E8CF86', '#F6E8C1'], accent: '#D4A537' },
     none: { tiles: [], accent: '' }
   };
+  // éclaircir (mélange avec du blanc) ; clarté perçue (0 noir … 1 blanc)
+  function tint(hex, t) {
+    const h = String(hex).replace('#', ''), n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16) || 0;
+    const f = v => Math.round(v + (255 - v) * t).toString(16).padStart(2, '0');
+    return '#' + f((n >> 16) & 255) + f((n >> 8) & 255) + f(n & 255);
+  }
+  function lum(hex) {
+    const h = String(hex).replace('#', ''), n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16) || 0;
+    return (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+  }
   function shade(hex, t) {
     const h = String(hex).replace('#', ''), n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16) || 0;
     const f = v => Math.round(v * (1 - t)).toString(16).padStart(2, '0');
@@ -580,7 +592,7 @@
     const outerK = 1.25;
     const gapR = Hh * 0.12, ringW = Math.max(1, Hh * (sh.ringW || 8) / 100);
     let f = null, frame = null, perSpan = null;
-    const info = {}, panels = [];
+    const info = {}, panels = [], lineRings = new Map();
     if (type === 'arc' || type === 'arcInv' || type === 'circle') {
       let ang, down = type === 'arcInv';
       if (type === 'circle') { ang = TAU * Math.min(1, Math.max(0.2, (sh.cover || 100) / 100)); down = sh.side === 'bottom'; }
@@ -850,6 +862,216 @@
       }
       info.tiles = n;
       perSpan = (part, s, k) => { const fn = fns.get(k); return fn ? eachPoint(part, fn) : part; };
+    } else if (type === 'tughra') {
+      // tughra : hampes du nom étirées vers le haut (tuğ), deux boucles en croissant à gauche (beyze),
+      // deux traits effilés qui filent vers la droite (hançer) ; les autres lignes, plus petites, sous le nom
+      const G = lineGroups(c, sp, tinfo).filter(Boolean);
+      const g0 = G[0], lb = g0.lb, dUp = Math.max(1e-6, lb - g0.y0), dDn = Math.max(0, g0.y1 - lb), Hb = dUp + dDn, W0 = g0.w;
+      const k = 1 + 2.4 * Math.min(1, Math.max(0, ((sh.height == null ? 60 : sh.height) + 100) / 200));
+      const yT = lb - dUp * 0.42;
+      const fns = new Map();
+      // hampes : traits étroits qui montent au-dessus de yT (alif, lām, ṭā'…) ; seules elles s'allongent,
+      // le corps des lettres (même haut, comme le mīm du ruqʿa) garde sa forme
+      const namePath = [];
+      for (const i of g0.idx) pushAllS(namePath, c.slice(sp[i].i0, sp[i].i1));
+      const polys = root.Khatt.flatten(namePath, Math.max(0.2, size * 0.004));
+      const cross = y => {
+        const xs = [];
+        for (const p of polys) for (let i = 0, n = p.length; i < n; i += 2) {
+          const j = (i + 2) % n, ya = p[i + 1], yb = p[j + 1];
+          if ((ya <= y && yb > y) || (yb <= y && ya > y)) xs.push([p[i] + (p[j] - p[i]) * (y - ya) / (yb - ya), yb > ya ? 1 : -1]);
+        }
+        xs.sort((a, b2) => a[0] - b2[0]);
+        const I = [];
+        let w = 0;
+        for (let q = 0; q < xs.length - 1; q++) {
+          w += xs[q][1];
+          if (!w) continue;
+          const L = I[I.length - 1];
+          if (L && xs[q][0] - L[1] < 1e-6) L[1] = xs[q + 1][0]; else I.push([xs[q][0], xs[q + 1][0]]);
+        }
+        return I;
+      };
+      const ys1 = yT - (yT - g0.y0) * 0.35, ys2 = yT - (yT - g0.y0) * 0.7, I2 = cross(ys2), shafts = [];
+      for (const [a, b2] of cross(ys1)) {
+        const w = b2 - a;
+        if (w > dUp * 0.22) continue;
+        const xc1 = (a + b2) / 2;
+        // la même hampe plus haut : sa pente (dīwānī, ruqʿa)
+        let lean = 0, best = Infinity, w2 = 0;
+        for (const [a2, b3] of I2) {
+          const d = Math.abs((a2 + b3) / 2 - xc1);
+          if (b3 - a2 < dUp * 0.25 && d < Math.max(w * 1.5, dUp * 0.12) && d < best) { best = d; w2 = b3 - a2; lean = ((a2 + b3) / 2 - xc1) / (ys2 - ys1); }
+        }
+        // une hampe continue plus haut, sans s'élargir beaucoup ni trop pencher (sinon : lettres empilées, trait oblique)
+        if (best === Infinity || w2 > w * 2.2 || Math.abs(lean) > 0.35) continue;
+        shafts.push({ xc: xc1, hw: w / 2, lean });
+      }
+      // poids d'étirement : 1 dans la hampe, décroissance douce sur ses côtés (pas de déchirure)
+      const wAt = (x, y) => {
+        let m = 0;
+        for (const h of shafts) {
+          const u = Math.abs(x - (h.xc + h.lean * (y - ys1))) / (h.hw * 1.6 + size * 0.01);
+          const v = u <= 1 ? 1 : u >= 2 ? 0 : 0.5 + 0.5 * Math.cos(Math.PI * (u - 1));
+          if (v > m) m = v;
+        }
+        return m;
+      };
+      const lift = (x, y) => [x, y < yT ? yT - (yT - y) * (1 + (k - 1) * wAt(x, y)) : y];
+      // contours : les petits (points, signes) sont déplacés d'un bloc, les autres étirés
+      let yTop = g0.y0;
+      for (const i of g0.idx) {
+        const out2 = [];
+        for (const ctr of root.Khatt.splitContours(c.slice(sp[i].i0, sp[i].i1))) {
+          const bc = bbox(ctr);
+          if (Math.max(bc.w, bc.h) < size * 0.2) {
+            const cx = bc.x + bc.w / 2, cy = bc.y + bc.h / 2, ny = lift(cx, cy)[1];
+            pushAllS(out2, eachPoint(ctr, (x, y) => [x, y + ny - cy]));
+          } else pushAllS(out2, eachPoint(subdivide(ctr, seg), lift));
+        }
+        if (out2.length) yTop = Math.min(yTop, bbox(out2).y);
+        fns.set(i, () => out2);
+      }
+      info.shafts = shafts.length;
+      // lignes suivantes : en dessous, au tiers de la taille, centrées sous le nom
+      let yNext = g0.y1 + Hb * 0.25;
+      G.slice(1).forEach(g => {
+        const s2 = Math.min(0.45, W0 * 0.8 / Math.max(1, g.w)), cx2 = (g0.x0 + g0.x1) / 2, xm = (g.x0 + g.x1) / 2, top = yNext;
+        for (const i of g.idx) fns.set(i, part => eachPoint(part, (x, y) => [cx2 + (x - xm) * s2, top + (y - g.y0) * s2]));
+        yNext += g.h * s2 + Hb * 0.12;
+      });
+      perSpan = (part, s, i) => { const fn = fns.get(i); return fn ? fn(part, s) : part; };
+      // boucles (beyze) : croissants épais à gauche, fins à droite, à gauche du nom ; d'après le plan des tughra,
+      // elles occupent les deux tiers bas de la hauteur totale (hampes comprises)
+      const Htot = g0.y1 - yTop;
+      const t = Hb * 0.14, ry1 = Math.max(Hb * 0.7, Htot * 0.41), rx1 = ry1 * 1.12;
+      const cx1 = g0.x0 - rx1 * 0.8, cy1 = yTop + Htot * 0.6;
+      const crescent = (cx, cy, rx, ry, th) => {
+        const o = [], inr = [];
+        for (let q = 0; q < 120; q++) {
+          const a = TAU * q / 120;
+          o.push(cx + rx * Math.cos(a), cy + ry * Math.sin(a));
+          inr.push(cx + th * 0.6 + (rx - th * 0.75) * Math.cos(a), cy - th * 0.1 + (ry - th * 0.45) * Math.sin(a));
+        }
+        return band(o, inr);
+      };
+      extra.push(crescent(cx1, cy1, rx1, ry1, t));
+      extra.push(crescent(cx1 + rx1 * 0.2, cy1 + ry1 * 0.1, rx1 * 0.66, ry1 * 0.64, t * 0.85));
+      // traits vers la droite (hançer) : deux lames effilées
+      const blade = (x0b, y0b, x1b, y1b, bend, th) => {
+        const up = [], dn = [];
+        for (let q = 0; q <= 60; q++) {
+          const u = q / 60, x = x0b + (x1b - x0b) * u, y = y0b + (y1b - y0b) * u - bend * Math.sin(Math.PI * u);
+          const h = th * (1 - u) * (0.35 + 0.65 * Math.sin(Math.PI * Math.min(1, u * 3)));
+          up.push(x, y - h); dn.push(x, y + h);
+        }
+        const o = [];
+        for (let q = 0; q < up.length; q += 2) o.push(q ? 1 : 0, up[q], up[q + 1]);
+        for (let q = dn.length - 2; q >= 0; q -= 2) o.push(1, dn[q], dn[q + 1]);
+        o.push(4);
+        return o;
+      };
+      // les traits partent du creux des boucles et traversent les hampes, au-dessus du corps des lettres
+      // (au-dessus de yT : seules les hampes sont traversées, le corps des lettres reste lisible)
+      const xs = cx1 - rx1 * 0.2, xe = g0.x1 + Math.min(W0 * 0.3, Hb * 1.6), yk = q => yT - Math.max(yT - yTop, dUp * 0.58) * q;
+      extra.push(blade(xs, yk(0.45), xe, yk(0.62), Hb * 0.08, t * 0.5));
+      extra.push(blade(xs, yk(0.15), xe - Math.min(W0 * 0.06, Hb * 0.3), yk(0.3), Hb * 0.05, t * 0.42));
+      info.tughra = true;
+    } else if (type === 'wings') {
+      // médaillon et ailes : la 1re ligne dans un cercle, la 2e à droite, la 3e à gauche, reliées par un long trait
+      const G = lineGroups(c, sp, tinfo).filter(Boolean);
+      const g0 = G[0], b0x = (g0.x0 + g0.x1) / 2, b0y = (g0.y0 + g0.y1) / 2;
+      let rC = 0;
+      for (const i of g0.idx) eachPoint(c.slice(sp[i].i0, sp[i].i1), (x, y) => { const d = Math.hypot(x - b0x, y - b0y); if (d > rC) rC = d; return [x, y]; });
+      rC *= 1.05;
+      const gap = rC * 0.12, rw = Math.max(1, rC * (sh.ringW || 8) / 100 * 0.6);
+      const fns = new Map();
+      for (const i of g0.idx) fns.set(i, part => eachPoint(part, (x, y) => [x - b0x, y - b0y]));
+      if (sh.ring !== 'none') extra.push(ring(0, 0, rC + gap, rw));
+      if (sh.ring === 'double') extra.push(ring(0, 0, rC + gap + rw * 2.2, rw * 0.5));
+      // bord extérieur du médaillon
+      const rOut = sh.ring === 'double' ? rC + gap + rw * 2.7 : sh.ring !== 'none' ? rC + gap + rw : rC;
+      const wingBase = rC * 0.62, side = [];
+      G.slice(1, 3).forEach((g, j) => {
+        const s = Math.min(1.75 * rC / Math.max(1, g.h), 2.7 * rC / Math.max(1, g.w));
+        const right = j === 0, x0w = right ? rC + gap * 3.2 : -(rC + gap * 3.2) - g.w * s;
+        for (const i of g.idx) fns.set(i, part => eachPoint(part, (x, y) => [x0w + (x - g.x0) * s, wingBase + (y - g.lb) * s]));
+        side.push({ line: g.line, x0: x0w, x1: x0w + g.w * s, h: (g.lb - g.y0) * s });
+      });
+      // long trait (kashida) sous le médaillon, d'une aile à l'autre
+      if (side.length === 2 && sh.swash !== 'off') {
+        const th = side[0].h * 0.075, xa = side[0].x0 + side[0].h * 0.15, xb = side[1].x1 - side[1].h * 0.15, y = wingBase + th * 0.6;
+        // au milieu, le trait passe juste sous le cercle (ou sous le texte du médaillon s'il n'y a pas de cercle)
+        const sag = Math.max(rC * 0.28, rOut + th * 1.6 - y);
+        const up = [], dn = [];
+        for (let q = 0; q <= 80; q++) {
+          const u = q / 80, x = xa + (xb - xa) * u, yy = y + sag * Math.sin(Math.PI * u), h = th * (0.25 + 0.75 * Math.sin(Math.PI * u) ** 0.35);
+          up.push(x, yy - h); dn.push(x, yy + h);
+        }
+        const o = [];
+        for (let q = 0; q < up.length; q += 2) o.push(q ? 1 : 0, up[q], up[q + 1]);
+        for (let q = dn.length - 2; q >= 0; q -= 2) o.push(1, dn[q], dn[q + 1]);
+        o.push(4);
+        lineRings.set(side[0].line, (lineRings.get(side[0].line) || []).concat(o));
+      }
+      // lignes suivantes : centrées sous le médaillon, plus petites
+      let yb = rOut + (side.length === 2 && sh.swash !== 'off' ? side[0].h * 0.3 : rC * 0.15);
+      G.slice(3).forEach(g => {
+        const s2 = Math.min(0.9 * rC / Math.max(1, g.h), 3.2 * rC / Math.max(1, g.w)), xm = (g.x0 + g.x1) / 2, top = yb;
+        for (const i of g.idx) fns.set(i, part => eachPoint(part, (x, y) => [(x - xm) * s2, top + (y - g.y0) * s2]));
+        yb += g.h * s2 * 1.1;
+      });
+      perSpan = (part, s, i) => { const fn = fns.get(i); return fn ? fn(part, s) : part; };
+    } else if (type === 'hilye') {
+      // panneau à compartiments (d'après le plan des hilye ottomanes) : bandeau en haut, rond central et croissant,
+      // quatre médaillons d'angle, bandeau du verset, panneau du bas ; une ligne de texte par compartiment
+      const G = lineGroups(c, sp, tinfo).filter(Boolean);
+      const U = size * 10, pal = PALETTES[sh.palette] || PALETTES.gold;
+      // compartiments à texte toujours clairs (encre foncée lisible) ; panneaux décoratifs et croissant en couleur franche
+      const deco = pal.tiles[0] || '#F1E3B6', acc = pal.accent || '#D4A537', tile = lum(deco) < 0.62 ? tint(deco, 0.72) : deco;
+      const cells = [
+        { kind: 'band', x: 0.5, y: 0.1, w: 0.84, h: 0.11 },
+        { kind: 'circle', x: 0.5, y: 0.42, w: 0.42, h: 0.42 },
+        { kind: 'circle', x: 0.83, y: 0.23, w: 0.15, h: 0.15 }, { kind: 'circle', x: 0.17, y: 0.23, w: 0.15, h: 0.15 },
+        { kind: 'circle', x: 0.83, y: 0.62, w: 0.15, h: 0.15 }, { kind: 'circle', x: 0.17, y: 0.62, w: 0.15, h: 0.15 },
+        { kind: 'band', x: 0.5, y: 0.81, w: 0.84, h: 0.1 },
+        { kind: 'rect', x: 0.5, y: 1.09, w: 0.6, h: 0.32 }
+      ];
+      const fns = new Map(), PH = 1.3;
+      // compartiments remplis selon le nombre de lignes (d'abord le rond central, puis les bandeaux, le bas, les angles),
+      // dans l'ordre de lecture ; au-delà de 8 lignes, les suivantes rejoignent le panneau du bas
+      const prio = [1, 0, 6, 7, 2, 3, 4, 5], use = prio.slice(0, Math.min(8, G.length)).sort((a, b2) => a - b2), byCell = new Map();
+      use.forEach((ci, j) => byCell.set(ci, j === use.length - 1 ? G.slice(j) : [G[j]]));
+      // fond et cadre du panneau, croissant autour du rond central, panneaux latéraux décorés
+      const rectL = (x0, y0, x1, y1) => [x0, y0, x1, y0, x1, y1, x0, y1];
+      const outer = rectL(0, 0, U, PH * U);
+      panels.push({ path: loopToCmds(outer), color: '#FBF5E6' });
+      extra.push(band(offsetLoop(outer, U * 0.012), outer));
+      const crO = [], crI = [], cg = cells[1];
+      for (let q = 0; q < 160; q++) { const a = TAU * q / 160; crO.push(cg.x * U + U * 0.255 * Math.cos(a), cg.y * U + U * 0.035 + U * 0.255 * Math.sin(a)); crI.push(cg.x * U + U * 0.215 * Math.cos(a), cg.y * U + U * 0.215 * Math.sin(a)); }
+      panels.push({ path: band(crO, crI), color: acc });
+      for (const sx of [0.06, 0.8]) panels.push({ path: loopToCmds(roundPoly([[sx * U, 0.95 * U], [(sx + 0.14) * U, 0.95 * U], [(sx + 0.14) * U, 1.24 * U], [sx * U, 1.24 * U]], U * 0.01)), color: deco });
+      cells.forEach((cl, j) => {
+        let L;
+        if (cl.kind === 'circle') { L = []; for (let q = 0; q < 160; q++) { const a = TAU * q / 160; L.push(cl.x * U + cl.w / 2 * U * Math.cos(a), cl.y * U + cl.h / 2 * U * Math.sin(a)); } }
+        else if (cl.kind === 'band') L = tileLoopAt(loopAspect(fillLoop('capsule', 100), cl.w / cl.h), cl.x * U, cl.y * U, cl.h / 2 * U);
+        else L = tileLoopAt(loopAspect(fillLoop('round', 100), cl.w / cl.h), cl.x * U, cl.y * U, cl.h / 2 * U);
+        panels.push({ path: loopToCmds(L), color: j === 1 ? '#FFFFFF' : tile });
+        extra.push(band(offsetLoop(L, U * 0.004), L));
+        const B = byCell.get(j);
+        if (!B) return;
+        const unit = cl.kind === 'circle' ? fillLoop('circle', 100) : loopAspect(fillLoop(cl.kind === 'band' ? 'capsule' : 'round', 100), cl.w / cl.h);
+        const f = fitRows(B.map(g => ({ w: g.w, h: g.h })), unit, { lead: 0.1, grow: 1, stretch: 0.2, pad: 0.24 });
+        if (!f) return;
+        const k0 = cl.h / 2 * U, cx = cl.x * U, cy = cl.y * U;
+        B.forEach((g, q) => {
+          const r = f.rows[q], xm = (g.x0 + g.x1) / 2;
+          const fn = (x, y) => [cx + (r.cx + (x - xm) * r.s * r.sx) * k0, cy + (r.y + (y - g.y0) * r.s) * k0];
+          for (const i of g.idx) fns.set(i, fn);
+        });
+      });
+      perSpan = (part, s, i) => { const fn = fns.get(i); return fn ? eachPoint(part, fn) : part; };
+      info.compartments = cells.length;
     } else if (type === 'bridge') {
       const A = Hh * (sh.height == null ? 50 : sh.height) / 100;
       f = (x, y) => { const u = (x - xc) / (W / 2); return [x, y - A * (1 - u * u)]; };
@@ -993,9 +1215,11 @@
     if (rot) {
       const bb = bbox(out.concat(rings)), cx = bb.x + bb.w / 2, cy = bb.y + bb.h / 2, cr = Math.cos(rot), sr = Math.sin(rot);
       const R = (x, y) => { const dx = x - cx, dy = y - cy; return [cx + dx * cr - dy * sr, cy + dx * sr + dy * cr]; };
-      return { cmds: eachPoint(out, R), ranges, rings: eachPoint(rings, R), panels: panels.map(p => ({ path: eachPoint(p.path, R), color: p.color })), info };
+      const LR = new Map();
+      for (const [k, v] of lineRings) LR.set(k, eachPoint(v, R));
+      return { cmds: eachPoint(out, R), ranges, rings: eachPoint(rings, R), panels: panels.map(p => ({ path: eachPoint(p.path, R), color: p.color })), lineRings: LR, info };
     }
-    return { cmds: out, ranges, rings, panels, info };
+    return { cmds: out, ranges, rings, panels, lineRings, info };
   }
 
   // ---------------------------------------------------------------------------
@@ -1031,7 +1255,7 @@
   function compose(parts, sh) {
     const rep = sh && sh.repeat;
     // anneaux et mosaïque organisent déjà tout le tableau : pas de répétition par-dessus
-    if (!rep || rep === 'none' || sh.type === 'rings' || sh.type === 'tiles') return parts;
+    if (!rep || rep === 'none' || ['rings', 'tiles', 'tughra', 'wings', 'hilye'].includes(sh.type)) return parts;
     let all = [];
     for (const p of parts) all = all.concat(p);
     if (!all.length) return parts;

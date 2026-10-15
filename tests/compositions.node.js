@@ -1,4 +1,5 @@
-// Compositions par lignes : forme remplie, anneaux, mosaïque, kaléidoscope, contre-formes, motifs et cadre pointillé
+// Compositions par lignes : forme remplie, anneaux, mosaïque, tughra, médaillon ailé, hilye, kaléidoscope, contre-formes,
+// lettres semées, motifs et cadre pointillé
 globalThis.self = globalThis;
 const fs = require('fs');
 globalThis.ClipperLib = require('clipper-lib');
@@ -63,7 +64,44 @@ const base = (o) => Object.assign({ size: 100, lineHeight: 1.15, align: 'center'
     const fr = sc.layers.find(l => l.role === 'frame');
     ok(fr && (!dash || K.splitContours(fr.path).length >= 8), 'cadre ' + type + (dash ? ' pointillé (' + K.splitContours(fr.path).length + ' tirets)' : ''));
   }
-  // 11. exports vectoriels d'une mosaïque
+  // 11. tughra : les hampes s'allongent, le corps des lettres garde sa hauteur ; boucles et traits ajoutés
+  const thuluth = new K.Font(fs.readFileSync('site/fonts/layla-thuluth.ttf'));
+  const sceneT = (text, o) => X.buildScene(thuluth, K.checkSupport(thuluth, text).text, base(o), ['-liga']);
+  const plain = sceneT('عبد الله', {}), tg = sceneT('عبد الله', { shape: { type: 'tughra', height: 60 } });
+  const hOf = sc => sc.layers.find(l => l.role === 'text').box.h;
+  ok(tg.shapeInfo.shafts === 3 && hOf(tg) > hOf(plain) * 1.6, 'tughra : 3 hampes allongées (hauteur ×' + (hOf(tg) / hOf(plain)).toFixed(2) + ')');
+  ok(tg.W > plain.W * 1.4, 'tughra : boucles à gauche et traits vers la droite élargissent le tableau');
+  // un mot sans hampe (lettres empilées du ruqʿa) n'est pas déformé
+  const ruqaa = new K.Font(fs.readFileSync('site/fonts/aref-ruqaa-bold.ttf'));
+  const mh = X.buildScene(ruqaa, 'محمود', base({ shape: { type: 'tughra', height: 100 } }));
+  ok(mh.shapeInfo.shafts === 0, 'tughra : pas de fausse hampe dans un mot sans alif ni lām');
+  save('tughra', tg);
+  // 12. médaillon et ailes : trait de liaison de la couleur des ailes, sous le médaillon
+  const wg = sceneT('بسم الله\nالرحمن\nالرحيم', { shape: { type: 'wings', ring: 'single', swash: 'on' }, lineInk: ['#7A3B1E', '#1F7A7A', '#1F7A7A'] });
+  const wingsL = wg.layers.filter(l => l.role === 'text' && l.fill && l.fill.color === '#1F7A7A');
+  const wingsOff = sceneT('بسم الله\nالرحمن\nالرحيم', { shape: { type: 'wings', ring: 'single', swash: 'off' }, lineInk: ['#7A3B1E', '#1F7A7A', '#1F7A7A'] });
+  const lenOf = sc => sc.layers.filter(l => l.role === 'text' && l.fill && l.fill.color === '#1F7A7A').reduce((a, l) => a + l.path.length, 0);
+  ok(wingsL.length === 1 && lenOf(wg) > lenOf(wingsOff), 'médaillon ailé : le trait de liaison prend la couleur des ailes');
+  ok(wg.W > wg.H * 2, 'médaillon ailé : composition en largeur (' + Math.round(wg.W) + '×' + Math.round(wg.H) + ')');
+  save('ailes', wg);
+  // 13. hilye : 8 compartiments, panneau entier dans le format (proportionnel à la taille)
+  const hil = sceneT('بسم الله\nالحمد لله\nأ\nب\nت\nث\nرب العالمين\nالرحمن الرحيم', { shape: { type: 'hilye', palette: 'gold' }, format: { id: 'custom', w: 800, h: 1100 } });
+  ok(hil.shapeInfo.compartments === 8 && hil.layers.filter(l => l.role === 'tile').length >= 12, 'hilye : 8 compartiments et leurs fonds');
+  const hfit = X.fitSize(thuluth, 'بسم الله\nالحمد لله', base({ shape: { type: 'hilye' }, format: { id: 'custom', w: 800, h: 1100 } }), ['-liga'], 0.84);
+  const hil2 = sceneT('بسم الله\nالحمد لله', { size: hfit, shape: { type: 'hilye' }, format: { id: 'custom', w: 800, h: 1100 } });
+  ok(hil2.layers.every(l => !l.path || inside(hil2, l)), 'hilye : tout le panneau tient dans le format');
+  save('hilye', hil);
+  // 14. lettres semées : autour du texte, sans le toucher
+  const sc0 = scene('روائع', { format: { id: 'custom', w: 800, h: 800 }, fx: { scatter: { on: true, color: '#9b2c4a', density: 60, size: 22, alpha: true } } });
+  const sl = sc0.layers.find(l => l.role === 'scatter'), txt = sc0.layers.find(l => l.role === 'text');
+  ok(sl && K.splitContours(sl.path).length >= 10, 'lettres semées : ' + (sl ? K.splitContours(sl.path).length : 0) + ' contours');
+  // aucune petite lettre ne recouvre le texte : on teste les points du semis contre le tramage du texte
+  const polys = K.flatten(txt.path, 0.5), inTxt = (x, y) => { let w = 0; for (const p of polys) for (let i = 0, n = p.length; i < n; i += 2) { const j = (i + 2) % n, ya = p[i + 1], yb = p[j + 1]; if ((ya <= y && yb > y) || (yb <= y && ya > y)) { const xx = p[i] + (p[j] - p[i]) * (y - ya) / (yb - ya); if (xx > x) w += yb > ya ? 1 : -1; } } return w !== 0; };
+  let hits = 0;
+  for (const p of K.flatten(sl.path, 1)) for (let i = 0; i < p.length; i += 8) if (inTxt(p[i], p[i + 1])) hits++;
+  ok(hits === 0, 'lettres semées : aucune ne touche le texte');
+  save('semees', sc0);
+  // 15. exports vectoriels d'une mosaïque
   const pdf = await X.sceneToPDF(tiles, { title: 'mosaique' }), eps = X.sceneToEPS(tiles, { titleAscii: 'mosaique' });
   ok(pdf.length > 2000 && /%%EOF/.test(eps.slice(-100)), 'mosaïque : PDF et EPS produits');
   console.log(fails ? fails + ' échec(s)' : 'compositions : tout est bon');

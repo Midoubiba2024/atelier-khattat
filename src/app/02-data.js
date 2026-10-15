@@ -75,7 +75,7 @@
     ['all', 'Tous', 'Toutes les compositions : chaque aperçu est dessiné par l’atelier avec votre phrase ou avec l’exemple du modèle.'],
     ['classique', 'Tableaux classiques', 'Les grands genres de la calligraphie : shamsa, levha, musanna, mihrab, qitʿa, page enluminée.'],
     ['medaillon', 'Médaillons et sceaux', 'Compositions circulaires et fermées : médaillons, sceaux, rosaces, étoiles, couronnes.'],
-    ['compositions', 'Compositions', 'La phrase organise tout le tableau : pyramide, œuf, goutte, médaillons en anneaux, mosaïques de tuiles, rosaces en miroir.'],
+    ['compositions', 'Compositions', 'La phrase organise tout le tableau : pyramide, œuf, goutte, médaillons en anneaux, mosaïques de tuiles, rosaces en miroir, tughra, hilye.'],
     ['versets', 'Versets et invocations', 'Pour une invocation ou un verset court, avec des compositions sobres et lisibles.'],
     ['prenoms', 'Prénoms', 'Pour un prénom : cœur, relief, néon, miroir, autocollant, pastel.'],
     ['fetes', 'Fêtes et vœux', 'Cartes de vœux : Aïd, Ramadan, anniversaire, nouvel an, félicitations.'],
@@ -149,6 +149,14 @@
     { font: 'layla-thuluth', shape: { repeat: 'kaleido', copies: 8, spread: 75 }, fill: SOL('#FFFFFF'), bg: SOL('#8FA38A'), format: 'square' });
   M('compositions', 'contre-formes', 'Contre-formes', 'Un mot en grand, l’intérieur de ses boucles en blanc, sur un semis de points du calame en couleurs.', 'هو',
     { font: 'layla-diwani', fx: { counters: { on: true, color: '#FFFFFF' } }, fill: SOL('#111111'), bg: SOL('#E8D5B0'), pattern: { type: 'nuqat', color: '#111111', opacity: 0.85, scale: 9, colorful: true }, format: 'square' });
+  M('compositions', 'tughra', 'Tughra', 'Le monogramme des sultans ottomans, réinventé pour un nom : les hampes s’élancent, deux boucles s’ouvrent à gauche, deux traits filent vers la droite. Écrivez votre nom sur la 1re ligne.', 'عبد الله\nالمظفر دائما',
+    { font: 'layla-thuluth', shape: { type: 'tughra', height: 60 }, fill: LIN(GOLD2), bg: RAD(['#1B2A5C', '#070B1A']), format: 'landscape' });
+  M('compositions', 'medaillon-ailes', 'Médaillon ailé', 'La basmala en trois parties : « Bismi-llāh » dans un médaillon, « ar-Raḥmān » et « ar-Raḥīm » en ailes turquoise, reliées par un long trait.', 'بسم الله\nالرحمن\nالرحيم',
+    { font: 'layla-thuluth', shape: { type: 'wings', ring: 'single', ringW: 8, swash: 'on' }, fill: SOL('#7A3B1E'), lineInk: ['#7A3B1E', '#1F7A7A', '#1F7A7A'], bg: SOL('#FBF6EA'), format: 'banner' });
+  M('compositions', 'lettres-semees', 'Lettres semées', 'Un mot en grand, et tout autour les lettres de l’alphabet semées en petit, à l’encre carmin.', 'روائع',
+    { font: 'aref-ruqaa-bold', fx: { scatter: { on: true, color: '#9B2C4A', density: 60, size: 22, alpha: true } }, fill: SOL('#1B1712'), bg: SOL('#FFFFFF'), format: 'square' });
+  M('compositions', 'hilye', 'Panneau hilye', 'D’après le plan des hilye ottomanes : bandeau, rond central dans son croissant, quatre médaillons d’angle, bandeau du verset, panneau du bas ; une ligne par compartiment.', 'بسم الله الرحمن الرحيم\nوَإِنَّكَ لَعَلَىٰ خُلُقٍ عَظِيمٍ\nأبو بكر\nعمر\nعثمان\nعلي\nوَمَا أَرْسَلْنَاكَ إِلَّا رَحْمَةً لِّلْعَالَمِينَ\nصلى الله عليه وسلم',
+    { font: 'layla-thuluth', shape: { type: 'hilye', palette: 'gold' }, fill: SOL('#1B1712'), bg: SOL('#3B2A1A'), harakat: true, format: 'portrait' });
   // Versets : couleurs et fonds
   M('versets', 'iqra', 'Iqraʾ', '« Lis, au nom de ton Seigneur » : thuluth d’or aux voyelles turquoise, sur nuit.', 'اقْرَأْ\nبِاسْمِ رَبِّكَ',
     { font: 'layla-thuluth', fill: LIN(GOLD2), bg: RAD(['#14234A', '#060B1C']), fx: { marks: { on: true, color: '#2BB3A8' } }, lineHeight: 1.1, harakat: true, shadow: SHADOW(0.45, 3, 6), format: 'portrait' });

@@ -37,8 +37,10 @@
     ['Goutte', 'Le texte remplit une forme de goutte, pointe en haut : une silhouette fréquente des panneaux ottomans.', 'goutte'],
     ['Formes remplies', 'Pyramide, œuf, ovale : chaque ligne prend la largeur de la forme à sa hauteur, du sommet à la base.', 'pyramide'],
     ['Mosaïque de cartouches', 'Une phrase par cartouche, assemblés en panneau : une manière de réunir des maximes ou les noms divins.', 'vertus'],
-    ['Tughra', 'Le monogramme des sultans ottomans : le nom en bas (sere), trois hampes verticales (tuğ), deux boucles à gauche (beyze) et des traits qui filent vers la droite (hançer).', null],
-    ['Hilye', 'Le panneau fixé par Hafız Osman : un bandeau en haut, un rond central entouré d’un croissant, quatre médaillons aux coins, un bandeau pour un verset, puis la suite du texte.', null],
+    ['Tughra', 'Le monogramme des sultans ottomans : le nom en bas (sere), trois hampes verticales (tuğ), deux boucles à gauche (beyze) et des traits qui filent vers la droite (hançer).', 'tughra'],
+    ['Hilye', 'Le panneau fixé par Hafız Osman : un bandeau en haut, un rond central entouré d’un croissant, quatre médaillons aux coins, un bandeau pour un verset, puis la suite du texte.', 'hilye'],
+    ['Médaillon ailé', 'Une formule coupée en trois : le début dans un médaillon, la suite en deux ailes de part et d’autre, souvent reliées par un long trait (kashida).', 'medaillon-ailes'],
+    ['Lettres semées', 'Un mot en grand, entouré de petites lettres qui flottent autour de lui : un écho contemporain entre le mot et l’alphabet.', 'lettres-semees'],
     ['Koufi carré', 'Les lettres deviennent un dédale de lignes droites qui remplit un carré, les vides répondant aux pleins. On le voit sur les murs, en brique et en céramique.', null],
     ['Figures', 'Des phrases qui dessinent un visage, un lion ou un cheval : un genre prisé à l’époque ottomane.', null]
   ];

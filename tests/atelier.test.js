@@ -41,7 +41,7 @@ fs.mkdirSync(OUT, { recursive: true });
   await tool('texte'); await page.fill('#txt', 'سبحان الله والحمد لله ولا إله إلا الله والله أكبر'); await settle(400);
   await tool('forme');
   await page.click('#shapeGroups button[data-v="compo"]');
-  for (const id of ['fill', 'rings', 'tiles']) {
+  for (const id of ['fill', 'rings', 'tiles', 'tughra', 'wings', 'hilye']) {
     await page.click('#shapeThumbs .sthumb[data-v="' + id + '"]'); await settle(600);
     ok((await svgLen()) > 500, 'composition ' + id);
   }
@@ -69,7 +69,7 @@ fs.mkdirSync(OUT, { recursive: true });
   // --- effets
   await tool('effets');
   const fxBoxes = await page.$$('#fxList .fxitem');
-  ok(fxBoxes.length === 7, 'sept effets');
+  ok(fxBoxes.length === 8, 'huit effets');
   for (let i = 0; i < fxBoxes.length; i++) {
     const cb = await fxBoxes[i].$('input[type=checkbox]');
     await cb.check(); await settle(500);

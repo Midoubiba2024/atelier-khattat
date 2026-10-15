@@ -1,17 +1,17 @@
 # Atelier Khattat
 
-Une phrase en arabe, près de 200 styles calligraphiques, 82 modèles de tableaux, le tashkīl, et des fichiers nets à toutes les tailles : SVG, PDF, EPS et DXF en vectoriel, PNG, JPG et WEBP en image.
+Une phrase en arabe, près de 200 styles calligraphiques, 86 modèles de tableaux, le tashkīl, et des fichiers nets à toutes les tailles : SVG, PDF, EPS et DXF en vectoriel, PNG, JPG et WEBP en image.
 
 ## Ce que fait l'atelier
 
 - **195 styles d'écriture** en 12 familles : naskh, thuluth, diwani, ruqʿa, kufi, maghribi, nastaʿlīq, soudani, décoratif, couleur, moderne. Toutes les polices sont sous licence libre.
-- **82 modèles de tableaux** en 10 thèmes : shamsa, levha, musanna, mihrab, sceaux, compositions (pyramide, œuf, goutte, médaillon en anneaux, mosaïque), prénoms, fêtes, mariage, motifs géométriques, découpe…
+- **86 modèles de tableaux** en 10 thèmes : shamsa, levha, musanna, mihrab, sceaux, compositions (pyramide, œuf, goutte, médaillon en anneaux, mosaïque, tughra, médaillon ailé, hilye, lettres semées), prénoms, fêtes, mariage, motifs géométriques, découpe…
 - **Tashkīl** : éditeur lettre par lettre, retrait du tashkīl, harakat en couleur, et vocalisation automatique dans Claude.
 - **Mise en forme** :
   - 23 formes : arc, cercle, sceau, cœur, vague, spirale, loupe… ;
-  - compositions par lignes : remplir une forme (pyramide, ovale, œuf, goutte, mihrab…), anneaux concentriques, mosaïque de tuiles colorées ;
+  - compositions par lignes : remplir une forme (pyramide, ovale, œuf, goutte, mihrab…), anneaux concentriques, mosaïque de tuiles colorées, tughra, médaillon ailé, panneau hilye ;
   - répétitions en miroir, en rosace et en kaléidoscope ;
-  - une couleur par ligne, contre-formes colorées ;
+  - une couleur par ligne, contre-formes colorées, lettres semées autour du texte ;
   - effets : relief 3D, néon, liseré, lettres creuses ;
   - 16 cadres (dont filet pointillé), 9 motifs de fond (dont points du calame et écriture répétée), dégradés et fonds partagés.
 - **Téléchargements** :

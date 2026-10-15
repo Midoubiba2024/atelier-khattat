@@ -178,11 +178,13 @@
   }
   function wrapForShape(font, text, st, features) {
     const sh = st.shape, S = SHP();
-    if (!sh || !S || !((sh.type === 'fill' && sh.wrap !== 'off') || sh.type === 'rings')) return text;
+    if (!sh || !S || !((sh.type === 'fill' && sh.wrap !== 'off') || sh.type === 'rings' || sh.type === 'wings')) return text;
     const src = String(text).replace(/\r/g, '');
     if (src.trim().includes('\n')) return text;
     const words = src.trim().split(/\s+/).filter(Boolean);
-    if (words.length < (sh.type === 'rings' ? 3 : 2)) return text;
+    if (words.length < (sh.type === 'fill' ? 2 : 3)) return text;
+    // médaillon et ailes : le début de la phrase au centre, les deux derniers mots en ailes (بسم الله | الرحمن | الرحيم)
+    if (sh.type === 'wings') return [words.slice(0, -2).join(' '), words[words.length - 2], words[words.length - 1]].join('\n');
     const s = (st.size || 100) / font.upem, opt = { features, wordSpace: st.wordSpace };
     const ww = words.map(w => K.layoutText(font, w, opt)[0].width * s);
     const sp = Math.max(0, K.layoutText(font, words[0] + ' ' + words[0], opt)[0].width * s - 2 * ww[0]);
@@ -211,10 +213,11 @@
     const tol = Math.max(0.03, size * (fine ? 0.0006 : 0.0018));
     const t = K.buildText(font, text, { size, lineHeight: st.lineHeight, align: st.align, features, wordSpace: st.wordSpace, color: st.colorFont !== false });
     // 1. forme
-    let cmds = t.cmds, ranges = t.spans.map(s => [s.i0, s.i1]), rings = [], shapeInfo = {}, panels = [];
+    let cmds = t.cmds, ranges = t.spans.map(s => [s.i0, s.i1]), rings = [], shapeInfo = {}, panels = [], lineRings = null;
     if (st.shape && SHP() && cmds.length) {
       const r = SHP().applyShape(t.cmds, st.shape, size, t.baseline, t.spans, t);
       cmds = r.cmds; ranges = r.ranges; rings = r.rings || []; shapeInfo = r.info || {}; panels = r.panels || [];
+      lineRings = r.lineRings || null;
     }
     // 2. parties : encre, harakat, points, calques d'une police en couleur
     const wantMarks = !!(fx.marks && fx.marks.on), wantDots = !!(fx.dots && fx.dots.on);
@@ -241,6 +244,11 @@
       pushAll(target, seg);
     });
     pushAll(base, rings);
+    // traits de la forme qui appartiennent à une ligne (trait de liaison des ailes…) : de la couleur de cette ligne
+    if (lineRings) for (const [ln, cm] of lineRings) {
+      const lc = lineInk && lineInk[ln];
+      if (lc) { if (!lineParts.has(lc)) lineParts.set(lc, []); pushAll(lineParts.get(lc), cm); } else pushAll(base, cm);
+    }
     const colorKeys = Array.from(colors.keys()), lineKeys = Array.from(lineParts.keys());
     let parts = [base, marks, dots].concat(colorKeys.map(k => colors.get(k)), lineKeys.map(k => lineParts.get(k)));
     // 3. composition (miroir, rosace)
@@ -306,6 +314,11 @@
     lineKeys.forEach((k, i) => { const p = parts[3 + colorKeys.length + i]; if (p && p.length) L.push({ role: 'text', path: body(p), fill: solid(k) }); });
     // tuiles colorées de la forme (mosaïque), sous les effets et le texte
     const PL = panels.filter(p => p.path && p.path.length).map(p => ({ role: 'tile', path: p.path, fill: solid(p.color) }));
+    // lettres semées dans les vides autour du texte
+    if (fx.scatter && fx.scatter.on && !empty) {
+      const sp = scatterLetters(font, text, textAll, size, fx.scatter, features);
+      if (sp.length) PL.push({ role: 'scatter', path: sp, fill: solid(fx.scatter.color || '#9b2c4a') });
+    }
     // 6. cadre autour du texte et de ses effets pleins
     const fr = st.frame || {};
     const fm = st.format || { id: 'auto', margin: 40 };
@@ -372,6 +385,57 @@
     const mmPerPx = st.phys && st.phys.on && st.phys.widthMm > 0 ? st.phys.widthMm / W : PX2MM;
     return { W, H, layers, path, cutPath, box, content, overflow, st, mmPerPx, shapeInfo, empty, pending, bgSolid: bgAverage(bg) };
   }
+  // Lettres semées : petites lettres (de la phrase, ou de tout l'alphabet) posées au hasard (graine fixe) dans les vides
+  // autour du texte, sans le toucher ; le texte est tramé en cases pour savoir où la place est libre
+  function scatterLetters(font, text, textAll, size, o, features) {
+    const tb = K.pathBBox(textAll);
+    if (!(tb.w && tb.h)) return [];
+    const m = Math.max(tb.w, tb.h) * 0.1, X0 = tb.x - m, Y0 = tb.y - m, X1 = tb.x + tb.w + m, Y1 = tb.y + tb.h + m;
+    const cell = Math.max(0.5, Math.max(X1 - X0, Y1 - Y0) / 170), nx = Math.ceil((X1 - X0) / cell), ny = Math.ceil((Y1 - Y0) / cell);
+    let occ = new Uint8Array(nx * ny);
+    const polys = K.flatten(textAll, cell * 0.5);
+    for (let j = 0; j < ny; j++) {
+      const y = Y0 + (j + 0.5) * cell, xs = [];
+      for (const p of polys) for (let i = 0, n = p.length; i < n; i += 2) {
+        const k = (i + 2) % n, ya = p[i + 1], yb = p[k + 1];
+        if ((ya <= y && yb > y) || (yb <= y && ya > y)) xs.push([p[i] + (p[k] - p[i]) * (y - ya) / (yb - ya), yb > ya ? 1 : -1]);
+      }
+      xs.sort((a, b) => a[0] - b[0]);
+      let w = 0;
+      for (let q = 0; q < xs.length - 1; q++) {
+        w += xs[q][1];
+        if (w) { const a = Math.max(0, Math.floor((xs[q][0] - X0) / cell)), b = Math.min(nx - 1, Math.floor((xs[q + 1][0] - X0) / cell)); for (let i = a; i <= b; i++) occ[j * nx + i] = 1; }
+      }
+    }
+    // marge autour du texte
+    const dil = Math.max(1, Math.round(size * 0.05 / cell)), d2 = new Uint8Array(nx * ny);
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) if (occ[j * nx + i]) for (let b = Math.max(0, j - dil); b <= Math.min(ny - 1, j + dil); b++) for (let a = Math.max(0, i - dil); a <= Math.min(nx - 1, i + dil); a++) d2[b * nx + a] = 1;
+    occ = d2;
+    const letters = o.alpha ? 'ابتثجحخدذرزسشصضطظعغفقكلمنهوي' : String(text).replace(/[^\u0621-\u064A]/g, '');
+    const chars = Array.from(new Set(letters || 'ابجد'));
+    const cache = new Map();
+    const glyph = ch => { if (!cache.has(ch)) { const t = K.buildText(font, ch, { size: 100, features, color: false }); cache.set(ch, { c: t.cmds, b: K.pathBBox(t.cmds) }); } return cache.get(ch); };
+    let seed = 1234567;
+    const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+    const dens = Math.min(1, Math.max(0.05, (o.density == null ? 50 : o.density) / 100)), sz = Math.min(0.6, Math.max(0.05, (o.size == null ? 22 : o.size) / 100));
+    const out = [], S = SHP();
+    for (let t = 0, n = Math.round(80 + 520 * dens); t < n; t++) {
+      const g = glyph(chars[Math.floor(rnd() * chars.length)]);
+      if (!g.c.length) continue;
+      const sc = size * sz * (0.6 + 0.8 * rnd()) / 100, a = (rnd() - 0.5) * 0.9, ca = Math.cos(a), sa = Math.sin(a);
+      const cx = X0 + rnd() * (X1 - X0), cy = Y0 + rnd() * (Y1 - Y0);
+      const hw = g.b.w * sc / 2, hh = g.b.h * sc / 2, ex = hw * Math.abs(ca) + hh * Math.abs(sa), ey = hw * Math.abs(sa) + hh * Math.abs(ca);
+      const i0 = Math.floor((cx - ex - X0) / cell), i1 = Math.ceil((cx + ex - X0) / cell), j0 = Math.floor((cy - ey - Y0) / cell), j1 = Math.ceil((cy + ey - Y0) / cell);
+      if (i0 < 0 || j0 < 0 || i1 >= nx || j1 >= ny) continue;
+      let free = true;
+      for (let j = j0; j <= j1 && free; j++) for (let i = i0; i <= i1; i++) if (occ[j * nx + i]) { free = false; break; }
+      if (!free) continue;
+      for (let j = Math.max(0, j0 - 1); j <= Math.min(ny - 1, j1 + 1); j++) for (let i = Math.max(0, i0 - 1); i <= Math.min(nx - 1, i1 + 1); i++) occ[j * nx + i] = 1;
+      const gx = g.b.x + g.b.w / 2, gy = g.b.y + g.b.h / 2;
+      pushAll(out, S.eachPoint(g.c, (x, y) => { const dx = (x - gx) * sc, dy = (y - gy) * sc; return [cx + dx * ca - dy * sa, cy + dx * sa + dy * ca]; }));
+    }
+    return out;
+  }
   // trous des lettres (contre-formes) : contours d'orientation contraire à celle des contours extérieurs
   function counterHoles(c, tol) {
     const info = K.splitContours(c).map(k => { const p = K.flatten(k, Math.max(0.2, tol * 4))[0] || []; return { c: k, a: p.length >= 6 ? K.polyArea(p) : 0 }; });
@@ -428,7 +492,7 @@
       return pt.color;
     };
     // calques nommés (Illustrator, Inkscape) ; dans la page : attribut data-layer
-    const ROLE = { bg: 'fond', pattern: 'motif', panel: 'fond-cadre', tile: 'tuiles', counter: 'contre-formes', frame: 'cadre', glow: 'halo', shadow: 'ombre', extrude: 'relief', outline: 'lisere', stroke: 'contour', text: 'texte', marks: 'harakat', dots: 'points', color: 'couleurs' };
+    const ROLE = { bg: 'fond', pattern: 'motif', panel: 'fond-cadre', tile: 'tuiles', scatter: 'lettres-semees', counter: 'contre-formes', frame: 'cadre', glow: 'halo', shadow: 'ombre', extrude: 'relief', outline: 'lisere', stroke: 'contour', text: 'texte', marks: 'harakat', dots: 'points', color: 'couleurs' };
     const seen = new Map();
     const label = r => { const b = ROLE[r] || 'calque', n = (seen.get(b) || 0) + 1; seen.set(b, n); return opt.inline ? ` data-layer="${b}"` : ` id="${b}${n > 1 ? '-' + n : ''}"`; };
     for (const l of sc.layers) {
