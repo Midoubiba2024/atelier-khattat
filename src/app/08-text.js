@@ -257,9 +257,9 @@
   const TK_LEVELS = [
     ['full', 'Complet', 'تشكيل كامل', 'Tous les signes : voyelles, soukoun, chadda et tanwīn.'],
     ['nosukun', 'Sans soukoun', 'بلا سكون', 'Tout sauf le soukoun <span lang="ar">ـْ</span>, comme dans beaucoup de livres récents.'],
-    ['partial', 'Partiel', 'تشكيل جزئي', 'Le tashkīl allégé : seulement ce que le lecteur ne devine pas. Ni soukoun, ni voyelle devant une lettre longue (<span lang="ar">ـَا ـُو ـِي</span>) ou devant <span lang="ar">ة</span>, ni kasra sous <span lang="ar">إ</span>.'],
+    ['partial', 'Partiel', 'تشكيل جزئي', 'Le tashkīl allégé : seulement ce que le lecteur ne devine pas. Ni soukoun, ni voyelle devant une lettre longue (<span lang="ar">ـَا ـُو ـِي</span>) ou devant <span lang="ar">ة</span>, ni kasra sous <span lang="ar">إ</span>. Les signes de récitation du Coran sont retirés.'],
     ['body', 'Sans les fins', 'بنية الكلمة', 'Tout sauf la voyelle, le soukoun et le tanwīn de la dernière lettre de chaque mot : la lecture à la pause (waqf). La chadda reste.'],
-    ['ends', 'Fins de mots', 'أواخر الكلمات', 'Seulement les signes de la dernière lettre de chaque mot : la désinence (iʿrāb), tanwīn compris.'],
+    ['ends', 'Fins de mots', 'أواخر الكلمات', 'Seulement les signes de la dernière lettre de chaque mot, tanwīn compris : le plus souvent la désinence (iʿrāb). Avec un pronom attaché (<span lang="ar">ـهُ ـهَا ـكُمْ</span>…), c’est la voyelle du pronom.'],
     ['shaddatanwin', 'Chadda et tanwīn', 'الشدة والتنوين', 'Seulement la chadda <span lang="ar">ـّ</span> et le tanwīn <span lang="ar">ـً ـٌ ـٍ</span>, comme dans la presse.'],
     ['shadda', 'Chadda seule', 'الشدة فقط', 'Seulement la chadda <span lang="ar">ـّ</span>, qui double une lettre.'],
     ['none', 'Aucun', 'بلا تشكيل', 'Les lettres seules. Le tashkīl reste dans votre texte : un autre niveau le fait revenir.']

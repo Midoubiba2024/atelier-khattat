@@ -333,125 +333,173 @@
   // allégés, comme dans l'écriture courante).
   //   full complet · nosukun sans soukoun · partial partiel (ce que le lecteur ne devine pas) · body sans les fins de mots
   //   ends fins de mots (désinence) · shaddatanwin chadda et tanwīn · shadda chadda seule · none aucun
+  // Les textes du Coran copiés de tanzil.net ou de quran.com (encodage du Complexe du roi Fahd, KFGQPC) sont reconnus :
+  // tanwīn « ouverts » ٗ ٖ ٞ, soukoun ۡ, lettres muettes ۟ ۠ (ou ْ chez KFGQPC), madda de tajwīd, tatwīl porteur de signes ;
+  // l'alif suscrit et les petites lettres y comptent comme des lettres jusqu'au niveau « Aucun » (الكتٰب et non الكتب).
   const TASHKIL_LEVELS = ['full', 'nosukun', 'partial', 'body', 'ends', 'shaddatanwin', 'shadda', 'none'];
-  // nature d'un signe : v voyelle, t tanwīn, h chadda, s soukoun, a alif suscrit ou souscrit,
-  // o orthographe (hamza et madda combinantes, formules, accents latins : toujours gardés), q signes coraniques
-  function markKind(c) {
-    if (c === 0x064E || c === 0x064F || c === 0x0650 || (c >= 0x0657 && c <= 0x065E)) return 'v';
-    if ((c >= 0x064B && c <= 0x064D) || (c >= 0x08F0 && c <= 0x08F2)) return 't';
+  // signes d'espacement (formes de présentation, textes copiés d'un PDF) : nature ; les formes « médianes » portent un tatwīl
+  const SPACING = { 0xFE70: 't', 0xFE71: 't', 0xFE72: 't', 0xFE74: 't', 0xFE76: 'v', 0xFE77: 'v', 0xFE78: 'v', 0xFE79: 'v', 0xFE7A: 'v', 0xFE7B: 'v', 0xFE7C: 'h', 0xFE7D: 'h', 0xFE7E: 's', 0xFE7F: 's' };
+  const SPACING_MEDIAL = new Set(['\uFE71', '\uFE77', '\uFE79', '\uFE7B', '\uFE7D', '\uFE7F']);
+  // écriture du texte : coranique (ʿuthmānī), et parmi elles l'encodage KFGQPC. Indices : alif waṣla, petits signes
+  // du Coran, alif suscrit porté par un tatwīl (ـٰ), madda posée ailleurs que sur un alif (قَالُوٓا، مُوسَىٰٓ)
+  function tkScript(s) {
+    const qpc = /\u065E/.test(s) || (/\u06E1/.test(s) && /\u0671/.test(s));
+    return { qpc, uthmani: qpc || /[\u0671\u06DF-\u06E2\u06E5-\u06E8\u06EA-\u06ED]|\u0640\u0670|[^\u0627\u0623]\u0653/.test(s) };
+  }
+  // nature d'un signe : v voyelle, t tanwīn, h chadda, s soukoun, a alif suscrit et lettres élidées (ٰ ٖ ۧ ۨ),
+  // o orthographe (hamza, madda de آ, formules, accents latins : toujours gardés), q signes coraniques (pauses, tajwīd)
+  function markKind(c, sc, base) {
+    if (SPACING[c]) return SPACING[c];
+    if (c === 0x065E || (c >= 0x064B && c <= 0x064D) || (c >= 0x08F0 && c <= 0x08F2)) return 't';
+    if ((c === 0x0657 || c === 0x0656) && sc.qpc) return 't';
+    if (c === 0x064E || c === 0x064F || c === 0x0650 || (c >= 0x0657 && c <= 0x065D)) return 'v';
     if (c === 0x0651) return 'h';
-    if (c === 0x0652 || c === 0x06E1) return 's';
-    if (c === 0x0670 || c === 0x0656) return 'a';
+    if (c === 0x06E1 || (c === 0x0652 && !sc.qpc)) return 's';
+    if (c === 0x0670 || c === 0x0656 || c === 0x06E7 || c === 0x06E8) return 'a';
+    if (c === 0x0653 && sc.uthmani && base !== 'أ') return 'q';
     if ((c >= 0x0653 && c <= 0x0655) || c === 0x065F || (c >= 0x0610 && c <= 0x0614) || (c >= 0x0300 && c <= 0x036F) || (c >= 0xFE20 && c <= 0xFE2F)) return 'o';
     return 'q';
   }
-  // grappes : un caractère de base et ses signes (avec leur nature)
-  function tkClusters(s) {
-    const cl = [];
-    for (const ch of Array.from(String(s))) {
-      const c = ch.codePointAt(0), last = cl[cl.length - 1], mk = isMark(c);
+  // lettres des mots : arabes (tatwīl compris), formes de présentation (ﷲ, textes copiés d'un PDF), liants ZWJ / ZWNJ
+  const isPres = c => (c >= 0xFB50 && c <= 0xFD3D) || (c >= 0xFD50 && c <= 0xFDFB) || c === 0xFDFD || (c >= 0xFE80 && c <= 0xFEFC);
+  const isWordCl = x => x.b !== '' && (x.b === '\u200C' || x.b === '\u200D' || isArabicLetter(x.b) || isPres(x.b.codePointAt(0)));
+  // lettre (un tatwīl qui porte des signes compte comme sa lettre)
+  const isLetterCl = x => isWordCl(x) && x.b !== '\u200C' && x.b !== '\u200D' && (x.b !== 'ـ' || x.m.length > 0);
+  const hasKind = (x, kinds) => x.k.some(k => kinds.indexOf(k) >= 0);
+  // grappes (un caractère et ses signes, avec leur nature), mots et lettres de désinence
+  function tkAnalyse(s) {
+    s = String(s);
+    const sc = tkScript(s), cl = [];
+    for (const ch of Array.from(s)) {
+      const c = ch.codePointAt(0), last = cl[cl.length - 1], mk = isMark(c) || SPACING[c] !== undefined;
       if (mk && last && !/\s/.test(last.b)) last.m.push(ch);
       else cl.push({ b: mk ? '' : ch, m: mk ? [ch] : [] });
     }
-    for (const x of cl) x.k = x.m.map(ch => markKind(ch.codePointAt(0)));
-    return cl;
-  }
-  const isLetterCl = x => x.b !== '' && x.b !== 'ـ' && isArabicLetter(x.b);
-  const hasKind = (x, kinds) => x.k.some(k => kinds.indexOf(k) >= 0);
-  // mots : [début, fin) des suites de grappes sans espace
-  function tkWords(cl) {
-    const w = [];
-    for (let i = 0; i < cl.length;) {
-      if (/\s/.test(cl[i].b)) { i++; continue; }
-      let j = i;
-      while (j < cl.length && !/\s/.test(cl[j].b)) j++;
-      w.push([i, j]); i = j;
+    for (const x of cl) {
+      x.k = x.m.map(ch => markKind(ch.codePointAt(0), sc, x.b));
+      // iqlāb (KFGQPC) : voyelle + ۢ = tanwīn
+      if (x.m.indexOf('ۢ') >= 0 && x.k.indexOf('v') >= 0) x.m.forEach((ch, i) => { if (/[َ-ِۢ]/.test(ch)) x.k[i] = 't'; });
+      // lettre muette : ۟ ۠, ْ dans l'encodage KFGQPC, alif marqué d'un soukoun (قَالُواْ)
+      x.silent = x.m.some(ch => ch === '\u06DF' || ch === '\u06E0' || (ch === '\u0652' && (sc.qpc || x.b === '\u0627')));
     }
-    return w;
+    const words = [];
+    for (let i = 0; i < cl.length;) {
+      if (!isWordCl(cl[i])) { i++; continue; }
+      let j = i;
+      while (j < cl.length && isWordCl(cl[j])) j++;
+      words.push({ a: i, b: j });
+      i = j;
+    }
+    for (const w of words) {
+      // ٗ ٖ devant un ا ou ى final nu : tanwīn (ailleurs, hors KFGQPC, ce sont des voyelles longues : لَهٗ، بِهٖ)
+      for (let i = w.a; i < w.b; i++) {
+        const x = cl[i], n = nextCl(cl, i, w.b);
+        if (n === w.b - 1 && 'اى'.indexOf(cl[n].b) >= 0 && !hasKind(cl[n], 'vths')) x.m.forEach((ch, k) => { if (ch === 'ٗ' || ch === 'ٖ') x.k[k] = 't'; });
+      }
+      w.unit = endingOf(cl, w.a, w.b);
+    }
+    return { cl, words, sc };
   }
   // lettre suivante du mot (le tatwīl nu est sauté), -1 s'il n'y en a pas
   function nextCl(cl, i, b) { let j = i + 1; while (j < b && cl[j].b === 'ـ' && !cl[j].m.length) j++; return j < b ? j : -1; }
-  // lettre qui porte la désinence : la dernière lettre du mot, ou celle qui porte le tanwīn devant un alif (ou ى) final nu
+  // lettre qui porte la désinence : la dernière lettre prononcée du mot (les lettres muettes sont sautées) ;
+  // celle qui porte le tanwīn devant un ا، ى ou و final nu (كِتَابًا، هُدًى، عَمْرٌو) ;
+  // avec le tanwīn sur l'alif (كتاباً، جدّاً), la lettre d'avant compte aussi
   function endingOf(cl, a, b) {
-    let e = -1;
-    for (let i = b - 1; i >= a; i--) if (isLetterCl(cl[i])) { e = i; break; }
-    if (e < 0) return -1;
-    if ('اىٱ'.indexOf(cl[e].b) >= 0 && !hasKind(cl[e], 'vths')) {
-      let p = e - 1;
-      while (p >= a && cl[p].b === 'ـ' && !cl[p].m.length) p--;
-      if (p >= a && isLetterCl(cl[p]) && hasKind(cl[p], 't')) e = p;
-    }
-    return e;
+    const prevL = i => { let p = i - 1; while (p >= a && !isLetterCl(cl[p])) p--; return p; };
+    let e = b - 1;
+    while (e >= a && !isLetterCl(cl[e])) e--;
+    while (e >= a && cl[e].silent) { const p = prevL(e); if (p < a) break; e = p; }
+    if (e < a) return [];
+    const p = prevL(e);
+    if ('اىوٱ'.indexOf(cl[e].b) >= 0 && !hasKind(cl[e], 'vths') && p >= a && hasKind(cl[p], 't')) return [p];
+    if ('اى'.indexOf(cl[e].b) >= 0 && hasKind(cl[e], 't') && p >= a) return [p, e];
+    return [e];
   }
   // voyelle que le lecteur devine : fatḥa devant un alif nu (ا ى ٱ) ou devant ة, ḍamma devant un و nu,
-  // kasra devant un ي nu, kasra de إ
+  // kasra devant un ي ou un ى nu, kasra de إ
   function evidentVowel(cl, i, ch, b) {
-    if (ch === 'ِ' && cl[i].b === 'إ') return true;
+    const x = cl[i];
+    if (ch === 'ِ' && (x.b === 'إ' || (x.b === 'ا' && x.m.indexOf('ٕ') >= 0))) return true;
     const j = nextCl(cl, i, b);
     if (j < 0) return false;
     const n = cl[j], bare = !hasKind(n, 'vth');
     if (ch === 'َ') return n.b === 'ة' || (bare && 'اىٱ'.indexOf(n.b) >= 0);
     if (ch === 'ُ') return bare && n.b === 'و';
-    if (ch === 'ِ') return bare && n.b === 'ي';
+    if (ch === 'ِ') return bare && (n.b === 'ي' || n.b === 'ى');
     return false;
   }
   const WASLA_KEPT = { nosukun: true, body: true };
   function tashkilLevel(s, level) {
     s = String(s == null ? '' : s);
     if (level === 'full' || TASHKIL_LEVELS.indexOf(level) < 0) return s;
-    const cl = tkClusters(s), end = new Array(cl.length).fill(cl.length), ending = new Set();
-    for (const [a, b] of tkWords(cl)) {
-      for (let i = a; i < b; i++) end[i] = b;
-      const e = endingOf(cl, a, b);
-      if (e >= 0) ending.add(e);
+    const { cl, words, sc } = tkAnalyse(s), end = new Array(cl.length).fill(cl.length), unit = new Set();
+    for (const w of words) {
+      for (let i = w.a; i < w.b; i++) end[i] = w.b;
+      for (const e of w.unit) unit.add(e);
     }
-    let out = '';
+    let out = '', skipSpace = false;
     for (let i = 0; i < cl.length; i++) {
-      const x = cl[i], last = ending.has(i);
-      out += x.b === 'ٱ' && !WASLA_KEPT[level] ? 'ا' : x.b;
+      const x = cl[i], last = unit.has(i);
+      if (skipSpace) { skipSpace = false; if (x.b === ' ' && !x.m.length) continue; }
+      let m = '';
       for (let k = 0; k < x.m.length; k++) {
         const kd = x.k[k], ch = x.m[k];
         let keep = kd === 'o';
         if (!keep) switch (level) {
           case 'nosukun': keep = kd !== 's'; break;
           case 'partial': keep = kd !== 's' && kd !== 'q' && !(kd === 'v' && evidentVowel(cl, i, ch, end[i])); break;
-          case 'body': keep = kd !== 'q' && !(last && (kd === 'v' || kd === 't' || kd === 's')); break;
+          case 'body': keep = !(last && (kd === 'v' || kd === 't' || kd === 's')); break;
           case 'ends': keep = last && kd !== 'q'; break;
           case 'shaddatanwin': keep = kd === 'h' || kd === 't'; break;
           case 'shadda': keep = kd === 'h'; break;
           default: keep = false;
         }
-        if (keep) out += ch;
+        // texte du Coran : l'alif suscrit et les petites lettres y tiennent lieu de lettres (ٱلْكِتَـٰبُ) ; seul « Aucun » les retire
+        if (!keep && kd === 'a' && sc.uthmani && level !== 'none') keep = true;
+        if (keep) m += ch;
+        else if (SPACING_MEDIAL.has(ch)) m += 'ـ';
       }
+      // tatwīl qui ne portait que des signes retirés (alif suscrit, madda du Coran…) : il disparaît avec eux
+      if (x.b === 'ـ' && x.m.length && !m && x.k.every(k => k === 'a' || k === 'q')) continue;
+      // signe seul (pause du Coran entre deux espaces) retiré : un seul espace reste
+      if (x.b === '' && !m) { if (/[ \u00A0]$/.test(out)) skipSpace = true; continue; }
+      out += (x.b === 'ٱ' && !WASLA_KEPT[level] ? 'ا' : x.b) + m;
     }
     return out;
   }
-  // part des lettres vocalisées à l'intérieur des mots (0 à 1). Ne comptent pas : la dernière lettre (souvent nue à la
-  // pause), les alifs, les lettres longues (و après ḍamma, ي après kasra), le lām de l'article devant une lettre doublée,
-  // la lettre suivie d'un alif qui porte le tanwīn (شكراً)
+  // part des lettres vocalisées à l'intérieur des mots (0 à 1). Ne comptent pas : la lettre de la désinence (souvent nue
+  // à la pause), les alifs, les lettres muettes, les lettres longues (و après ḍamma, ي après kasra), le lām de l'article,
+  // la lettre suivie d'un alif qui porte le tanwīn (شكراً), la consonne nue entre une voyelle et une autre voyelle ou la
+  // fin du mot (soukoun sous-entendu : العِلمُ، صَبر). Les signes d'un tatwīl comptent pour la lettre qui le précède.
   function tashkilCoverage(s) {
-    const cl = tkClusters(s);
+    const { cl, words } = tkAnalyse(s);
     let n = 0, m = 0;
-    for (const [a, b] of tkWords(cl)) {
-      const e = endingOf(cl, a, b);
-      for (let i = a; i < b; i++) {
+    for (const { a, b, unit } of words) {
+      const kindsOf = i => { const k = cl[i].k.slice(); for (let j = i + 1; j < b && cl[j].b === 'ـ'; j++) k.push(...cl[j].k); return k; };
+      const letters = [];
+      for (let i = a; i < b; i++) if (isLetterCl(cl[i]) && cl[i].b !== 'ـ') letters.push(i);
+      const vowelled = i => kindsOf(i).some(k => k === 'v' || k === 'a');
+      letters.forEach((i, li) => {
         const x = cl[i];
-        if (i === e || !isLetterCl(x) || 'اىٱآ'.indexOf(x.b) >= 0) continue;
-        const marked = hasKind(x, 'vthsa');
+        if (unit.indexOf(i) >= 0 || 'اىٱآ'.indexOf(x.b) >= 0 || x.silent) return;
+        const marked = kindsOf(i).some(k => 'vthsa'.indexOf(k) >= 0);
         if (!marked) {
-          const p = i > a ? cl[i - 1] : null, j = nextCl(cl, i, b);
-          if (x.b === 'و' && p && p.m.indexOf('ُ') >= 0) continue;
-          if (x.b === 'ي' && p && p.m.indexOf('ِ') >= 0) continue;
-          if (x.b === 'ل' && j >= 0 && hasKind(cl[j], 'h')) continue;
-          if (j >= 0 && cl[j].b === 'ا' && hasKind(cl[j], 't')) continue;
+          const p = li > 0 ? letters[li - 1] : -1, j = li < letters.length - 1 ? letters[li + 1] : -1;
+          if (x.b === 'و' && p >= 0 && cl[p].m.indexOf('ُ') >= 0) return;
+          if (x.b === 'ي' && p >= 0 && cl[p].m.indexOf('ِ') >= 0) return;
+          if (x.b === 'ل' && p >= 0 && 'اٱ'.indexOf(cl[p].b) >= 0) return;
+          if (x.b === 'ل' && j >= 0 && hasKind(cl[j], 'h')) return;
+          if (j >= 0 && cl[j].b === 'ا' && hasKind(cl[j], 't')) return;
+          if (p >= 0 && vowelled(p) && (j < 0 || unit.indexOf(j) >= 0 || vowelled(j))) return;
         }
         n++;
         if (marked) m++;
-      }
+      });
     }
     return n ? m / n : (hasTashkil(s) ? 1 : 0);
   }
-  const hasTashkil = s => tkClusters(s).some(x => hasKind(x, 'vthsa'));
+  const hasTashkil = s => tkAnalyse(s).cl.some(x => hasKind(x, 'vthsa'));
 
   // Lettres qui ne se lient pas à la lettre suivante
   const RIGHT_JOIN = new Set('اأإآٱدذرزوؤةڈڑژۆۇۈۋۅۉۊۏەۀړڕږڗڙۮۯٲٳٵٶٷ'.split(''));
