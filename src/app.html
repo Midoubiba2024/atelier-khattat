@@ -164,6 +164,18 @@ h1{font:700 1.28rem/1.1 var(--display);margin:0;letter-spacing:.005em;white-spac
 .tk .label{color:var(--muted);font-size:.88rem}
 .tk .label span{font-size:1.05rem;color:var(--ink)}
 .tk-status{min-height:1.3em;font-size:.88rem;color:var(--muted);margin:-4px 0 0}
+.tk-status:empty{min-height:0;margin:-6px 0 0}
+.tk-lv{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tk-lv .label{color:var(--muted);font-size:.88rem;margin-inline-end:2px}
+.tk-lv-chips{display:flex;flex-wrap:wrap;gap:6px}
+.tk-lv .chip{font-size:.84rem;padding:3px 10px}
+.tk-lv-note{display:flex;flex-direction:column;gap:4px;padding:8px 12px;border:1px solid var(--rule);border-radius:12px;background:var(--sheet);font-size:.86rem;color:var(--muted)}
+.tk-lv-note p{margin:0}
+.tk-lv-note b{color:var(--ink)}
+.tk-lv-note [lang="ar"]{font-family:var(--ar);color:var(--ink);font-size:1.08em}
+.tk-ex{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+.tk-lv-note .tk-sample{font-size:1.55rem;line-height:1.9;overflow-wrap:anywhere}
+.tk-warn{color:var(--alert)}
 .tk-status.err{color:var(--alert)}
 .tk-status.ok{color:var(--ok)}
 .tkpanel{display:flex;flex-direction:column;gap:10px;padding:10px;border:1px solid var(--rule);border-radius:14px;background:var(--sheet)}
@@ -752,12 +764,17 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
         <div id="kbd" class="kbd" hidden></div>
         <div class="tk" role="group" aria-labelledby="tkLbl">
           <span class="label" id="tkLbl">Tashkīl <span lang="ar">التشكيل</span> :</span>
-          <button class="chip" id="tkToggle" type="button">Retirer le tashkīl</button>
+          <button class="chip" id="tkToggle" type="button" hidden>Ajouter le tashkīl</button>
           <button class="chip ai" id="tkAuto" type="button" hidden>✦ Vocaliser automatiquement</button>
           <button class="chip" id="tkStop" type="button" hidden>Arrêter</button>
           <button class="chip" id="tkEdit" type="button" aria-expanded="false" aria-controls="tkPanel">Éditer lettre par lettre</button>
         </div>
         <p class="tk-status" id="tkStatus" role="status" aria-live="polite"></p>
+        <div class="tk-lv" role="group" aria-labelledby="tkLvLbl">
+          <span class="label" id="tkLvLbl">Niveau du tashkīl :</span>
+          <span class="tk-lv-chips" id="tkLevels"></span>
+        </div>
+        <div class="tk-lv-note" id="tkLvNote"></div>
         <div id="tkPanel" class="tkpanel" hidden>
           <div class="tk-letters" id="tkLetters" dir="rtl" role="listbox" aria-label="Lettres du texte"></div>
           <div class="tk-marks" id="tkMarks" role="group" aria-label="Signes de la lettre choisie"></div>
@@ -792,8 +809,6 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
             <div class="ctl"><div class="seg" id="kashida" role="group" aria-labelledby="lblKashida"></div><span class="hint" id="kashidaHint">Kashida : allonge la liaison avant la dernière lettre de chaque mot</span></div></div>
           <div class="row"><label for="ws">Espace des mots</label>
             <div class="ctl"><input type="range" id="ws" min="0.2" max="4" step="0.05"><span class="val" id="wsVal"></span></div></div>
-          <div class="row"><span class="lbl">Tashkīl</span>
-            <div class="ctl"><label class="check"><input type="checkbox" id="harakat"> Afficher les voyelles et la chadda</label></div></div>
           <div class="row" id="rowColorFont" hidden><span class="lbl">Police en couleur</span>
             <div class="ctl"><label class="check"><input type="checkbox" id="colorFont"> Garder les couleurs propres à la police</label></div></div>
           <div class="row" id="rowAlign" hidden><span class="lbl" id="lblAlign">Alignement</span>

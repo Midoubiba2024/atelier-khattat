@@ -110,7 +110,7 @@
       b.addEventListener('click', () => {
         const v = libMode === 'line' && txt.value.trim() ? txt.value.replace(/\s+$/, '') + '\n' + ar : ar;
         setText(v, v.length);
-        if (hasMarks(ar) && !S.harakat) { S.harakat = true; }
+        if (K.hasTashkil(ar)) showTashkil();
         // légende affichée : elle reprend le nom ou le sens du texte choisi
         if (S.caption.on && libMode !== 'line') { S.caption.text = libraryMeaning(ar) || captionOf(fr); $('#capText').value = S.caption.text; }
         textChanged(true);
@@ -207,7 +207,7 @@
     c.marks = marks;
     const v = joinClusters(cs);
     txt.value = v; S.text = v;
-    if (!S.harakat) S.harakat = true;
+    showTashkil();
     textChanged(true);
     // passe à la lettre suivante après une voyelle
     if (m !== SHADDA && m !== 'none') {
@@ -237,6 +237,7 @@
     $('#tkStop').addEventListener('click', () => { if (tkCtl) tkCtl.abort(); });
     // vocalisation automatique : disponible quand l'atelier peut interroger Claude
     sampleP.then(fn => { tkClaude = !!fn; $('#tkAuto').hidden = !fn; syncTkUI(); });
+    buildTkLevels();
     syncTkUI();
   }
   function showTkPanel(open) {
@@ -245,12 +246,69 @@
     if (open) { buildTashkilPanel(); const b = $('#tkLetters .tkl[aria-selected="true"]'); if (b) b.focus(); }
   }
 
-  // ------------------------------------------------------------------ tashkīl : retirer, afficher, remettre, ajouter
-  // Un seul bouton, dont l'action suit le texte :
-  //   texte vocalisé → « Retirer » (la version vocalisée est gardée) ; signes masqués → « Afficher » ;
-  //   tashkīl retiré → « Remettre » ; texte connu de l'atelier → « Ajouter » (bibliothèque, modèles, exemples) ;
+  // ------------------------------------------------------------------ tashkīl : niveaux, ajouter, compléter
+  // Le texte garde sa vocalisation ; le niveau choisi (complet, partiel, fins de mots…) décide des signes dessinés.
+  // Un seul bouton pour vocaliser, dont l'action suit le texte :
+  //   texte connu de l'atelier (bibliothèque, modèles, exemples) → « Ajouter » ; vocalisé en partie → « Compléter » ;
+  //   tashkīl retiré par une version précédente → « Remettre » ;
   //   autre texte → « Ajouter » ouvre l'éditeur lettre par lettre (avec Claude : « Vocaliser automatiquement »).
   let tkClaude = false;
+  // niveaux : identifiant (moteur), nom, nom arabe, ce que le niveau garde
+  const TK_LEVELS = [
+    ['full', 'Complet', 'تشكيل كامل', 'Tous les signes : voyelles, soukoun, chadda et tanwīn.'],
+    ['nosukun', 'Sans soukoun', 'بلا سكون', 'Tout sauf le soukoun <span lang="ar">ـْ</span>, comme dans beaucoup de livres récents.'],
+    ['partial', 'Partiel', 'تشكيل جزئي', 'Le tashkīl allégé : seulement ce que le lecteur ne devine pas. Ni soukoun, ni voyelle devant une lettre longue (<span lang="ar">ـَا ـُو ـِي</span>) ou devant <span lang="ar">ة</span>, ni kasra sous <span lang="ar">إ</span>.'],
+    ['body', 'Sans les fins', 'بنية الكلمة', 'Tout sauf la voyelle, le soukoun et le tanwīn de la dernière lettre de chaque mot : la lecture à la pause (waqf). La chadda reste.'],
+    ['ends', 'Fins de mots', 'أواخر الكلمات', 'Seulement les signes de la dernière lettre de chaque mot : la désinence (iʿrāb), tanwīn compris.'],
+    ['shaddatanwin', 'Chadda et tanwīn', 'الشدة والتنوين', 'Seulement la chadda <span lang="ar">ـّ</span> et le tanwīn <span lang="ar">ـً ـٌ ـٍ</span>, comme dans la presse.'],
+    ['shadda', 'Chadda seule', 'الشدة فقط', 'Seulement la chadda <span lang="ar">ـّ</span>, qui double une lettre.'],
+    ['none', 'Aucun', 'بلا تشكيل', 'Les lettres seules. Le tashkīl reste dans votre texte : un autre niveau le fait revenir.']
+  ];
+  const TK_REF = 'الْكِتَابُ مُفِيدٌ جِدًّا';
+  // signes ajoutés ou modifiés alors que le niveau « Aucun » les cache : on les montre
+  function showTashkil() { if (S.tkLevel === 'none') S.tkLevel = 'full'; S.harakat = true; }
+  function setTkLevel(v) {
+    if (S.tkLevel === v) return;
+    S.tkLevel = v; S.harakat = v !== 'none';
+    textChanged(true);
+  }
+  function buildTkLevels() {
+    const box = $('#tkLevels');
+    for (const [id, name, ar, desc] of TK_LEVELS) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'chip'; b.dataset.v = id; b.textContent = name;
+      b.title = ar + ' : ' + desc.replace(/<[^>]+>/g, '');
+      b.addEventListener('click', () => setTkLevel(id));
+      box.appendChild(b);
+    }
+    syncTkLevels();
+  }
+  // première ligne du texte, coupée entre deux mots
+  function tkSample(t) {
+    const line = (t.split('\n').find(l => l.trim()) || '').trim();
+    if (line.length <= 48) return line;
+    const words = line.split(/\s+/);
+    let out = words[0];
+    for (let i = 1; i < words.length && (out + ' ' + words[i]).length <= 48; i++) out += ' ' + words[i];
+    return out + ' …';
+  }
+  function syncTkLevels() {
+    const box = $('#tkLevels');
+    if (!box || !box.children.length) return;
+    syncSeg(box, S.tkLevel);
+    const L = TK_LEVELS.find(l => l[0] === S.tkLevel) || TK_LEVELS[0];
+    const has = K.hasTashkil(S.text);
+    let html = '<p><b>' + L[1] + '</b> · <span lang="ar">' + L[2] + '</span> — ' + L[3] + '</p>';
+    if (has) {
+      html += '<p class="tk-ex"><span>Votre texte :</span> <span class="tk-sample" lang="ar" dir="rtl">' + esc(tkSample(K.tashkilLevel(S.text, S.tkLevel))) + '</span></p>';
+      if (K.tashkilCoverage(S.text) < 0.6) html += '<p class="tk-warn">Votre texte n’a qu’une partie du tashkīl : chaque niveau garde seulement les signes déjà écrits.' +
+        (tkPlan().m === 'complete' ? ' « Compléter le tashkīl » le vocalise en entier.' : ' Complétez-le avec l’éditeur lettre par lettre' + (tkClaude ? ' ou la vocalisation automatique.' : '.')) + '</p>';
+    } else {
+      html += '<p class="tk-ex"><span>Exemple :</span> <span class="tk-sample" lang="ar" dir="rtl">' + esc(K.tashkilLevel(TK_REF, S.tkLevel)) + '</span></p>';
+      if (S.text.trim()) html += '<p>Votre texte n’a pas encore de tashkīl : le niveau choisi s’appliquera dès qu’il en aura.</p>';
+    }
+    $('#tkLvNote').innerHTML = html;
+  }
   // un texte sans ses signes : lettres seules, espaces et retours à la ligne réduits
   const bareKey = t => K.stripMarks(String(t)).replace(/ٱ/g, 'ا').replace(/ـ/g, '').replace(/\s+/g, ' ').trim();
   let tkCat = null;
@@ -294,43 +352,52 @@
     });
     return n ? { v, all: n === m } : null;
   }
+  // nombre de signes du tashkīl (voyelles, soukoun, chadda, tanwīn, alif suscrit, signes coraniques)
+  const tkCount = t => Array.from(t).length - Array.from(K.tashkilLevel(t, 'none')).length;
+  // texte vocalisé en partie dont le catalogue connaît une vocalisation plus complète : le texte entier, sinon chaque ligne.
+  // La vocalisation du catalogue remplace celle du texte (deux conventions ne se mélangent pas : شكراً / شُكْرًا)
+  function completeMarks(t) {
+    const cat = tkCatalogue();
+    const fuller = s => { const voc = cat.get(bareKey(s)); return voc && tkCount(voc) > tkCount(s) ? remapMarks(K.stripMarks(s), voc) : null; };
+    const w = fuller(t);
+    if (w && w !== t) return { v: w, all: true };
+    let n = 0;
+    const v = t.split('\n').map(line => {
+      const r = line.trim() ? fuller(line) : null;
+      if (r && r !== line) { n++; return r; }
+      return line;
+    }).join('\n');
+    return n ? { v, all: false } : null;
+  }
   function tkPlan() {
     const t = S.text;
     if (!t.trim()) return { m: 'none' };
-    if (hasMarks(t)) return { m: S.harakat ? 'clear' : 'show' };
+    if (K.hasTashkil(t)) { const c = completeMarks(t); return c ? Object.assign({ m: 'complete' }, c) : { m: 'has' }; }
     const back = S.tkBackup ? carryMarks(t, S.tkBackup) : null;
     if (back) return Object.assign({ m: 'restore' }, back);
     const cat = catalogMarks(t);
     if (cat) return Object.assign({ m: 'catalog' }, cat);
     return { m: 'add' };
   }
-  const TK_LABEL = { clear: 'Retirer le tashkīl', show: 'Afficher le tashkīl', restore: 'Remettre le tashkīl', catalog: 'Ajouter le tashkīl', add: 'Ajouter le tashkīl' };
+  const TK_LABEL = { restore: 'Remettre le tashkīl', catalog: 'Ajouter le tashkīl', complete: 'Compléter le tashkīl', add: 'Ajouter le tashkīl' };
   function syncTkUI() {
     const b = $('#tkToggle');
     if (!b) return;
     const p = tkPlan();
-    // sans signe ni texte connu, la vocalisation de Claude (bouton voisin) fait l'ajout
-    b.hidden = p.m === 'none' || (p.m === 'add' && tkClaude);
-    b.textContent = TK_LABEL[p.m] || TK_LABEL.clear;
+    // texte déjà vocalisé : les niveaux suffisent ; sans signe ni texte connu, la vocalisation de Claude (bouton voisin) fait l'ajout
+    b.hidden = p.m === 'none' || p.m === 'has' || (p.m === 'add' && tkClaude);
+    b.textContent = TK_LABEL[p.m] || TK_LABEL.add;
     b.dataset.mode = p.m;
-    b.classList.toggle('prim', p.m === 'restore' || p.m === 'catalog');
+    b.classList.toggle('prim', p.m === 'restore' || p.m === 'catalog' || p.m === 'complete');
   }
   function tkToggle() {
     const p = tkPlan(), before = S.text;
-    if (p.m === 'clear') {
-      S.tkBackup = before;
-      setText(K.stripMarks(before), 0);
-      textChanged(true);
-      tkStatus('Tashkīl retiré. « Remettre le tashkīl » le rétablit.', 'ok');
-    } else if (p.m === 'show') {
-      S.harakat = true;
-      textChanged(true);
-      tkStatus('Tashkīl affiché.', 'ok');
-    } else if (p.m === 'restore' || p.m === 'catalog') {
-      txt.value = p.v; S.text = p.v; S.harakat = true;
+    if (p.m === 'restore' || p.m === 'catalog' || p.m === 'complete') {
+      txt.value = p.v; S.text = p.v; showTashkil();
       textChanged(true);
       if (p.m === 'restore') tkStatus(p.all ? 'Tashkīl remis.' : 'Tashkīl remis sur les mots qui n’ont pas changé.', 'ok');
-      else tkStatus((p.all ? 'Tashkīl ajouté' : 'Tashkīl ajouté sur les lignes que l’atelier connaît') + ' (texte de la bibliothèque ou des modèles). Vérifiez-le ; « Annuler » revient au texte d’avant.', 'ok');
+      else tkStatus((p.m === 'complete' ? (p.all ? 'Tashkīl complété' : 'Tashkīl complété sur les lignes que l’atelier connaît') : (p.all ? 'Tashkīl ajouté' : 'Tashkīl ajouté sur les lignes que l’atelier connaît')) +
+        ' (texte de la bibliothèque ou des modèles). Vérifiez-le ; « Annuler » revient au texte d’avant.', 'ok');
     } else if (p.m === 'add') {
       showTkPanel(true);
       tkStatus('Ce texte n’est pas dans la bibliothèque de l’atelier : ajoutez les signes lettre par lettre ci-dessous.');
@@ -372,7 +439,7 @@
       const out = res && typeof res.text === 'string' ? res.text : '';
       const merged = out ? remapMarks(S.text, out) : null;
       if (!merged) { tkStatus('La proposition modifiait des lettres : elle n’a pas été appliquée. Réessayez ou utilisez l’éditeur lettre par lettre.', 'err'); return; }
-      txt.value = merged; S.text = merged; S.harakat = true;
+      txt.value = merged; S.text = merged; showTashkil();
       textChanged(true); commitHist();
       tkStatus('Tashkīl ajouté. Vérifiez-le et corrigez une lettre au besoin avec l’éditeur ; « Annuler » revient au texte d’avant.', 'ok');
     } catch (e) {

@@ -161,12 +161,12 @@ fs.mkdirSync(OUT, { recursive: true });
   const tv = await page.$eval('#txt', t => t.value);
   ok(tv === 'كَتَبَ', 'tashkīl lettre par lettre : ' + tv);
   await page.screenshot({ path: OUT + '/tashkil.png', clip: { x: 82, y: 60, width: 410, height: 900 } });
-  ok((await page.$eval('#tkToggle', b => b.textContent)) === 'Retirer le tashkīl', 'bouton : Retirer');
-  await page.click('#tkToggle'); await settle(300);
-  ok((await page.$eval('#txt', t => t.value)) === 'كتب', 'tashkīl retiré');
-  ok((await page.$eval('#tkToggle', b => b.textContent)) === 'Remettre le tashkīl', 'bouton : Remettre');
-  await page.click('#tkToggle'); await settle(300);
-  ok((await page.$eval('#txt', t => t.value)) === 'كَتَبَ', 'tashkīl remis');
+  ok(await page.$eval('#tkToggle', b => b.hidden), 'texte vocalisé : pas de bouton à côté des niveaux');
+  // niveau « Aucun » : le texte garde son tashkīl, seul le dessin change ; « Complet » le fait revenir
+  await page.click('#tkLevels .chip[data-v="none"]'); await settle(300);
+  ok((await page.$eval('#txt', t => t.value)) === 'كَتَبَ' && (await page.$eval('#tkLvNote .tk-sample', e => e.textContent)) === 'كتب', 'niveau Aucun : texte gardé, signes cachés');
+  await page.click('#tkLevels .chip[data-v="full"]'); await settle(300);
+  ok((await page.$eval('#tkLvNote .tk-sample', e => e.textContent)) === 'كَتَبَ', 'niveau Complet : signes revenus');
   await page.click('#tkEdit');
   // texte de la bibliothèque sans tashkīl : « Ajouter » le vocalise d'après le catalogue de l'atelier
   await page.fill('#txt', 'الخط\nالعربي'); await settle(400);

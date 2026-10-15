@@ -164,6 +164,18 @@ h1{font:700 1.28rem/1.1 var(--display);margin:0;letter-spacing:.005em;white-spac
 .tk .label{color:var(--muted);font-size:.88rem}
 .tk .label span{font-size:1.05rem;color:var(--ink)}
 .tk-status{min-height:1.3em;font-size:.88rem;color:var(--muted);margin:-4px 0 0}
+.tk-status:empty{min-height:0;margin:-6px 0 0}
+.tk-lv{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tk-lv .label{color:var(--muted);font-size:.88rem;margin-inline-end:2px}
+.tk-lv-chips{display:flex;flex-wrap:wrap;gap:6px}
+.tk-lv .chip{font-size:.84rem;padding:3px 10px}
+.tk-lv-note{display:flex;flex-direction:column;gap:4px;padding:8px 12px;border:1px solid var(--rule);border-radius:12px;background:var(--sheet);font-size:.86rem;color:var(--muted)}
+.tk-lv-note p{margin:0}
+.tk-lv-note b{color:var(--ink)}
+.tk-lv-note [lang="ar"]{font-family:var(--ar);color:var(--ink);font-size:1.08em}
+.tk-ex{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+.tk-lv-note .tk-sample{font-size:1.55rem;line-height:1.9;overflow-wrap:anywhere}
+.tk-warn{color:var(--alert)}
 .tk-status.err{color:var(--alert)}
 .tk-status.ok{color:var(--ok)}
 .tkpanel{display:flex;flex-direction:column;gap:10px;padding:10px;border:1px solid var(--rule);border-radius:14px;background:var(--sheet)}
@@ -752,12 +764,17 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
         <div id="kbd" class="kbd" hidden></div>
         <div class="tk" role="group" aria-labelledby="tkLbl">
           <span class="label" id="tkLbl">Tashkīl <span lang="ar">التشكيل</span> :</span>
-          <button class="chip" id="tkToggle" type="button">Retirer le tashkīl</button>
+          <button class="chip" id="tkToggle" type="button" hidden>Ajouter le tashkīl</button>
           <button class="chip ai" id="tkAuto" type="button" hidden>✦ Vocaliser automatiquement</button>
           <button class="chip" id="tkStop" type="button" hidden>Arrêter</button>
           <button class="chip" id="tkEdit" type="button" aria-expanded="false" aria-controls="tkPanel">Éditer lettre par lettre</button>
         </div>
         <p class="tk-status" id="tkStatus" role="status" aria-live="polite"></p>
+        <div class="tk-lv" role="group" aria-labelledby="tkLvLbl">
+          <span class="label" id="tkLvLbl">Niveau du tashkīl :</span>
+          <span class="tk-lv-chips" id="tkLevels"></span>
+        </div>
+        <div class="tk-lv-note" id="tkLvNote"></div>
         <div id="tkPanel" class="tkpanel" hidden>
           <div class="tk-letters" id="tkLetters" dir="rtl" role="listbox" aria-label="Lettres du texte"></div>
           <div class="tk-marks" id="tkMarks" role="group" aria-label="Signes de la lettre choisie"></div>
@@ -792,8 +809,6 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
             <div class="ctl"><div class="seg" id="kashida" role="group" aria-labelledby="lblKashida"></div><span class="hint" id="kashidaHint">Kashida : allonge la liaison avant la dernière lettre de chaque mot</span></div></div>
           <div class="row"><label for="ws">Espace des mots</label>
             <div class="ctl"><input type="range" id="ws" min="0.2" max="4" step="0.05"><span class="val" id="wsVal"></span></div></div>
-          <div class="row"><span class="lbl">Tashkīl</span>
-            <div class="ctl"><label class="check"><input type="checkbox" id="harakat"> Afficher les voyelles et la chadda</label></div></div>
           <div class="row" id="rowColorFont" hidden><span class="lbl">Police en couleur</span>
             <div class="ctl"><label class="check"><input type="checkbox" id="colorFont"> Garder les couleurs propres à la police</label></div></div>
           <div class="row" id="rowAlign" hidden><span class="lbl" id="lblAlign">Alignement</span>
@@ -1594,6 +1609,131 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
   const MARKS_RE = /[ؐ-ًؚ-ٰٟۖ-ۜ۟-۪ۤۧۨ-ۭ࣊-ࣣ࣡-ࣿ]/g;
   function stripMarks(s) { return s.replace(MARKS_RE, ''); }
 
+  // Niveaux du tashkīl. Le texte garde sa vocalisation complète ; chaque niveau en montre une partie, selon des règles
+  // fixes : aucun signe n'est ajouté, aucune lettre n'est changée (seul l'alif waṣla ٱ redevient ا dans les niveaux
+  // allégés, comme dans l'écriture courante).
+  //   full complet · nosukun sans soukoun · partial partiel (ce que le lecteur ne devine pas) · body sans les fins de mots
+  //   ends fins de mots (désinence) · shaddatanwin chadda et tanwīn · shadda chadda seule · none aucun
+  const TASHKIL_LEVELS = ['full', 'nosukun', 'partial', 'body', 'ends', 'shaddatanwin', 'shadda', 'none'];
+  // nature d'un signe : v voyelle, t tanwīn, h chadda, s soukoun, a alif suscrit ou souscrit,
+  // o orthographe (hamza et madda combinantes, formules, accents latins : toujours gardés), q signes coraniques
+  function markKind(c) {
+    if (c === 0x064E || c === 0x064F || c === 0x0650 || (c >= 0x0657 && c <= 0x065E)) return 'v';
+    if ((c >= 0x064B && c <= 0x064D) || (c >= 0x08F0 && c <= 0x08F2)) return 't';
+    if (c === 0x0651) return 'h';
+    if (c === 0x0652 || c === 0x06E1) return 's';
+    if (c === 0x0670 || c === 0x0656) return 'a';
+    if ((c >= 0x0653 && c <= 0x0655) || c === 0x065F || (c >= 0x0610 && c <= 0x0614) || (c >= 0x0300 && c <= 0x036F) || (c >= 0xFE20 && c <= 0xFE2F)) return 'o';
+    return 'q';
+  }
+  // grappes : un caractère de base et ses signes (avec leur nature)
+  function tkClusters(s) {
+    const cl = [];
+    for (const ch of Array.from(String(s))) {
+      const c = ch.codePointAt(0), last = cl[cl.length - 1], mk = isMark(c);
+      if (mk && last && !/\s/.test(last.b)) last.m.push(ch);
+      else cl.push({ b: mk ? '' : ch, m: mk ? [ch] : [] });
+    }
+    for (const x of cl) x.k = x.m.map(ch => markKind(ch.codePointAt(0)));
+    return cl;
+  }
+  const isLetterCl = x => x.b !== '' && x.b !== 'ـ' && isArabicLetter(x.b);
+  const hasKind = (x, kinds) => x.k.some(k => kinds.indexOf(k) >= 0);
+  // mots : [début, fin) des suites de grappes sans espace
+  function tkWords(cl) {
+    const w = [];
+    for (let i = 0; i < cl.length;) {
+      if (/\s/.test(cl[i].b)) { i++; continue; }
+      let j = i;
+      while (j < cl.length && !/\s/.test(cl[j].b)) j++;
+      w.push([i, j]); i = j;
+    }
+    return w;
+  }
+  // lettre suivante du mot (le tatwīl nu est sauté), -1 s'il n'y en a pas
+  function nextCl(cl, i, b) { let j = i + 1; while (j < b && cl[j].b === 'ـ' && !cl[j].m.length) j++; return j < b ? j : -1; }
+  // lettre qui porte la désinence : la dernière lettre du mot, ou celle qui porte le tanwīn devant un alif (ou ى) final nu
+  function endingOf(cl, a, b) {
+    let e = -1;
+    for (let i = b - 1; i >= a; i--) if (isLetterCl(cl[i])) { e = i; break; }
+    if (e < 0) return -1;
+    if ('اىٱ'.indexOf(cl[e].b) >= 0 && !hasKind(cl[e], 'vths')) {
+      let p = e - 1;
+      while (p >= a && cl[p].b === 'ـ' && !cl[p].m.length) p--;
+      if (p >= a && isLetterCl(cl[p]) && hasKind(cl[p], 't')) e = p;
+    }
+    return e;
+  }
+  // voyelle que le lecteur devine : fatḥa devant un alif nu (ا ى ٱ) ou devant ة, ḍamma devant un و nu,
+  // kasra devant un ي nu, kasra de إ
+  function evidentVowel(cl, i, ch, b) {
+    if (ch === 'ِ' && cl[i].b === 'إ') return true;
+    const j = nextCl(cl, i, b);
+    if (j < 0) return false;
+    const n = cl[j], bare = !hasKind(n, 'vth');
+    if (ch === 'َ') return n.b === 'ة' || (bare && 'اىٱ'.indexOf(n.b) >= 0);
+    if (ch === 'ُ') return bare && n.b === 'و';
+    if (ch === 'ِ') return bare && n.b === 'ي';
+    return false;
+  }
+  const WASLA_KEPT = { nosukun: true, body: true };
+  function tashkilLevel(s, level) {
+    s = String(s == null ? '' : s);
+    if (level === 'full' || TASHKIL_LEVELS.indexOf(level) < 0) return s;
+    const cl = tkClusters(s), end = new Array(cl.length).fill(cl.length), ending = new Set();
+    for (const [a, b] of tkWords(cl)) {
+      for (let i = a; i < b; i++) end[i] = b;
+      const e = endingOf(cl, a, b);
+      if (e >= 0) ending.add(e);
+    }
+    let out = '';
+    for (let i = 0; i < cl.length; i++) {
+      const x = cl[i], last = ending.has(i);
+      out += x.b === 'ٱ' && !WASLA_KEPT[level] ? 'ا' : x.b;
+      for (let k = 0; k < x.m.length; k++) {
+        const kd = x.k[k], ch = x.m[k];
+        let keep = kd === 'o';
+        if (!keep) switch (level) {
+          case 'nosukun': keep = kd !== 's'; break;
+          case 'partial': keep = kd !== 's' && kd !== 'q' && !(kd === 'v' && evidentVowel(cl, i, ch, end[i])); break;
+          case 'body': keep = kd !== 'q' && !(last && (kd === 'v' || kd === 't' || kd === 's')); break;
+          case 'ends': keep = last && kd !== 'q'; break;
+          case 'shaddatanwin': keep = kd === 'h' || kd === 't'; break;
+          case 'shadda': keep = kd === 'h'; break;
+          default: keep = false;
+        }
+        if (keep) out += ch;
+      }
+    }
+    return out;
+  }
+  // part des lettres vocalisées à l'intérieur des mots (0 à 1). Ne comptent pas : la dernière lettre (souvent nue à la
+  // pause), les alifs, les lettres longues (و après ḍamma, ي après kasra), le lām de l'article devant une lettre doublée,
+  // la lettre suivie d'un alif qui porte le tanwīn (شكراً)
+  function tashkilCoverage(s) {
+    const cl = tkClusters(s);
+    let n = 0, m = 0;
+    for (const [a, b] of tkWords(cl)) {
+      const e = endingOf(cl, a, b);
+      for (let i = a; i < b; i++) {
+        const x = cl[i];
+        if (i === e || !isLetterCl(x) || 'اىٱآ'.indexOf(x.b) >= 0) continue;
+        const marked = hasKind(x, 'vthsa');
+        if (!marked) {
+          const p = i > a ? cl[i - 1] : null, j = nextCl(cl, i, b);
+          if (x.b === 'و' && p && p.m.indexOf('ُ') >= 0) continue;
+          if (x.b === 'ي' && p && p.m.indexOf('ِ') >= 0) continue;
+          if (x.b === 'ل' && j >= 0 && hasKind(cl[j], 'h')) continue;
+          if (j >= 0 && cl[j].b === 'ا' && hasKind(cl[j], 't')) continue;
+        }
+        n++;
+        if (marked) m++;
+      }
+    }
+    return n ? m / n : (hasTashkil(s) ? 1 : 0);
+  }
+  const hasTashkil = s => tkClusters(s).some(x => hasKind(x, 'vthsa'));
+
   // Lettres qui ne se lient pas à la lettre suivante
   const RIGHT_JOIN = new Set('اأإآٱدذرزوؤةڈڑژۆۇۈۋۅۉۊۏەۀړڕږڗڙۮۯٲٳٵٶٷ'.split(''));
   function isArabicLetter(ch) {
@@ -1906,7 +2046,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     return { text: out, missing: Array.from(missing) };
   }
 
-  root.Khatt = { checkSupport, isMark, HB, Font, bidiRuns, stripMarks, addKashida, layoutText, buildText, pathBBox, transformPath, toSVGPath, toCubic, flatten, num, splitContours, polyArea, winding, dotContours };
+  root.Khatt = { checkSupport, isMark, HB, Font, bidiRuns, stripMarks, TASHKIL_LEVELS, tashkilLevel, tashkilCoverage, hasTashkil, addKashida, layoutText, buildText, pathBBox, transformPath, toSVGPath, toCubic, flatten, num, splitContours, polyArea, winding, dotContours };
 })(typeof self !== 'undefined' ? self : globalThis);
 </script>
 <script>/* Formes : déformation du texte (arc, cercle, vague, tracé libre…) appliquée point par point aux contours,
@@ -5520,7 +5660,10 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
   const STORE = 'khattat:v1';
   const DEFAULT = {
     text: 'الخط العربي', fontId: 'aref-ruqaa', wght: null,
-    size: 160, lineHeight: 1.15, align: 'center', kashida: 0, harakat: true, wordSpace: 1, colorFont: true,
+    size: 160, lineHeight: 1.15, align: 'center', kashida: 0, wordSpace: 1, colorFont: true,
+    // niveau du tashkīl affiché (le texte garde sa vocalisation complète) ; harakat : ancien réglage oui / non, gardé pour
+    // les créations et les codes relus par une version précédente de l'atelier
+    tkLevel: 'full', harakat: true,
     fill: { type: 'linear', color: '#1b1712', stops: stopsOf(GOLD), angle: 90, gk: 'linear' },
     stroke: { on: false, color: '#ffffff', width: 6 },
     shadow: { on: true, color: '#000000', opacity: 0.45, dist: 4, blur: 6 },
@@ -5548,7 +5691,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     phys: { on: false, value: 60, unit: 'cm' },
     // réglages d'interface (hors historique)
     scale: 2, filter: 'all', tab: 'ecr', tool: 'texte', favs: [], cardColors: false, pvBg: 'check', dims: false, guides: false, gtab: 'styles', mdTheme: 'all', mdSrc: 'mine',
-    // dernier texte vocalisé dont le tashkīl a été retiré (pour « Remettre le tashkīl »)
+    // dernier texte vocalisé dont le tashkīl a été retiré par une version précédente (pour « Remettre le tashkīl »)
     tkBackup: ''
   };
   const UI_KEYS = ['scale', 'filter', 'tab', 'tool', 'favs', 'cardColors', 'pvBg', 'dims', 'guides', 'gtab', 'mdTheme', 'mdSrc', 'tkBackup'];
@@ -5600,6 +5743,8 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     s.lineHeight = clampN(s.lineHeight, 0.4, 3, DEFAULT.lineHeight);
     s.align = oneOf(s.align, ['right', 'center', 'left'], 'center');
     s.kashida = oneOf(s.kashida, [0, 1, 2, 3, 5], 0);
+    s.tkLevel = K.TASHKIL_LEVELS.includes(o && o.tkLevel) ? o.tkLevel : (o && o.harakat === false ? 'none' : 'full');
+    s.harakat = s.tkLevel !== 'none';
     s.wordSpace = clampN(s.wordSpace, 0.1, 5, 1);
     s.stroke.color = normHex(s.stroke.color) || DEFAULT.stroke.color;
     s.stroke.width = clampN(s.stroke.width, 0, 200, 6);
@@ -5816,13 +5961,13 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
 
   // ------------------------------------------------------------------ texte
   let prepared = '', preparedK = '';
-  function prepText(raw, harakat, kashida) {
-    let t = String(raw || '').replace(/\r/g, '');
-    if (!harakat) t = K.stripMarks(t);
+  // texte à dessiner : le niveau du tashkīl choisi (complet, partiel…), puis l'étirement
+  function prepText(raw, level, kashida) {
+    const t = K.tashkilLevel(String(raw || '').replace(/\r/g, ''), level);
     return { t, k: kashida ? t.split('\n').map(l => K.addKashida(l, kashida)).join('\n') : t };
   }
   function prepareText() {
-    const p = prepText(S.text, S.harakat, S.kashida);
+    const p = prepText(S.text, S.tkLevel, S.kashida);
     prepared = p.t; preparedK = p.k;
     return prepared;
   }
@@ -7085,10 +7230,8 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
   function updateTextUI() {
     const multi = S.text.includes('\n');
     $('#rowAlign').hidden = !multi; $('#rowLh').hidden = !multi;
-    const hm = hasMarks(S.text), cb = $('#harakat');
-    cb.disabled = !hm; cb.checked = S.harakat;
-    cb.parentElement.style.opacity = hm ? '1' : '.55';
     syncTkUI();
+    syncTkLevels();
   }
   let inkPick = null, inkGrad = null, bgPick = null, bgGrad = null;
   function updateColorUI() {
@@ -7291,7 +7434,6 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     $('#size').addEventListener('input', () => { S.size = +$('#size').value; syncSize(); changed(); });
     $('#sizeNum').addEventListener('change', () => { S.size = Math.min(2000, Math.max(8, +$('#sizeNum').value || S.size)); syncSize(); changed(); });
     seg($('#kashida'), [[0, 'Aucun'], [1, '1'], [2, '2'], [3, '3'], [5, '5']], () => S.kashida, v => { S.kashida = v; textChanged(true); });
-    $('#harakat').addEventListener('change', () => { S.harakat = $('#harakat').checked; textChanged(true); });
     seg($('#align'), [['right', 'Droite'], ['center', 'Centre'], ['left', 'Gauche']], () => S.align, v => { S.align = v; changed(); });
     bindRange('lh', () => S.lineHeight, v => { S.lineHeight = v; }, v => nf1.format(v), 'lhVal');
     bindRange('ws', () => S.wordSpace, v => { S.wordSpace = v; }, v => '×' + nf2.format(v), 'wsVal');
@@ -7525,7 +7667,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
       b.addEventListener('click', () => {
         const v = libMode === 'line' && txt.value.trim() ? txt.value.replace(/\s+$/, '') + '\n' + ar : ar;
         setText(v, v.length);
-        if (hasMarks(ar) && !S.harakat) { S.harakat = true; }
+        if (K.hasTashkil(ar)) showTashkil();
         // légende affichée : elle reprend le nom ou le sens du texte choisi
         if (S.caption.on && libMode !== 'line') { S.caption.text = libraryMeaning(ar) || captionOf(fr); $('#capText').value = S.caption.text; }
         textChanged(true);
@@ -7622,7 +7764,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     c.marks = marks;
     const v = joinClusters(cs);
     txt.value = v; S.text = v;
-    if (!S.harakat) S.harakat = true;
+    showTashkil();
     textChanged(true);
     // passe à la lettre suivante après une voyelle
     if (m !== SHADDA && m !== 'none') {
@@ -7652,6 +7794,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     $('#tkStop').addEventListener('click', () => { if (tkCtl) tkCtl.abort(); });
     // vocalisation automatique : disponible quand l'atelier peut interroger Claude
     sampleP.then(fn => { tkClaude = !!fn; $('#tkAuto').hidden = !fn; syncTkUI(); });
+    buildTkLevels();
     syncTkUI();
   }
   function showTkPanel(open) {
@@ -7660,12 +7803,69 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     if (open) { buildTashkilPanel(); const b = $('#tkLetters .tkl[aria-selected="true"]'); if (b) b.focus(); }
   }
 
-  // ------------------------------------------------------------------ tashkīl : retirer, afficher, remettre, ajouter
-  // Un seul bouton, dont l'action suit le texte :
-  //   texte vocalisé → « Retirer » (la version vocalisée est gardée) ; signes masqués → « Afficher » ;
-  //   tashkīl retiré → « Remettre » ; texte connu de l'atelier → « Ajouter » (bibliothèque, modèles, exemples) ;
+  // ------------------------------------------------------------------ tashkīl : niveaux, ajouter, compléter
+  // Le texte garde sa vocalisation ; le niveau choisi (complet, partiel, fins de mots…) décide des signes dessinés.
+  // Un seul bouton pour vocaliser, dont l'action suit le texte :
+  //   texte connu de l'atelier (bibliothèque, modèles, exemples) → « Ajouter » ; vocalisé en partie → « Compléter » ;
+  //   tashkīl retiré par une version précédente → « Remettre » ;
   //   autre texte → « Ajouter » ouvre l'éditeur lettre par lettre (avec Claude : « Vocaliser automatiquement »).
   let tkClaude = false;
+  // niveaux : identifiant (moteur), nom, nom arabe, ce que le niveau garde
+  const TK_LEVELS = [
+    ['full', 'Complet', 'تشكيل كامل', 'Tous les signes : voyelles, soukoun, chadda et tanwīn.'],
+    ['nosukun', 'Sans soukoun', 'بلا سكون', 'Tout sauf le soukoun <span lang="ar">ـْ</span>, comme dans beaucoup de livres récents.'],
+    ['partial', 'Partiel', 'تشكيل جزئي', 'Le tashkīl allégé : seulement ce que le lecteur ne devine pas. Ni soukoun, ni voyelle devant une lettre longue (<span lang="ar">ـَا ـُو ـِي</span>) ou devant <span lang="ar">ة</span>, ni kasra sous <span lang="ar">إ</span>.'],
+    ['body', 'Sans les fins', 'بنية الكلمة', 'Tout sauf la voyelle, le soukoun et le tanwīn de la dernière lettre de chaque mot : la lecture à la pause (waqf). La chadda reste.'],
+    ['ends', 'Fins de mots', 'أواخر الكلمات', 'Seulement les signes de la dernière lettre de chaque mot : la désinence (iʿrāb), tanwīn compris.'],
+    ['shaddatanwin', 'Chadda et tanwīn', 'الشدة والتنوين', 'Seulement la chadda <span lang="ar">ـّ</span> et le tanwīn <span lang="ar">ـً ـٌ ـٍ</span>, comme dans la presse.'],
+    ['shadda', 'Chadda seule', 'الشدة فقط', 'Seulement la chadda <span lang="ar">ـّ</span>, qui double une lettre.'],
+    ['none', 'Aucun', 'بلا تشكيل', 'Les lettres seules. Le tashkīl reste dans votre texte : un autre niveau le fait revenir.']
+  ];
+  const TK_REF = 'الْكِتَابُ مُفِيدٌ جِدًّا';
+  // signes ajoutés ou modifiés alors que le niveau « Aucun » les cache : on les montre
+  function showTashkil() { if (S.tkLevel === 'none') S.tkLevel = 'full'; S.harakat = true; }
+  function setTkLevel(v) {
+    if (S.tkLevel === v) return;
+    S.tkLevel = v; S.harakat = v !== 'none';
+    textChanged(true);
+  }
+  function buildTkLevels() {
+    const box = $('#tkLevels');
+    for (const [id, name, ar, desc] of TK_LEVELS) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'chip'; b.dataset.v = id; b.textContent = name;
+      b.title = ar + ' : ' + desc.replace(/<[^>]+>/g, '');
+      b.addEventListener('click', () => setTkLevel(id));
+      box.appendChild(b);
+    }
+    syncTkLevels();
+  }
+  // première ligne du texte, coupée entre deux mots
+  function tkSample(t) {
+    const line = (t.split('\n').find(l => l.trim()) || '').trim();
+    if (line.length <= 48) return line;
+    const words = line.split(/\s+/);
+    let out = words[0];
+    for (let i = 1; i < words.length && (out + ' ' + words[i]).length <= 48; i++) out += ' ' + words[i];
+    return out + ' …';
+  }
+  function syncTkLevels() {
+    const box = $('#tkLevels');
+    if (!box || !box.children.length) return;
+    syncSeg(box, S.tkLevel);
+    const L = TK_LEVELS.find(l => l[0] === S.tkLevel) || TK_LEVELS[0];
+    const has = K.hasTashkil(S.text);
+    let html = '<p><b>' + L[1] + '</b> · <span lang="ar">' + L[2] + '</span> — ' + L[3] + '</p>';
+    if (has) {
+      html += '<p class="tk-ex"><span>Votre texte :</span> <span class="tk-sample" lang="ar" dir="rtl">' + esc(tkSample(K.tashkilLevel(S.text, S.tkLevel))) + '</span></p>';
+      if (K.tashkilCoverage(S.text) < 0.6) html += '<p class="tk-warn">Votre texte n’a qu’une partie du tashkīl : chaque niveau garde seulement les signes déjà écrits.' +
+        (tkPlan().m === 'complete' ? ' « Compléter le tashkīl » le vocalise en entier.' : ' Complétez-le avec l’éditeur lettre par lettre' + (tkClaude ? ' ou la vocalisation automatique.' : '.')) + '</p>';
+    } else {
+      html += '<p class="tk-ex"><span>Exemple :</span> <span class="tk-sample" lang="ar" dir="rtl">' + esc(K.tashkilLevel(TK_REF, S.tkLevel)) + '</span></p>';
+      if (S.text.trim()) html += '<p>Votre texte n’a pas encore de tashkīl : le niveau choisi s’appliquera dès qu’il en aura.</p>';
+    }
+    $('#tkLvNote').innerHTML = html;
+  }
   // un texte sans ses signes : lettres seules, espaces et retours à la ligne réduits
   const bareKey = t => K.stripMarks(String(t)).replace(/ٱ/g, 'ا').replace(/ـ/g, '').replace(/\s+/g, ' ').trim();
   let tkCat = null;
@@ -7709,43 +7909,52 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     });
     return n ? { v, all: n === m } : null;
   }
+  // nombre de signes du tashkīl (voyelles, soukoun, chadda, tanwīn, alif suscrit, signes coraniques)
+  const tkCount = t => Array.from(t).length - Array.from(K.tashkilLevel(t, 'none')).length;
+  // texte vocalisé en partie dont le catalogue connaît une vocalisation plus complète : le texte entier, sinon chaque ligne.
+  // La vocalisation du catalogue remplace celle du texte (deux conventions ne se mélangent pas : شكراً / شُكْرًا)
+  function completeMarks(t) {
+    const cat = tkCatalogue();
+    const fuller = s => { const voc = cat.get(bareKey(s)); return voc && tkCount(voc) > tkCount(s) ? remapMarks(K.stripMarks(s), voc) : null; };
+    const w = fuller(t);
+    if (w && w !== t) return { v: w, all: true };
+    let n = 0;
+    const v = t.split('\n').map(line => {
+      const r = line.trim() ? fuller(line) : null;
+      if (r && r !== line) { n++; return r; }
+      return line;
+    }).join('\n');
+    return n ? { v, all: false } : null;
+  }
   function tkPlan() {
     const t = S.text;
     if (!t.trim()) return { m: 'none' };
-    if (hasMarks(t)) return { m: S.harakat ? 'clear' : 'show' };
+    if (K.hasTashkil(t)) { const c = completeMarks(t); return c ? Object.assign({ m: 'complete' }, c) : { m: 'has' }; }
     const back = S.tkBackup ? carryMarks(t, S.tkBackup) : null;
     if (back) return Object.assign({ m: 'restore' }, back);
     const cat = catalogMarks(t);
     if (cat) return Object.assign({ m: 'catalog' }, cat);
     return { m: 'add' };
   }
-  const TK_LABEL = { clear: 'Retirer le tashkīl', show: 'Afficher le tashkīl', restore: 'Remettre le tashkīl', catalog: 'Ajouter le tashkīl', add: 'Ajouter le tashkīl' };
+  const TK_LABEL = { restore: 'Remettre le tashkīl', catalog: 'Ajouter le tashkīl', complete: 'Compléter le tashkīl', add: 'Ajouter le tashkīl' };
   function syncTkUI() {
     const b = $('#tkToggle');
     if (!b) return;
     const p = tkPlan();
-    // sans signe ni texte connu, la vocalisation de Claude (bouton voisin) fait l'ajout
-    b.hidden = p.m === 'none' || (p.m === 'add' && tkClaude);
-    b.textContent = TK_LABEL[p.m] || TK_LABEL.clear;
+    // texte déjà vocalisé : les niveaux suffisent ; sans signe ni texte connu, la vocalisation de Claude (bouton voisin) fait l'ajout
+    b.hidden = p.m === 'none' || p.m === 'has' || (p.m === 'add' && tkClaude);
+    b.textContent = TK_LABEL[p.m] || TK_LABEL.add;
     b.dataset.mode = p.m;
-    b.classList.toggle('prim', p.m === 'restore' || p.m === 'catalog');
+    b.classList.toggle('prim', p.m === 'restore' || p.m === 'catalog' || p.m === 'complete');
   }
   function tkToggle() {
     const p = tkPlan(), before = S.text;
-    if (p.m === 'clear') {
-      S.tkBackup = before;
-      setText(K.stripMarks(before), 0);
-      textChanged(true);
-      tkStatus('Tashkīl retiré. « Remettre le tashkīl » le rétablit.', 'ok');
-    } else if (p.m === 'show') {
-      S.harakat = true;
-      textChanged(true);
-      tkStatus('Tashkīl affiché.', 'ok');
-    } else if (p.m === 'restore' || p.m === 'catalog') {
-      txt.value = p.v; S.text = p.v; S.harakat = true;
+    if (p.m === 'restore' || p.m === 'catalog' || p.m === 'complete') {
+      txt.value = p.v; S.text = p.v; showTashkil();
       textChanged(true);
       if (p.m === 'restore') tkStatus(p.all ? 'Tashkīl remis.' : 'Tashkīl remis sur les mots qui n’ont pas changé.', 'ok');
-      else tkStatus((p.all ? 'Tashkīl ajouté' : 'Tashkīl ajouté sur les lignes que l’atelier connaît') + ' (texte de la bibliothèque ou des modèles). Vérifiez-le ; « Annuler » revient au texte d’avant.', 'ok');
+      else tkStatus((p.m === 'complete' ? (p.all ? 'Tashkīl complété' : 'Tashkīl complété sur les lignes que l’atelier connaît') : (p.all ? 'Tashkīl ajouté' : 'Tashkīl ajouté sur les lignes que l’atelier connaît')) +
+        ' (texte de la bibliothèque ou des modèles). Vérifiez-le ; « Annuler » revient au texte d’avant.', 'ok');
     } else if (p.m === 'add') {
       showTkPanel(true);
       tkStatus('Ce texte n’est pas dans la bibliothèque de l’atelier : ajoutez les signes lettre par lettre ci-dessous.');
@@ -7787,7 +7996,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
       const out = res && typeof res.text === 'string' ? res.text : '';
       const merged = out ? remapMarks(S.text, out) : null;
       if (!merged) { tkStatus('La proposition modifiait des lettres : elle n’a pas été appliquée. Réessayez ou utilisez l’éditeur lettre par lettre.', 'err'); return; }
-      txt.value = merged; S.text = merged; S.harakat = true;
+      txt.value = merged; S.text = merged; showTashkil();
       textChanged(true); commitHist();
       tkStatus('Tashkīl ajouté. Vérifiez-le et corrigez une lettre au besoin avec l’éditeur ; « Annuler » revient au texte d’avant.', 'ok');
     } catch (e) {
@@ -8271,7 +8480,10 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     st.kashida = L.kashida || 0;
     st.wordSpace = L.wordSpace || 1;
     st.align = L.align || 'center';
-    if (L.harakat) st.harakat = true;
+    // niveau du tashkīl : celui du modèle s'il en a un ; un modèle « avec harakat » montre le tashkīl caché
+    if (K.TASHKIL_LEVELS.includes(L.tkLevel)) st.tkLevel = L.tkLevel;
+    else if (L.harakat && st.tkLevel === 'none') st.tkLevel = 'full';
+    st.harakat = st.tkLevel !== 'none';
     return st;
   }
   // apparence de la création en cours (pour l'enregistrer comme modèle)
@@ -8279,7 +8491,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     return {
       font: S.fontId, wght: S.wght, shape: clone(S.shape), fill: clone(S.fill), bg: S.bg.type === 'image' ? { type: 'none' } : clone(S.bg),
       stroke: clone(S.stroke), shadow: clone(S.shadow), fx: clone(S.fx), frame: clone(S.frame), pattern: clone(S.pattern), lineInk: S.lineInk.on ? S.lineInk.colors.slice() : null,
-      format: S.format.id === 'custom' ? 'auto' : S.format.id, lineHeight: S.lineHeight, kashida: S.kashida, wordSpace: S.wordSpace, align: S.align, harakat: S.harakat
+      format: S.format.id === 'custom' ? 'auto' : S.format.id, lineHeight: S.lineHeight, kashida: S.kashida, wordSpace: S.wordSpace, align: S.align, tkLevel: S.tkLevel, harakat: S.harakat
     };
   }
   // ------------------------------------------------------------------ variations : propositions tirées au sort pour la phrase
@@ -8308,7 +8520,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
       const f = pickOne(fonts), m = pickOne(MOODS), s = pickShape();
       if (out.some(o => o.look.font === f || o.mood === m.id)) continue;
       const look = { font: f, shape: clone(s.sh), fill: clone(m.ink), bg: clone(m.bg), shadow: m.shadow ? clone(m.shadow) : null, fx: m.fx ? clone(m.fx) : {},
-        frame: m.frame ? clone(m.frame) : null, pattern: m.pattern ? clone(m.pattern) : null, format: s.fmt, harakat: S.harakat };
+        frame: m.frame ? clone(m.frame) : null, pattern: m.pattern ? clone(m.pattern) : null, format: s.fmt, tkLevel: S.tkLevel };
       if (!look.frame && Math.random() < 0.4) look.frame = s.round ? { type: 'circle', width: 1.6, double: true, pad: 12 } : { type: pickOne(['rect', 'cartouche', 'arch', 'round', 'octagon']), width: 1.6, double: Math.random() < 0.5, pad: 16 };
       const fo = fontById(f), sh = SHAPES.find(x => x.id === (s.sh.type || 'straight')), rp = s.sh.repeat ? REPEATS.find(r => r[0] === s.sh.repeat) : null;
       out.push({ id: 'var' + Date.now().toString(36) + i, name: fo ? fo.name : f, note: m.name + (rp ? ' · ' + rp[1] : sh && sh.id !== 'straight' ? ' · ' + sh.name : ''), look, mood: m.id, variation: true });
@@ -8330,7 +8542,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
   // aperçus des variations avec la phrase en cours (redessinés quand elle change)
   async function drawVariations() {
     const g = $('#vgrid'), run = ++varSeq;
-    varKey = [S.text, S.harakat].join('|');
+    varKey = [S.text, S.tkLevel].join('|');
     for (const c of $$('.mc', g)) {
       if (run !== varSeq) return;
       const v = c._m, art = c.querySelector('.mc-art');
@@ -8374,7 +8586,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     const v = Object.assign({}, f.vars || {});
     if (typeof st.wght === 'number' && hb.axes.some(a => a.tag === 'wght')) v.wght = st.wght;
     hb.setVariations(v);
-    const p = prepText(text, st.harakat, st.kashida);
+    const p = prepText(text, st.tkLevel, st.kashida);
     const chk = K.checkSupport(hb, st.kashida && hb.kashidaOK ? p.k : p.t);
     if (!chk.text.trim()) return null;
     const F = FORMATS.find(x => x.id === st.format.id);
@@ -8466,7 +8678,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
   let builtTheme = null;
   function renderModels(force) {
     if (S.gtab !== 'models') return;
-    if (curVars.length && varKey !== [S.text, S.harakat].join('|')) drawVariations();
+    if (curVars.length && varKey !== [S.text, S.tkLevel].join('|')) drawVariations();
     const g = $('#mgrid');
     const t = MTHEMES.find(x => x[0] === S.mdTheme) || MTHEMES[0];
     $('#mdNote').textContent = t[2];
@@ -8484,7 +8696,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
       for (const c of $$('.mc', g)) { if (!c._m) continue; c._dirty = true; if (!mio || c._vis) queueModel(c); }
     }
   }
-  const modelsKey = () => [S.mdSrc, S.mdSrc === 'mine' ? S.text : '', S.harakat].join('|');
+  const modelsKey = () => [S.mdSrc, S.mdSrc === 'mine' ? S.text : '', S.tkLevel].join('|');
   let mdT = 0;
   function renderModelsSoon() { clearTimeout(mdT); mdT = setTimeout(() => renderModels(false), 250); }
   function importModelCard() {

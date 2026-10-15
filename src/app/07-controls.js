@@ -670,10 +670,8 @@
   function updateTextUI() {
     const multi = S.text.includes('\n');
     $('#rowAlign').hidden = !multi; $('#rowLh').hidden = !multi;
-    const hm = hasMarks(S.text), cb = $('#harakat');
-    cb.disabled = !hm; cb.checked = S.harakat;
-    cb.parentElement.style.opacity = hm ? '1' : '.55';
     syncTkUI();
+    syncTkLevels();
   }
   let inkPick = null, inkGrad = null, bgPick = null, bgGrad = null;
   function updateColorUI() {
@@ -876,7 +874,6 @@
     $('#size').addEventListener('input', () => { S.size = +$('#size').value; syncSize(); changed(); });
     $('#sizeNum').addEventListener('change', () => { S.size = Math.min(2000, Math.max(8, +$('#sizeNum').value || S.size)); syncSize(); changed(); });
     seg($('#kashida'), [[0, 'Aucun'], [1, '1'], [2, '2'], [3, '3'], [5, '5']], () => S.kashida, v => { S.kashida = v; textChanged(true); });
-    $('#harakat').addEventListener('change', () => { S.harakat = $('#harakat').checked; textChanged(true); });
     seg($('#align'), [['right', 'Droite'], ['center', 'Centre'], ['left', 'Gauche']], () => S.align, v => { S.align = v; changed(); });
     bindRange('lh', () => S.lineHeight, v => { S.lineHeight = v; }, v => nf1.format(v), 'lhVal');
     bindRange('ws', () => S.wordSpace, v => { S.wordSpace = v; }, v => '×' + nf2.format(v), 'wsVal');

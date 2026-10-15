@@ -101,13 +101,13 @@
 
   // ------------------------------------------------------------------ texte
   let prepared = '', preparedK = '';
-  function prepText(raw, harakat, kashida) {
-    let t = String(raw || '').replace(/\r/g, '');
-    if (!harakat) t = K.stripMarks(t);
+  // texte à dessiner : le niveau du tashkīl choisi (complet, partiel…), puis l'étirement
+  function prepText(raw, level, kashida) {
+    const t = K.tashkilLevel(String(raw || '').replace(/\r/g, ''), level);
     return { t, k: kashida ? t.split('\n').map(l => K.addKashida(l, kashida)).join('\n') : t };
   }
   function prepareText() {
-    const p = prepText(S.text, S.harakat, S.kashida);
+    const p = prepText(S.text, S.tkLevel, S.kashida);
     prepared = p.t; preparedK = p.k;
     return prepared;
   }

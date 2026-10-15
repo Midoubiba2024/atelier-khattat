@@ -8,7 +8,8 @@ Une phrase en arabe, près de 200 styles calligraphiques, 86 modèles de tableau
 - **86 modèles de tableaux** en 10 thèmes : shamsa, levha, musanna, mihrab, sceaux, compositions (pyramide, œuf, goutte, médaillon en anneaux, mosaïque, tughra, médaillon ailé, hilye, lettres semées), prénoms, fêtes, mariage, motifs géométriques, découpe…
 - **Variations** : six mises en page de votre phrase tirées au sort (écriture, ambiance, forme), appliquées en un clic.
 - **Tashkīl** :
-  - un seul bouton qui retire le tashkīl, le remet, ou l'ajoute aux textes de la bibliothèque et des modèles, dont l'atelier connaît la vocalisation ;
+  - 8 niveaux : complet, sans soukoun, partiel (allégé), sans les fins de mots (lecture à la pause), fins de mots (iʿrāb), chadda et tanwīn, chadda seule, aucun. Le texte garde son tashkīl complet ; chaque niveau en dessine une partie selon des règles fixes, sans jamais changer une lettre ;
+  - un bouton qui ajoute le tashkīl aux textes de la bibliothèque et des modèles, dont l'atelier connaît la vocalisation, ou le complète quand il n'y en a qu'une partie ;
   - éditeur lettre par lettre, harakat en couleur ;
   - vocalisation automatique de n'importe quelle phrase dans la version Claude de l'atelier.
 - **Mise en forme** :

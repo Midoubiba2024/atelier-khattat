@@ -27,7 +27,10 @@
     st.kashida = L.kashida || 0;
     st.wordSpace = L.wordSpace || 1;
     st.align = L.align || 'center';
-    if (L.harakat) st.harakat = true;
+    // niveau du tashkīl : celui du modèle s'il en a un ; un modèle « avec harakat » montre le tashkīl caché
+    if (K.TASHKIL_LEVELS.includes(L.tkLevel)) st.tkLevel = L.tkLevel;
+    else if (L.harakat && st.tkLevel === 'none') st.tkLevel = 'full';
+    st.harakat = st.tkLevel !== 'none';
     return st;
   }
   // apparence de la création en cours (pour l'enregistrer comme modèle)
@@ -35,7 +38,7 @@
     return {
       font: S.fontId, wght: S.wght, shape: clone(S.shape), fill: clone(S.fill), bg: S.bg.type === 'image' ? { type: 'none' } : clone(S.bg),
       stroke: clone(S.stroke), shadow: clone(S.shadow), fx: clone(S.fx), frame: clone(S.frame), pattern: clone(S.pattern), lineInk: S.lineInk.on ? S.lineInk.colors.slice() : null,
-      format: S.format.id === 'custom' ? 'auto' : S.format.id, lineHeight: S.lineHeight, kashida: S.kashida, wordSpace: S.wordSpace, align: S.align, harakat: S.harakat
+      format: S.format.id === 'custom' ? 'auto' : S.format.id, lineHeight: S.lineHeight, kashida: S.kashida, wordSpace: S.wordSpace, align: S.align, tkLevel: S.tkLevel, harakat: S.harakat
     };
   }
   // ------------------------------------------------------------------ variations : propositions tirées au sort pour la phrase
@@ -64,7 +67,7 @@
       const f = pickOne(fonts), m = pickOne(MOODS), s = pickShape();
       if (out.some(o => o.look.font === f || o.mood === m.id)) continue;
       const look = { font: f, shape: clone(s.sh), fill: clone(m.ink), bg: clone(m.bg), shadow: m.shadow ? clone(m.shadow) : null, fx: m.fx ? clone(m.fx) : {},
-        frame: m.frame ? clone(m.frame) : null, pattern: m.pattern ? clone(m.pattern) : null, format: s.fmt, harakat: S.harakat };
+        frame: m.frame ? clone(m.frame) : null, pattern: m.pattern ? clone(m.pattern) : null, format: s.fmt, tkLevel: S.tkLevel };
       if (!look.frame && Math.random() < 0.4) look.frame = s.round ? { type: 'circle', width: 1.6, double: true, pad: 12 } : { type: pickOne(['rect', 'cartouche', 'arch', 'round', 'octagon']), width: 1.6, double: Math.random() < 0.5, pad: 16 };
       const fo = fontById(f), sh = SHAPES.find(x => x.id === (s.sh.type || 'straight')), rp = s.sh.repeat ? REPEATS.find(r => r[0] === s.sh.repeat) : null;
       out.push({ id: 'var' + Date.now().toString(36) + i, name: fo ? fo.name : f, note: m.name + (rp ? ' · ' + rp[1] : sh && sh.id !== 'straight' ? ' · ' + sh.name : ''), look, mood: m.id, variation: true });
@@ -86,7 +89,7 @@
   // aperçus des variations avec la phrase en cours (redessinés quand elle change)
   async function drawVariations() {
     const g = $('#vgrid'), run = ++varSeq;
-    varKey = [S.text, S.harakat].join('|');
+    varKey = [S.text, S.tkLevel].join('|');
     for (const c of $$('.mc', g)) {
       if (run !== varSeq) return;
       const v = c._m, art = c.querySelector('.mc-art');
@@ -130,7 +133,7 @@
     const v = Object.assign({}, f.vars || {});
     if (typeof st.wght === 'number' && hb.axes.some(a => a.tag === 'wght')) v.wght = st.wght;
     hb.setVariations(v);
-    const p = prepText(text, st.harakat, st.kashida);
+    const p = prepText(text, st.tkLevel, st.kashida);
     const chk = K.checkSupport(hb, st.kashida && hb.kashidaOK ? p.k : p.t);
     if (!chk.text.trim()) return null;
     const F = FORMATS.find(x => x.id === st.format.id);
@@ -222,7 +225,7 @@
   let builtTheme = null;
   function renderModels(force) {
     if (S.gtab !== 'models') return;
-    if (curVars.length && varKey !== [S.text, S.harakat].join('|')) drawVariations();
+    if (curVars.length && varKey !== [S.text, S.tkLevel].join('|')) drawVariations();
     const g = $('#mgrid');
     const t = MTHEMES.find(x => x[0] === S.mdTheme) || MTHEMES[0];
     $('#mdNote').textContent = t[2];
@@ -240,7 +243,7 @@
       for (const c of $$('.mc', g)) { if (!c._m) continue; c._dirty = true; if (!mio || c._vis) queueModel(c); }
     }
   }
-  const modelsKey = () => [S.mdSrc, S.mdSrc === 'mine' ? S.text : '', S.harakat].join('|');
+  const modelsKey = () => [S.mdSrc, S.mdSrc === 'mine' ? S.text : '', S.tkLevel].join('|');
   let mdT = 0;
   function renderModelsSoon() { clearTimeout(mdT); mdT = setTimeout(() => renderModels(false), 250); }
   function importModelCard() {

@@ -2,7 +2,10 @@
   const STORE = 'khattat:v1';
   const DEFAULT = {
     text: 'الخط العربي', fontId: 'aref-ruqaa', wght: null,
-    size: 160, lineHeight: 1.15, align: 'center', kashida: 0, harakat: true, wordSpace: 1, colorFont: true,
+    size: 160, lineHeight: 1.15, align: 'center', kashida: 0, wordSpace: 1, colorFont: true,
+    // niveau du tashkīl affiché (le texte garde sa vocalisation complète) ; harakat : ancien réglage oui / non, gardé pour
+    // les créations et les codes relus par une version précédente de l'atelier
+    tkLevel: 'full', harakat: true,
     fill: { type: 'linear', color: '#1b1712', stops: stopsOf(GOLD), angle: 90, gk: 'linear' },
     stroke: { on: false, color: '#ffffff', width: 6 },
     shadow: { on: true, color: '#000000', opacity: 0.45, dist: 4, blur: 6 },
@@ -30,7 +33,7 @@
     phys: { on: false, value: 60, unit: 'cm' },
     // réglages d'interface (hors historique)
     scale: 2, filter: 'all', tab: 'ecr', tool: 'texte', favs: [], cardColors: false, pvBg: 'check', dims: false, guides: false, gtab: 'styles', mdTheme: 'all', mdSrc: 'mine',
-    // dernier texte vocalisé dont le tashkīl a été retiré (pour « Remettre le tashkīl »)
+    // dernier texte vocalisé dont le tashkīl a été retiré par une version précédente (pour « Remettre le tashkīl »)
     tkBackup: ''
   };
   const UI_KEYS = ['scale', 'filter', 'tab', 'tool', 'favs', 'cardColors', 'pvBg', 'dims', 'guides', 'gtab', 'mdTheme', 'mdSrc', 'tkBackup'];
@@ -82,6 +85,8 @@
     s.lineHeight = clampN(s.lineHeight, 0.4, 3, DEFAULT.lineHeight);
     s.align = oneOf(s.align, ['right', 'center', 'left'], 'center');
     s.kashida = oneOf(s.kashida, [0, 1, 2, 3, 5], 0);
+    s.tkLevel = K.TASHKIL_LEVELS.includes(o && o.tkLevel) ? o.tkLevel : (o && o.harakat === false ? 'none' : 'full');
+    s.harakat = s.tkLevel !== 'none';
     s.wordSpace = clampN(s.wordSpace, 0.1, 5, 1);
     s.stroke.color = normHex(s.stroke.color) || DEFAULT.stroke.color;
     s.stroke.width = clampN(s.stroke.width, 0, 200, 6);
