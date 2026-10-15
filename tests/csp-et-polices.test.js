@@ -1,0 +1,50 @@
+const { launch, BASE } = require('./env');
+const fs = require('fs');
+const CSP = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net/npm/ https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'";
+(async () => {
+  const browser = await launch();
+  // A. CSP stricte sans wasm-unsafe-eval -> bascule JavaScript
+  const ctxA = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
+  const pa = await ctxA.newPage();
+  const errsA = [];
+  pa.on('console', m => { if (m.type() === 'error' || m.type() === 'warning') errsA.push(m.text().slice(0, 160)); });
+  pa.on('pageerror', e => errsA.push('pageerror ' + e.message));
+  await pa.route('**/index.html', async route => {
+    const r = await route.fetch();
+    await route.fulfill({ response: r, headers: Object.assign({}, r.headers(), { 'content-security-policy': CSP }) });
+  });
+  const t0 = Date.now();
+  await pa.goto(BASE + 'index.html');
+  await pa.waitForSelector('#preview svg', { timeout: 30000 });
+  await pa.waitForFunction(() => document.querySelectorAll('.card-art svg').length >= 8, null, { timeout: 30000 });
+  console.log('[CSP] preview in', Date.now() - t0, 'ms ·', await pa.textContent('#engineInfo'), '· cards', await pa.$$eval('.card-art svg', a => a.length));
+  const [dl] = await Promise.all([pa.waitForEvent('download'), pa.click('.dl button[data-x="zip"]')]);
+  await dl.saveAs('out/dl/csp-pack.zip');
+  console.log('[CSP] zip', fs.statSync('out/dl/csp-pack.zip').size, 'bytes ·', await pa.textContent('#status'));
+  console.log('[CSP] console:', errsA.filter(e => !/favicon/.test(e)).join(' || ') || 'none');
+  // B. clavier, import de police, persistance
+  const ctxB = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const pb = await ctxB.newPage();
+  pb.on('pageerror', e => console.log('[B] pageerror', e.message));
+  await pb.goto(BASE + 'index.html');
+  await pb.waitForSelector('#preview svg');
+  await pb.fill('#txt', '');
+  await pb.click('#kbdBtn');
+  for (const k of ['س', 'ل', 'ا', 'م']) await pb.click(`#kbd .key:text-is("${k}")`);
+  await pb.click('#kbd .key[aria-label="chadda"]');
+  console.log('[B] keyboard text:', JSON.stringify(await pb.inputValue('#txt')));
+  await pb.setInputFiles('#fontFile', 'site/fonts/lateef.ttf');
+  await pb.waitForTimeout(800);
+  console.log('[B] after import status:', await pb.textContent('#status'), '· bench font:', await pb.textContent('#benchFont'), '· filter pressed:', await pb.$eval('#filters .chip[aria-pressed="true"]', e => e.textContent));
+  await pb.reload();
+  await pb.waitForSelector('#preview svg');
+  await pb.waitForTimeout(1200);
+  console.log('[B] after reload bench font:', await pb.textContent('#benchFont'), '· text:', JSON.stringify(await pb.inputValue('#txt')), '· user cards:', await pb.$$eval('.card[data-id^="user-"]', a => a.length));
+  await pb.click('.mood:has-text("Autocollant")');
+  await pb.waitForTimeout(400);
+  await pb.screenshot({ path: 'out/ui_sticker.png', clip: { x: 760, y: 0, width: 520, height: 520 } });
+  await pb.click('#removeFontBtn');
+  await pb.waitForTimeout(400);
+  console.log('[B] after remove bench font:', await pb.textContent('#benchFont'), '· user cards:', await pb.$$eval('.card[data-id^="user-"]', a => a.length));
+  await browser.close();
+})().catch(e => { console.error('TEST FAIL', e); process.exit(1); });

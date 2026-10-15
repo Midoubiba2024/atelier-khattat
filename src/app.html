@@ -1,0 +1,897 @@
+<title>Atelier Khattat</title>
+<meta name="description" content="Écrivez une phrase en arabe, choisissez parmi près de 200 styles calligraphiques et des dizaines de modèles de tableaux, ajoutez le tashkīl, puis téléchargez en vectoriel (SVG, PDF, EPS, DXF) ou en image.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:wght@500;700&family=Alegreya+Sans:wght@400;500;700&family=Amiri:wght@400;700&display=swap">
+<style>
+:root{
+  /* Un établi en deux colonnes : à gauche, sur papier, la phrase puis la galerie (styles et modèles) ;
+     à droite, l'atelier bleu lapis (aperçu, réglages, export) qui reste à portée de main. Une colonne sur téléphone. */
+  --paper:#F7F6F2; --sheet:#FFFFFF; --ink:#1D1B18; --muted:#67635A; --rule:#E2DED4;
+  --lapis:#233F8C; --lapis-wash:#E9EEF9; --gold:#94701C; --alert:#A23F2B; --ok:#2F6B3A;
+  --bench:#101B3D; --bench-2:#18264F; --bench-ink:#F1EBDC; --bench-muted:#AFB6CC; --bench-rule:#2D3B6A; --bench-gold:#E3C06A; --bench-alert:#F2A08C;
+  --check-a:#DADADA; --check-b:#F4F4F4; --draw-veil:rgba(11,20,49,.42); --skeleton:#ECE8DF; --veil:rgba(12,16,28,.48); --lift:rgba(8,12,24,.22);
+  --display:"Alegreya",Georgia,"Times New Roman",serif;
+  --ui:"Alegreya Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+  --ar:"Amiri","Noto Naskh Arabic","Geeza Pro","Arabic Typesetting",serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1218; --sheet:#171B23; --ink:#ECE6DA; --muted:#A39D91; --rule:#2B303B;
+    --lapis:#A9BBF3; --lapis-wash:#1B2440; --gold:#DDB75E; --alert:#EB937D; --ok:#8FD19E;
+    --bench:#0B1431; --bench-2:#13204A; --bench-ink:#F1EBDC; --bench-muted:#A8AFC5; --bench-rule:#293868; --bench-gold:#E3C06A; --bench-alert:#F2A08C;
+    --skeleton:#212631; --veil:rgba(0,0,0,.6); --lift:rgba(0,0,0,.45);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1218; --sheet:#171B23; --ink:#ECE6DA; --muted:#A39D91; --rule:#2B303B;
+  --lapis:#A9BBF3; --lapis-wash:#1B2440; --gold:#DDB75E; --alert:#EB937D; --ok:#8FD19E;
+  --bench:#0B1431; --bench-2:#13204A; --bench-ink:#F1EBDC; --bench-muted:#A8AFC5; --bench-rule:#293868; --bench-gold:#E3C06A; --bench-alert:#F2A08C;
+  --skeleton:#212631; --veil:rgba(0,0,0,.6); --lift:rgba(0,0,0,.45);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:400 15px/1.5 var(--ui);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--lapis);outline-offset:2px}
+.bench :focus-visible,.mbar :focus-visible,.vw :focus-visible{outline-color:var(--bench-gold)}
+[lang="ar"]{font-family:var(--ar)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+.app{max-width:1440px;margin:0 auto;padding-inline:clamp(16px,3vw,32px);padding-block:18px 56px;display:flex;flex-direction:column;gap:22px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:14px;min-width:0}
+.brand-mark{width:96px;height:56px;flex:none;color:var(--gold);display:grid;place-items:center}
+.brand-mark svg{width:100%;height:100%;fill:currentColor}
+.brand-mark .fallback{font:700 2rem/1 var(--ar)}
+h1{font:700 1.7rem/1.1 var(--display);margin:0;letter-spacing:.005em;text-wrap:balance}
+.tagline{margin:3px 0 0;color:var(--muted);max-width:62ch}
+.top-actions{display:flex;gap:8px;flex-wrap:wrap}
+.linkbtn{background:none;border:1px solid var(--rule);border-radius:999px;padding:6px 14px;color:var(--ink);font-weight:500}
+.linkbtn:hover{border-color:var(--lapis);color:var(--lapis)}
+.linkbtn .n{font-variant-numeric:tabular-nums;opacity:.65;font-size:.82rem}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr);gap:22px;align-items:start}
+@media (min-width:1040px){
+  .layout{grid-template-columns:minmax(0,1.08fr) minmax(400px,.92fr)}
+  .bench{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);max-height:calc(100vh - 24px);overflow:auto;scrollbar-width:thin}
+}
+.left{display:flex;flex-direction:column;gap:26px;min-width:0}
+.panel{display:flex;flex-direction:column;gap:12px;min-width:0}
+.step{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.step h2{font:700 1.2rem/1.2 var(--display);margin:0}
+.step-n{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:var(--paper);font:700 .85rem/1 var(--ui);flex:none}
+.step .sub{color:var(--muted);font-size:.9rem}
+
+/* Saisie */
+.field{position:relative}
+#txt{display:block;width:100%;min-height:92px;resize:vertical;padding:10px 18px;border:1px solid var(--rule);border-radius:14px;background:var(--sheet);color:var(--ink);font:400 2rem/1.75 var(--ar)}
+#txt:focus-visible{outline-offset:1px}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule);background:var(--sheet);color:var(--ink);border-radius:999px;padding:4px 12px;font-weight:500;font-size:.9rem;line-height:1.5;white-space:nowrap}
+.chip:hover{border-color:var(--lapis)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.chip:disabled{opacity:.5;cursor:not-allowed}
+.chip .n{font-variant-numeric:tabular-nums;opacity:.65;font-size:.8rem}
+.chip-ar{font:400 1.1rem/1.35 var(--ar);padding-block:2px}
+.chip.ai{border-color:var(--lapis);color:var(--lapis)}
+.chip.ai:hover{background:var(--lapis-wash)}
+.chip[aria-busy="true"]{opacity:.65;cursor:progress}
+.tools .label{color:var(--muted);font-size:.88rem;margin-inline-end:2px}
+.kbd-toggle[aria-expanded="true"],#tkEdit[aria-expanded="true"]{background:var(--lapis-wash);border-color:var(--lapis)}
+
+.kbd{display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid var(--rule);border-radius:14px;background:var(--sheet)}
+.krow{display:flex;gap:5px;justify-content:center;direction:rtl}
+.key{flex:0 1 44px;min-width:0;height:44px;padding:0;border:1px solid var(--rule);border-radius:8px;background:var(--paper);color:var(--ink);font:400 1.35rem/1 var(--ar)}
+.key:hover{border-color:var(--lapis)}
+.key:active{background:var(--lapis-wash)}
+.key.mark{color:var(--lapis)}
+.key.orn{color:var(--gold)}
+.key.wide{flex:0 1 120px;font:500 .9rem/1 var(--ui)}
+.key.space{flex:0 1 260px}
+@media (max-width:560px){.key{height:40px;font-size:1.12rem}.krow{gap:3px}.key.wide{flex-basis:84px}}
+
+/* Tashkil */
+.tk{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tk .label{color:var(--muted);font-size:.88rem}
+.tk .label span{font-size:1.05rem;color:var(--ink)}
+.tk-status{min-height:1.3em;font-size:.88rem;color:var(--muted);margin:-4px 0 0}
+.tk-status.err{color:var(--alert)}
+.tk-status.ok{color:var(--ok)}
+.tkpanel{display:flex;flex-direction:column;gap:10px;padding:10px;border:1px solid var(--rule);border-radius:14px;background:var(--sheet)}
+.tk-letters{display:flex;flex-wrap:wrap;gap:4px;direction:rtl;max-height:236px;overflow:auto;padding:2px}
+.tkl{min-width:42px;height:58px;padding:0 4px;border:1px solid var(--rule);border-radius:8px;background:var(--paper);color:var(--ink);font:400 1.55rem/1 var(--ar)}
+.tkl:hover{border-color:var(--lapis)}
+.tkl[aria-selected="true"]{border-color:var(--lapis);box-shadow:inset 0 0 0 1px var(--lapis);background:var(--lapis-wash)}
+.tk-gap{width:16px;flex:none}
+.tk-br{flex-basis:100%;height:0}
+.tk-other{display:inline-grid;place-items:center;min-width:24px;height:58px;color:var(--muted);font:400 1.3rem/1 var(--ar)}
+.tk-marks{display:flex;flex-wrap:wrap;gap:5px}
+.tkm{min-width:46px;height:46px;border:1px solid var(--rule);border-radius:8px;background:var(--paper);color:var(--lapis);font:400 1.5rem/1 var(--ar);padding:0 6px}
+.tkm:hover{border-color:var(--lapis)}
+.tkm[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.tkm.txt{font:500 .85rem/1 var(--ui);color:var(--ink);padding:0 10px}
+.tkm:disabled{opacity:.4;cursor:not-allowed}
+
+/* Galerie : onglets Styles / Modèles */
+.gtabs{display:flex;gap:4px;border-bottom:1px solid var(--rule);overflow-x:auto;scrollbar-width:none}
+.gtab{background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;color:var(--muted);padding:8px 12px;font:700 1rem/1.2 var(--display);white-space:nowrap}
+.gtab:hover{color:var(--ink)}
+.gtab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--gold)}
+.gtab .n{font:500 .8rem/1 var(--ui);color:var(--muted);margin-inline-start:4px}
+.gpanel{display:flex;flex-direction:column;gap:12px;min-width:0}
+.gtools{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.search{flex:1 1 240px;min-width:0;position:relative}
+.search input{width:100%;border:1px solid var(--rule);border-radius:999px;background:var(--sheet);padding:7px 14px 7px 34px}
+.search svg{position:absolute;left:12px;top:50%;width:16px;height:16px;transform:translateY(-50%);stroke:var(--muted);fill:none;stroke-width:2}
+.check-l{display:inline-flex;align-items:center;gap:7px;font-size:.9rem;color:var(--muted)}
+.check-l input{accent-color:var(--lapis);width:16px;height:16px}
+.lseg{display:inline-flex;border:1px solid var(--rule);border-radius:999px;overflow:hidden;background:var(--sheet)}
+.lseg button{background:none;border:0;padding:5px 12px;font-size:.88rem;font-weight:500;color:var(--ink)}
+.lseg button + button{border-inline-start:1px solid var(--rule)}
+.lseg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.filters{display:flex;flex-wrap:wrap;gap:6px}
+.famnote{margin:-2px 0 0;color:var(--muted);font-size:.92rem;min-height:1.4em}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:10px}
+.cw{position:relative;display:flex;min-width:0}
+.cw > .card{flex:1 1 auto;min-width:0}
+.card{position:relative;display:flex;flex-direction:column;gap:6px;min-width:0;padding:10px 12px 11px;text-align:start;border:1px solid var(--rule);border-radius:12px;background:var(--sheet);color:var(--ink);transition:border-color .15s}
+.card:hover{border-color:var(--lapis)}
+.card[aria-pressed="true"]{border-color:var(--lapis);box-shadow:inset 0 0 0 1px var(--lapis)}
+.card-art{height:86px;display:flex;align-items:center;justify-content:center;color:var(--ink);overflow:hidden;border-radius:8px}
+.card-art svg{width:100%;height:100%;fill:currentColor;display:block}
+.card-art.colored{padding:4px 6px}
+.card-meta{display:flex;justify-content:space-between;align-items:baseline;gap:8px;min-width:0}
+.card-name{font-weight:700;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card-fam{color:var(--muted);font-size:.95rem;font-family:var(--ar);white-space:nowrap}
+.card-note{color:var(--muted);font-size:.82rem;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card-tick{position:absolute;top:8px;inset-inline-end:8px;width:20px;height:20px;border-radius:50%;background:var(--lapis);color:var(--sheet);display:none;place-items:center;font-size:.75rem;font-weight:700}
+.card[aria-pressed="true"] .card-tick{display:grid}
+.card-warn{position:absolute;top:9px;inset-inline-start:40px;font-size:.72rem;font-weight:700;color:var(--alert);background:var(--sheet);border:1px solid currentColor;border-radius:999px;padding:0 6px;display:none}
+.card.missing .card-warn{display:block}
+.fav{position:absolute;top:5px;inset-inline-start:5px;width:30px;height:30px;border-radius:50%;border:1px solid transparent;background:transparent;color:var(--muted);font-size:1.05rem;line-height:1;display:grid;place-items:center;padding:0;z-index:1}
+.fav:hover{border-color:var(--rule);background:var(--sheet);color:var(--gold)}
+.fav[aria-pressed="true"]{color:var(--gold)}
+.sk{width:78%;height:46%;border-radius:8px;background:var(--skeleton);animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.45}}
+.card-err{color:var(--alert);font-size:.85rem}
+.card-import{border-style:dashed;justify-content:center;align-items:center;text-align:center;min-height:150px;gap:4px;cursor:pointer}
+.card-import:focus-within{outline:2px solid var(--lapis);outline-offset:2px}
+.card-import strong{font-size:1rem}
+.card-import span{color:var(--muted);font-size:.84rem;line-height:1.35;max-width:26ch}
+.card-import .plus{font:500 1.8rem/1 var(--display);color:var(--lapis)}
+.note-line{color:var(--muted);font-size:.86rem;margin:0}
+
+/* Modèles */
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:12px}
+.mc{position:relative;display:flex;flex-direction:column;min-width:0;border:1px solid var(--rule);border-radius:14px;background:var(--sheet);overflow:hidden}
+.mc:hover{border-color:var(--lapis)}
+.mc-apply{display:flex;flex-direction:column;gap:6px;padding:0 0 10px;background:none;border:0;text-align:start;color:var(--ink);min-width:0}
+.mc-art{aspect-ratio:4/3;width:100%;display:grid;place-items:center;background:repeating-conic-gradient(var(--check-a) 0 25%,var(--check-b) 0 50%) 0 0/14px 14px;overflow:hidden}
+.mc-art svg{width:100%;height:100%;display:block}
+.mc-art .sk{width:60%;height:40%}
+.mc-name{padding:0 12px;font-weight:700;font-size:.98rem;line-height:1.25}
+.mc-note{padding:0 12px;color:var(--muted);font-size:.84rem;line-height:1.35;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.mc-tags{padding:0 12px;display:flex;flex-wrap:wrap;gap:4px}
+.mc-tags span{font-size:.72rem;color:var(--muted);border:1px solid var(--rule);border-radius:999px;padding:0 7px}
+.mc-acts{display:flex;gap:6px;padding:0 10px 10px;flex-wrap:wrap}
+.mc-acts button{border:1px solid var(--rule);background:var(--paper);color:var(--ink);border-radius:999px;padding:3px 10px;font-size:.8rem;font-weight:500}
+.mc-acts button:hover{border-color:var(--lapis)}
+.mc-acts button.danger:hover{border-color:var(--alert);color:var(--alert)}
+.mc-ref{position:absolute;top:8px;inset-inline-end:8px;width:46px;height:46px;border-radius:8px;object-fit:cover;border:2px solid var(--sheet);box-shadow:0 2px 6px var(--lift)}
+.mc-import{border-style:dashed;justify-content:center;align-items:center;text-align:center;gap:6px;padding:18px 14px;min-height:220px;cursor:pointer;background:var(--sheet)}
+.mc-import strong{font-size:1.02rem}
+.mc-import span{color:var(--muted);font-size:.85rem;line-height:1.4;max-width:30ch}
+.mc-import .plus{font:500 2rem/1 var(--display);color:var(--lapis)}
+.mc-import:focus-within{outline:2px solid var(--lapis);outline-offset:2px}
+
+/* Atelier */
+.bench{background:var(--bench);color:var(--bench-ink);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.bench > *{flex-shrink:0}
+.bench .step-n{background:var(--bench-gold);color:var(--bench)}
+.bench .step .sub{color:var(--bench-muted)}
+.bench .chip,.vw .chip{background:var(--bench-2);color:var(--bench-ink);border-color:var(--bench-rule)}
+.bench .chip:hover,.vw .chip:hover{border-color:var(--bench-gold)}
+.bench .chip[aria-pressed="true"],.vw .chip[aria-pressed="true"]{background:var(--bench-gold);color:var(--bench);border-color:var(--bench-gold)}
+.bench .mini{background:none;border:1px solid var(--bench-rule);color:var(--bench-ink);border-radius:999px;padding:2px 10px;font-size:.8rem}
+.bench .mini:hover{border-color:var(--bench-alert);color:var(--bench-alert)}
+
+/* Barre d'outils de l'aperçu */
+.pvbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;justify-content:space-between}
+.pvgrp{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap}
+.ib{min-width:34px;height:32px;padding:0 9px;border:1px solid var(--bench-rule);background:var(--bench-2);color:var(--bench-ink);border-radius:8px;font-weight:700;font-size:.86rem;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.ib:hover{border-color:var(--bench-gold)}
+.ib:disabled{opacity:.38;cursor:not-allowed}
+.ib[aria-pressed="true"]{background:var(--bench-gold);color:var(--bench);border-color:var(--bench-gold)}
+.ib svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.zval{min-width:3.9em;height:32px;text-align:center;font-size:.82rem;color:var(--bench-muted);font-variant-numeric:tabular-nums;background:none;border:0;padding:0 2px}
+.zval:hover{color:var(--bench-ink)}
+.sseg{display:inline-flex;border:1px solid var(--bench-rule);border-radius:8px;overflow:hidden;height:32px}
+.sseg button{background:var(--bench-2);border:0;color:var(--bench-ink);padding:0 8px;display:grid;place-items:center}
+.sseg button + button{border-inline-start:1px solid var(--bench-rule)}
+.sseg button[aria-pressed="true"]{background:var(--bench-gold);color:var(--bench)}
+.sseg i{display:block;width:16px;height:16px;border-radius:4px;border:1px solid rgba(255,255,255,.5)}
+
+.preview{position:relative;overflow:hidden;min-height:200px;border-radius:12px;background:var(--bench-2);touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.preview.zoomed{cursor:grab;touch-action:none}
+.preview.panning{cursor:grabbing}
+.stage{position:absolute;left:0;top:0;will-change:transform}
+.stage > svg{display:block;width:100%;height:100%;box-shadow:0 6px 22px var(--lift)}
+.preview.see-through.pv-check .stage > svg{background:repeating-conic-gradient(var(--check-a) 0 25%,var(--check-b) 0 50%) 0 0/16px 16px}
+.preview.see-through.pv-light .stage > svg{background:#FFFFFF}
+.preview.see-through.pv-dark .stage > svg{background:#14161B}
+.preview .msg{position:absolute;inset:0;display:grid;place-items:center;margin:0;color:var(--bench-muted);text-align:center;font-size:.95rem;padding:24px}
+.pvnote{position:absolute;left:8px;bottom:8px;max-width:calc(100% - 16px);font-size:.78rem;color:var(--bench-ink);background:rgba(11,20,49,.82);border:1px solid var(--bench-rule);border-radius:999px;padding:2px 10px;pointer-events:none}
+.dims{position:absolute;inset:0;pointer-events:none;color:var(--bench-gold);font:700 .74rem/1 var(--ui);font-variant-numeric:tabular-nums}
+.dim-w{position:absolute;left:0;right:0;top:-20px;height:10px;border-inline:1px solid currentColor}
+.dim-w::before{content:"";position:absolute;left:0;right:0;top:50%;border-top:1px solid currentColor}
+.dim-h{position:absolute;top:0;bottom:0;left:-20px;width:10px;border-block:1px solid currentColor}
+.dim-h::before{content:"";position:absolute;top:0;bottom:0;left:50%;border-left:1px solid currentColor}
+.dims .dlab{position:absolute;left:50%;top:50%;background:var(--bench-2);padding:2px 6px;border-radius:4px;white-space:nowrap}
+.dim-w .dlab{transform:translate(-50%,-50%)}
+.dim-h .dlab{transform:translate(-50%,-50%) rotate(-90deg)}
+.preview .drawpad{position:absolute;inset:0;width:100%;height:100%;border-radius:12px;cursor:crosshair;touch-action:none;background:var(--draw-veil);z-index:2}
+.drawtip{position:absolute;top:8px;inset-inline:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 8px 6px 12px;border-radius:9px;background:var(--bench);color:var(--bench-ink);font-size:.86rem;pointer-events:none;z-index:3}
+.drawtip button{pointer-events:auto;background:var(--bench-2);color:var(--bench-ink);border:1px solid var(--bench-rule);border-radius:7px;padding:3px 10px;font-weight:700}
+
+/* Téléchargement vectoriel rapide */
+.badge{display:inline-block;background:var(--bench-gold);color:var(--bench);border-radius:999px;padding:1px 9px;font-weight:700;font-size:.72rem;letter-spacing:.03em;text-transform:uppercase}
+.qdl{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 10px;padding:9px 11px;border:1px solid var(--bench-gold);border-radius:12px;background:linear-gradient(90deg,rgba(227,192,106,.14),rgba(227,192,106,.03))}
+.qdl-t{font-size:.86rem;color:var(--bench-ink);display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.qdl-b{display:flex;gap:6px;flex-wrap:wrap}
+.qdl-b button{background:var(--bench-gold);color:var(--bench);border:1px solid var(--bench-gold);border-radius:8px;padding:6px 12px;font-weight:700;font-size:.88rem}
+.qdl-b button:hover{filter:brightness(1.06)}
+.qdl-b button.ghost{background:transparent;color:var(--bench-ink);border-color:var(--bench-rule)}
+.qdl-b button.ghost:hover{border-color:var(--bench-gold)}
+.qdl-b button[aria-busy="true"]{opacity:.6;cursor:progress}
+.qdl-hint{flex:1 1 100%;margin:0;font-size:.8rem;color:var(--bench-muted)}
+
+.meta{display:flex;justify-content:space-between;gap:6px 12px;flex-wrap:wrap;font-size:.85rem;color:var(--bench-muted);font-variant-numeric:tabular-nums}
+.meta b{color:var(--bench-ink);font-weight:500}
+.alert{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.88rem;color:var(--bench-alert);border:1px solid currentColor;border-radius:10px;padding:6px 10px}
+.alert button{background:var(--bench-alert);color:var(--bench);border:0;border-radius:6px;padding:4px 10px;font-weight:700}
+.moods{display:flex;gap:6px;flex-wrap:wrap}
+.mood{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--bench-rule);background:transparent;color:var(--bench-ink);border-radius:999px;padding:3px 11px 3px 4px;font-size:.84rem;font-weight:500}
+.mood:hover{border-color:var(--bench-gold)}
+.mood .dot{width:20px;height:20px;border-radius:50%;border:1px solid var(--bench-rule);display:grid;place-items:center;font:700 .7rem/1 var(--ar)}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--bench-rule);overflow-x:auto;scrollbar-width:none}
+.tab{background:none;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;color:var(--bench-muted);padding:8px 10px;font-weight:700;font-size:.92rem;white-space:nowrap}
+.tab:hover{color:var(--bench-ink)}
+.tab[aria-selected="true"]{color:var(--bench-ink);border-bottom-color:var(--bench-gold)}
+.tab .dot-on{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--bench-gold);margin-inline-start:5px;vertical-align:middle}
+.tp{display:flex;flex-direction:column;gap:12px}
+.row{display:grid;grid-template-columns:110px minmax(0,1fr);gap:10px;align-items:center}
+.row > label,.row > .lbl{color:var(--bench-muted);font-size:.88rem}
+.row.top{align-items:start}
+.row.top > .lbl{padding-top:3px}
+.ctl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+.ctl input[type=range]{flex:1 1 140px;min-width:110px;accent-color:var(--bench-gold)}
+.val{min-width:3.6em;text-align:end;font-variant-numeric:tabular-nums;font-size:.86rem;color:var(--bench-muted)}
+.num{width:76px;background:var(--bench-2);color:var(--bench-ink);border:1px solid var(--bench-rule);border-radius:7px;padding:4px 7px;font-variant-numeric:tabular-nums}
+input[type=color]{width:38px;height:30px;padding:0 2px;border:1px solid var(--bench-rule);border-radius:7px;background:var(--bench-2)}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--bench-rule);border-radius:9px;overflow:hidden}
+.seg button{background:transparent;border:0;color:var(--bench-ink);padding:6px 11px;font-size:.88rem;font-weight:500}
+.seg button + button{border-inline-start:1px solid var(--bench-rule)}
+.seg button[aria-pressed="true"]{background:var(--bench-gold);color:var(--bench)}
+.seg button:disabled{opacity:.4;cursor:not-allowed}
+.sws{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.sw{width:26px;height:26px;border-radius:50%;border:2px solid var(--bench-rule);padding:0}
+.sw[aria-pressed="true"]{border-color:var(--bench-gold);box-shadow:inset 0 0 0 2px var(--bench)}
+.msw{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.msw .sw{width:22px;height:22px}
+.gp{height:26px;min-width:64px;border-radius:999px;border:2px solid var(--bench-rule);color:#14110C;font-size:.78rem;font-weight:700;padding:0 10px;text-shadow:0 0 4px rgba(255,255,255,.85),0 0 8px rgba(255,255,255,.6)}
+.gp.dark{color:#FFFFFF;text-shadow:0 0 4px rgba(0,0,0,.85),0 0 8px rgba(0,0,0,.6)}
+.gp[aria-pressed="true"]{border-color:var(--bench-gold);box-shadow:0 0 0 1px var(--bench-gold)}
+.cpick{display:flex;flex-direction:column;align-items:stretch;gap:8px;min-width:0;container-type:inline-size}
+.pal{display:grid;grid-template-columns:repeat(8,24px);gap:6px}
+@container (min-width:480px){.pal{grid-template-columns:repeat(16,24px)}}
+.pal .sw{width:24px;height:24px}
+.cp-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.hex.bad{border-color:var(--bench-alert)}
+.hex{width:92px;background:var(--bench-2);color:var(--bench-ink);border:1px solid var(--bench-rule);border-radius:7px;padding:4px 8px;font:500 .86rem/1.4 ui-monospace,"SF Mono",Menlo,Consolas,monospace;text-transform:uppercase}
+.gedit{display:flex;flex-direction:column;gap:10px;min-width:0}
+.gbar-wrap{padding:0 15px 12px}
+.gbar{position:relative;height:30px;border-radius:7px;border:1px solid var(--bench-rule);cursor:copy;touch-action:none;user-select:none;-webkit-user-select:none}
+.gstop{position:absolute;top:15px;width:24px;height:24px;margin-left:-12px;border-radius:50%;border:3px solid #FFFFFF;box-shadow:0 0 0 1px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.35);padding:0;cursor:grab;touch-action:none}
+.gstop[aria-pressed="true"]{border-color:var(--bench-gold);box-shadow:0 0 0 1px var(--bench),0 0 0 3px var(--bench-gold),0 2px 6px rgba(0,0,0,.35);z-index:1}
+.gbar.dragging,.gbar.dragging .gstop{cursor:grabbing}
+.gtools2{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.gtools2 .gbtns{display:flex;gap:6px;flex-wrap:wrap}
+.gsel{font-size:.84rem;color:var(--bench-muted);font-variant-numeric:tabular-nums}
+.bench .mini:disabled{opacity:.4;cursor:not-allowed}
+.bench .mini.add:hover,.bench .mini.rev:hover,.bench .mini.tune:hover{border-color:var(--bench-gold);color:var(--bench-gold)}
+.garrow{display:inline-grid;place-items:center;width:26px;height:26px;border:1px solid var(--bench-rule);border-radius:50%;font-weight:700;line-height:1;color:var(--bench-gold)}
+.check{display:inline-flex;align-items:center;gap:8px;font-size:.9rem;color:var(--bench-ink)}
+.check:has(input:disabled){opacity:.55}
+.check input{accent-color:var(--bench-gold);width:16px;height:16px}
+.strip{display:flex;flex-direction:column;gap:8px}
+.strip-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.strip-head h3{margin:0;font:700 1rem/1.2 var(--display)}
+.sgroups{display:flex;gap:4px;flex-wrap:wrap}
+.sgroups button{background:none;border:1px solid var(--bench-rule);color:var(--bench-muted);border-radius:999px;padding:2px 10px;font-size:.8rem;font-weight:700}
+.sgroups button:hover{color:var(--bench-ink)}
+.sgroups button[aria-pressed="true"]{color:var(--bench);background:var(--bench-gold);border-color:var(--bench-gold)}
+.shape-thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px}
+.sthumb{display:flex;flex-direction:column;gap:2px;min-width:0;border:1px solid var(--bench-rule);background:var(--bench-2);color:var(--bench-ink);border-radius:10px;padding:5px 5px 4px;font-size:.74rem;font-weight:500;line-height:1.2;text-align:center}
+.sthumb .art{height:46px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.sthumb .art svg{width:100%;height:100%;fill:currentColor;display:block}
+.sthumb .art .sk{width:70%;height:40%;background:var(--bench-rule)}
+.sthumb:hover{border-color:var(--bench-gold)}
+.sthumb[aria-pressed="true"]{border-color:var(--bench-gold);box-shadow:inset 0 0 0 1px var(--bench-gold);color:var(--bench-gold)}
+.sthumb .ico{height:46px;display:grid;place-items:center}
+.sthumb .ico svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.comp{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.comp > .lbl{color:var(--bench-muted);font-size:.84rem;padding-inline-end:6px;min-width:96px}
+.comp .sthumb{width:96px}
+.shape-title{margin:0;font-weight:700;font-size:.92rem}
+.tp-inner{display:flex;flex-direction:column;gap:12px}
+.tp-inner:empty{display:none}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px}
+.sub-ctl{display:flex;flex-direction:column;gap:10px;padding-inline-start:10px;border-inline-start:2px solid var(--bench-rule)}
+.hint{color:var(--bench-muted);font-size:.82rem;margin:0;line-height:1.4}
+.fxitem{display:flex;flex-direction:column;gap:8px;padding:8px 0;border-top:1px solid var(--bench-rule)}
+.fxitem:first-of-type{border-top:0}
+.fxhead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.fxhead .hint{font-size:.8rem}
+.othumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}
+.othumbs .sthumb .ico svg{width:34px;height:34px}
+.filebtn{display:inline-flex;align-items:center;gap:8px;border:1px dashed var(--bench-rule);border-radius:9px;padding:7px 12px;color:var(--bench-ink);font-size:.88rem;cursor:pointer}
+.filebtn:hover{border-color:var(--bench-gold)}
+.fmt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:6px}
+.fmt{display:flex;flex-direction:column;align-items:flex-start;gap:1px;border:1px solid var(--bench-rule);background:transparent;color:var(--bench-ink);border-radius:9px;padding:7px 9px;text-align:start}
+.fmt small{color:var(--bench-muted);font-size:.74rem;font-variant-numeric:tabular-nums}
+.fmt[aria-pressed="true"]{border-color:var(--bench-gold);box-shadow:inset 0 0 0 1px var(--bench-gold)}
+
+/* Export */
+.export{display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--bench-rule);padding-top:14px}
+.export h3{margin:0;font:700 1.05rem/1.2 var(--display)}
+.export h4{margin:0;font:700 .95rem/1.2 var(--ui);color:var(--bench-ink)}
+.export section{display:flex;flex-direction:column;gap:8px}
+.vec{border:1px solid var(--bench-gold);border-radius:12px;padding:12px;background:rgba(227,192,106,.07)}
+.vec-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.dl button{display:flex;flex-direction:column;align-items:center;gap:1px;background:var(--bench-2);color:var(--bench-ink);border:1px solid var(--bench-rule);border-radius:10px;padding:9px 6px;font-weight:700;font-size:.95rem;text-align:center}
+.dl button small{font-weight:400;font-size:.74rem;color:var(--bench-muted)}
+.dl button:hover{border-color:var(--bench-gold)}
+.dl-vec{grid-template-columns:repeat(2,minmax(0,1fr))}
+.dl-vec .big{padding:12px 8px;border-color:var(--bench-gold)}
+.dl-vec .big b{font-size:1.2rem}
+.dl .pack{grid-column:1/-1;flex-direction:row;justify-content:center;flex-wrap:wrap;gap:4px 10px;background:var(--bench-gold);color:var(--bench);border-color:var(--bench-gold);padding:11px}
+.dl .pack small{color:var(--bench);opacity:.75}
+.dl button[aria-busy="true"]{opacity:.6;cursor:progress}
+.dl4{grid-template-columns:repeat(2,minmax(0,1fr))}
+.status{min-height:1.4em;font-size:.88rem;color:var(--bench-muted);margin:0}
+.status.err{color:var(--bench-alert)}
+.foot{color:var(--muted);font-size:.85rem;display:flex;flex-wrap:wrap;gap:6px 18px;border-top:1px solid var(--rule);padding-top:14px}
+.mbar{position:fixed;inset-inline:0;bottom:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:var(--bench);color:var(--bench-ink);box-shadow:0 -6px 18px var(--lift)}
+.mbar span{font-size:.9rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mbar button{background:var(--bench-gold);color:var(--bench);border:0;border-radius:9px;padding:8px 14px;font-weight:700;white-space:nowrap}
+@media (min-width:1040px){.mbar{display:none!important}}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);z-index:20;max-width:min(560px,calc(100vw - 32px));background:var(--bench);color:var(--bench-ink);border:1px solid var(--bench-rule);border-radius:12px;padding:10px 16px;font-size:.92rem;box-shadow:0 10px 30px var(--lift);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.toast.err{border-color:var(--bench-alert);color:var(--bench-alert)}
+@media (max-width:1039px){.toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}}
+
+/* Boîtes de dialogue */
+dialog{border:1px solid var(--rule);border-radius:16px;background:var(--sheet);color:var(--ink);width:min(760px,calc(100vw - 32px));max-height:calc(100vh - 48px);padding:0}
+dialog::backdrop{background:var(--veil)}
+.dlg{padding:20px 22px;display:flex;flex-direction:column;gap:12px}
+.dlg h2{margin:0;font:700 1.25rem/1.2 var(--display)}
+.dlg p{margin:0;max-width:70ch}
+.dlg ul{margin:0;padding-inline-start:18px;display:flex;flex-direction:column;gap:6px;font-size:.88rem;color:var(--muted)}
+.dlg ul b{color:var(--ink)}
+.dlg .close{align-self:flex-end;border:1px solid var(--rule);background:var(--paper);border-radius:999px;padding:6px 16px;font-weight:700}
+.btn{border:1px solid var(--rule);background:var(--paper);color:var(--ink);border-radius:999px;padding:6px 14px;font-weight:700}
+.btn:hover{border-color:var(--lapis)}
+.btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.dsave{display:flex;gap:8px;flex-wrap:wrap}
+.dsave input{flex:1 1 220px;min-width:0;border:1px solid var(--rule);border-radius:999px;background:var(--paper);padding:6px 14px}
+.dtransfer{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--rule);padding-top:12px}
+.dtransfer h3,.dlfb-way h3{margin:0;font:700 1rem/1.3 var(--display)}
+.codebox{width:100%;font:500 .76rem/1.35 ui-monospace,"SF Mono",Menlo,Consolas,monospace;border:1px solid var(--rule);border-radius:8px;background:var(--paper);color:var(--ink);padding:6px 8px;resize:vertical;word-break:break-all}
+a.btn{text-decoration:none;display:inline-flex;align-items:center}
+.dlfb-file{font-variant-numeric:lining-nums;color:var(--muted)}
+.dlfb-file b{color:var(--ink);word-break:break-all}
+.dlfb-warn{color:var(--alert);font-size:.9rem}
+.dlfb-way{display:flex;flex-direction:column;gap:8px;border:1px solid var(--rule);border-radius:12px;padding:12px 14px;background:var(--paper)}
+.dlfb-way .codebox{background:var(--sheet)}
+.dlfb-code{display:flex;flex-direction:column;gap:4px;font-size:.82rem;color:var(--muted)}
+#dlfbUrl{word-break:break-all;color:var(--ink)}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;max-height:55vh;overflow:auto;padding:2px}
+.dcard{display:flex;flex-direction:column;gap:6px;border:1px solid var(--rule);border-radius:12px;padding:8px;background:var(--paper)}
+.dcard img{width:100%;aspect-ratio:4/3;object-fit:contain;border-radius:8px;background:repeating-conic-gradient(var(--check-a) 0 25%,var(--check-b) 0 50%) 0 0/12px 12px}
+.dcard b{font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dcard small{color:var(--muted);font-size:.78rem}
+.dcard .acts{display:flex;gap:6px;flex-wrap:wrap}
+.dcard .acts button{border:1px solid var(--rule);background:var(--sheet);border-radius:999px;padding:3px 10px;font-size:.8rem;font-weight:500}
+.dcard .acts button:hover{border-color:var(--lapis)}
+.dcard .acts button.danger:hover{border-color:var(--alert);color:var(--alert)}
+.libcats{display:flex;flex-wrap:wrap;gap:6px}
+.libgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;max-height:52vh;overflow:auto;padding:2px}
+.libitem{display:flex;flex-direction:column;align-items:stretch;gap:2px;border:1px solid var(--rule);background:var(--paper);border-radius:10px;padding:8px 12px;text-align:start;color:var(--ink)}
+.libitem:hover{border-color:var(--lapis)}
+.libitem .ar{font:400 1.35rem/1.6 var(--ar);text-align:right;direction:rtl}
+.libitem small{color:var(--muted);font-size:.8rem;line-height:1.35}
+.im-body{display:grid;grid-template-columns:minmax(0,200px) minmax(0,1fr);gap:16px;align-items:start}
+.im-body img{width:100%;border-radius:10px;border:1px solid var(--rule);background:var(--paper)}
+.im-res{display:flex;flex-direction:column;gap:10px;min-width:0}
+.im-prev{aspect-ratio:4/3;width:100%;border-radius:10px;overflow:hidden;display:grid;place-items:center;background:repeating-conic-gradient(var(--check-a) 0 25%,var(--check-b) 0 50%) 0 0/14px 14px}
+.im-prev svg{width:100%;height:100%}
+.im-facts{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;font-size:.88rem;margin:0}
+.im-facts dt{color:var(--muted)}
+.im-facts dd{margin:0;font-variant-numeric:lining-nums}
+.im-facts .swc{display:inline-block;width:14px;height:14px;border-radius:4px;border:1px solid var(--rule);vertical-align:-2px;margin-inline-end:3px}
+@media (max-width:640px){.im-body{grid-template-columns:minmax(0,1fr)}.im-body img{max-height:220px;object-fit:contain}}
+
+/* Plein écran */
+dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max-height:none;max-width:none;background:var(--bench);color:var(--bench-ink);border-color:var(--bench-rule)}
+.vw{display:flex;flex-direction:column;height:100%;padding:12px 14px;gap:10px}
+.vw-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;justify-content:space-between}
+.vw-head h2{margin:0;font:700 1.1rem/1.2 var(--display)}
+.vw .tabs{flex:1 1 auto;min-width:0}
+.vw-acts{display:flex;gap:6px;flex-wrap:wrap}
+.vw-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+.vw-pane{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:10px}
+.vw-pane[hidden]{display:none!important}
+.vw .preview{flex:1 1 auto;min-height:0}
+.mockchips{display:flex;flex-wrap:wrap;gap:6px}
+.mockbox{flex:1 1 auto;min-height:0;display:grid;place-items:center;border-radius:12px;overflow:hidden}
+.mockbox > svg{width:100%;height:100%;display:block}
+.cmpgrid{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));grid-auto-rows:min-content;gap:10px;overflow:auto;padding:2px}
+.cmpcell{display:flex;flex-direction:column;gap:6px;border:1px solid var(--bench-rule);background:var(--bench-2);color:var(--bench-ink);border-radius:12px;padding:8px;text-align:start}
+.cmpcell:hover{border-color:var(--bench-gold)}
+.cmpcell[aria-pressed="true"]{border-color:var(--bench-gold);box-shadow:inset 0 0 0 1px var(--bench-gold)}
+.cmpcell .art{aspect-ratio:4/3;display:grid;place-items:center;border-radius:8px;overflow:hidden;background:repeating-conic-gradient(var(--check-a) 0 25%,var(--check-b) 0 50%) 0 0/12px 12px}
+.cmpcell .art svg{width:100%;height:100%}
+.cmpcell .art .sk{width:60%;height:40%;background:var(--bench-rule)}
+.cmpcell b{font-size:.88rem}
+.cmpcell small{color:var(--bench-muted);font-size:.78rem}
+.vw .hint{color:var(--bench-muted)}
+@media (max-width:640px){
+  h1{font-size:1.4rem}.brand-mark{width:72px;height:44px}
+  #txt{font-size:1.6rem}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .mgrid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+  .card{padding:8px 9px 9px}.card-art{height:70px}
+  .bench{padding:14px;border-radius:14px}
+  .row{grid-template-columns:minmax(0,1fr)}
+  .dl{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .app{padding-bottom:96px}
+  dialog.viewer{width:100vw;height:100vh;border-radius:0}
+  .comp .sthumb{flex:1 1 0;width:auto}
+  .comp > .lbl{flex-basis:100%}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <div class="brand-mark" id="brandMark" aria-hidden="true"><span class="fallback" lang="ar">خطّاط</span></div>
+      <div>
+        <h1>Atelier Khattat</h1>
+        <p class="tagline">Votre phrase en calligraphie arabe : près de 200 styles, des dizaines de modèles de tableaux, et des fichiers vectoriels nets à toutes les tailles.</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="linkbtn" id="designsBtn" type="button">Mes créations <span class="n" id="designsCount"></span></button>
+      <button class="linkbtn" id="aboutBtn" type="button">Polices et licences</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <div class="left">
+      <section class="panel" aria-labelledby="h1-text">
+        <div class="step"><span class="step-n">1</span><h2 id="h1-text">Votre phrase en arabe</h2><span class="sub">Entrée pour aller à la ligne</span></div>
+        <div class="field">
+          <label class="sr" for="txt">Phrase en arabe</label>
+          <textarea id="txt" dir="rtl" lang="ar" rows="2" spellcheck="false" autocomplete="off">الخط العربي</textarea>
+        </div>
+        <div class="tools">
+          <button class="chip kbd-toggle" id="kbdBtn" type="button" aria-expanded="false" aria-controls="kbd">Clavier arabe</button>
+          <button class="chip" id="libBtn" type="button">Bibliothèque de textes</button>
+          <span class="label">Exemples :</span>
+          <span id="samples" class="tools"></span>
+        </div>
+        <div id="kbd" class="kbd" hidden></div>
+        <div class="tk" role="group" aria-labelledby="tkLbl">
+          <span class="label" id="tkLbl">Tashkīl <span lang="ar">التشكيل</span> :</span>
+          <button class="chip ai" id="tkAuto" type="button" hidden>✦ Vocaliser automatiquement</button>
+          <button class="chip" id="tkStop" type="button" hidden>Arrêter</button>
+          <button class="chip" id="tkEdit" type="button" aria-expanded="false" aria-controls="tkPanel">Éditer lettre par lettre</button>
+          <button class="chip" id="tkClear" type="button">Retirer le tashkīl</button>
+        </div>
+        <p class="tk-status" id="tkStatus" role="status" aria-live="polite"></p>
+        <div id="tkPanel" class="tkpanel" hidden>
+          <div class="tk-letters" id="tkLetters" dir="rtl" role="listbox" aria-label="Lettres du texte"></div>
+          <div class="tk-marks" id="tkMarks" role="group" aria-label="Signes de la lettre choisie"></div>
+          <p class="note-line">Touchez une lettre puis un signe : la sélection passe à la lettre suivante. Les flèches du clavier déplacent la sélection, Suppr efface les signes.</p>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="h2-styles">
+        <div class="step"><span class="step-n">2</span><h2 id="h2-styles">Choisissez un style ou un modèle</h2></div>
+        <div class="gtabs" role="tablist" aria-label="Galerie">
+          <button class="gtab" role="tab" id="gt-styles" aria-controls="gp-styles" aria-selected="true" type="button">Styles d’écriture<span class="n" id="styleCount"></span></button>
+          <button class="gtab" role="tab" id="gt-models" aria-controls="gp-models" aria-selected="false" tabindex="-1" type="button">Modèles de tableaux<span class="n" id="modelCount"></span></button>
+        </div>
+        <div role="tabpanel" id="gp-styles" aria-labelledby="gt-styles" class="gpanel">
+          <div class="gtools">
+            <div class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg><input type="search" id="q" placeholder="Rechercher : kufi, thuluth, gras, Amiri…" aria-label="Rechercher un style" autocomplete="off"></div>
+            <label class="check-l"><input type="checkbox" id="cardColors"> Aperçus en couleurs</label>
+          </div>
+          <div class="filters" id="filters" role="group" aria-label="Familles d'écriture"></div>
+          <p class="famnote" id="famNote"></p>
+          <div class="grid" id="grid"></div>
+          <p class="note-line" id="gridEmpty" hidden>Aucun style ne correspond. Essayez un autre mot ou la famille « Tous ».</p>
+          <p class="note-line">Thuluth et Diwani libres restent simples : pour le rendu d’un maître calligraphe, importez votre propre police (.ttf ou .otf), elle rejoint la galerie.</p>
+        </div>
+        <div role="tabpanel" id="gp-models" aria-labelledby="gt-models" class="gpanel" hidden>
+          <div class="gtools">
+            <span class="note-line">Aperçus avec :</span>
+            <div class="lseg" id="mdSrc" role="group" aria-label="Texte des aperçus"></div>
+            <button class="chip" id="saveModelBtn" type="button">Enregistrer le style actuel comme modèle</button>
+          </div>
+          <div class="filters" id="mdFilters" role="group" aria-label="Thèmes des modèles"></div>
+          <p class="famnote" id="mdNote"></p>
+          <div class="mgrid" id="mgrid"></div>
+          <p class="note-line">Chaque modèle est une composition originale dessinée par l’atelier, inspirée des genres classiques de la calligraphie : elle s’applique à votre phrase en un clic, puis tout reste réglable.</p>
+        </div>
+      </section>
+    </div>
+
+    <aside class="bench" id="bench" aria-labelledby="h3-bench">
+      <div class="step"><span class="step-n">3</span><h2 id="h3-bench">Réglez et téléchargez</h2><span class="sub" id="benchFont"></span><button class="mini" type="button" id="removeFontBtn" hidden>Retirer cette police</button></div>
+
+      <div class="pvbar" role="toolbar" aria-label="Outils de l’aperçu">
+        <div class="pvgrp">
+          <button class="ib" id="undoBtn" type="button" title="Annuler (Ctrl+Z)" aria-label="Annuler" disabled><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
+          <button class="ib" id="redoBtn" type="button" title="Rétablir (Ctrl+Y)" aria-label="Rétablir" disabled><svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></button>
+          <button class="ib" id="saveBtn" type="button" title="Enregistrer dans Mes créations"><svg viewBox="0 0 24 24"><path d="M6 3h10l4 4v14H4V3z"/><path d="M8 3v6h8V3M8 21v-7h8v7"/></svg>Enregistrer</button>
+        </div>
+        <div class="pvgrp">
+          <button class="ib" id="zoomOut" type="button" aria-label="Zoom arrière" title="Zoom arrière (−)"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+          <button class="zval" id="zoomVal" type="button" title="Taille réelle (100 %)">100 %</button>
+          <button class="ib" id="zoomIn" type="button" aria-label="Zoom avant" title="Zoom avant (+)"><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg></button>
+          <button class="ib" id="zoomFit" type="button" title="Ajuster à la fenêtre (0)">Ajuster</button>
+        </div>
+        <div class="pvgrp">
+          <div class="sseg" id="pvBg" role="group" aria-label="Fond de l’aperçu derrière la transparence"></div>
+          <button class="ib" id="dimsBtn" type="button" aria-pressed="false" title="Afficher les dimensions réelles">Cotes</button>
+          <button class="ib" id="fullBtn" type="button" title="Plein écran, mise en situation, comparaison des styles"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Plein écran</button>
+        </div>
+      </div>
+      <div class="preview pv-check" id="preview" tabindex="0" role="img" aria-label="Aperçu : Ctrl + molette ou deux doigts pour zoomer, glisser pour se déplacer">
+        <div class="stage" id="stage"></div>
+        <p class="msg" id="pvMsg">Préparation du moteur d'écriture…</p>
+        <span class="pvnote" id="pvNote" hidden></span>
+      </div>
+      <div class="qdl" id="qdl">
+        <span class="qdl-t"><span class="badge">Vectoriel</span>Net à toutes les tailles, de la carte de visite à l’enseigne</span>
+        <div class="qdl-b">
+          <button type="button" data-x="svg">SVG</button>
+          <button type="button" data-x="pdf">PDF</button>
+          <button type="button" data-x="zip">Pack EPS · DXF · tout</button>
+          <button type="button" class="ghost" id="qdlMore">Autres formats ↓</button>
+        </div>
+        <p class="qdl-hint" id="dlHint" hidden>Cette fenêtre n’enregistre pas les fichiers elle-même : un clic sur un format vous propose de le récupérer depuis votre navigateur ou de le copier.</p>
+      </div>
+      <div class="meta" id="meta"></div>
+      <div class="alert" id="overflow" hidden><span>Le texte dépasse du format choisi.</span><button type="button" id="fitBtn2">Ajuster la taille</button></div>
+      <div class="alert" id="missing" hidden></div>
+
+      <div class="strip">
+        <div class="strip-head"><h3 id="hShapes">Forme de l’écriture</h3><div class="sgroups" id="shapeGroups" role="group" aria-label="Familles de formes"></div><button class="mini tune" type="button" id="shapeTune">Régler la forme</button></div>
+        <div class="shape-thumbs" id="shapeThumbs" role="group" aria-labelledby="hShapes"></div>
+        <div class="comp" id="compThumbs" role="group" aria-label="Composition"><span class="lbl">Composition</span></div>
+      </div>
+
+      <div class="moods" id="moods" role="group" aria-label="Ambiances"></div>
+
+      <div class="tabs" role="tablist" aria-label="Réglages">
+        <button class="tab" role="tab" id="tab-ecr" aria-controls="tp-ecr" aria-selected="true" type="button">Écriture</button>
+        <button class="tab" role="tab" id="tab-forme" aria-controls="tp-forme" aria-selected="false" type="button" tabindex="-1">Forme</button>
+        <button class="tab" role="tab" id="tab-col" aria-controls="tp-col" aria-selected="false" type="button" tabindex="-1">Couleurs</button>
+        <button class="tab" role="tab" id="tab-fx" aria-controls="tp-fx" aria-selected="false" type="button" tabindex="-1">Effets<span class="dot-on" id="fxDot" hidden></span></button>
+        <button class="tab" role="tab" id="tab-cadre" aria-controls="tp-cadre" aria-selected="false" type="button" tabindex="-1">Cadre<span class="dot-on" id="frDot" hidden></span></button>
+        <button class="tab" role="tab" id="tab-bg" aria-controls="tp-bg" aria-selected="false" type="button" tabindex="-1">Fond</button>
+        <button class="tab" role="tab" id="tab-fmt" aria-controls="tp-fmt" aria-selected="false" type="button" tabindex="-1">Format</button>
+      </div>
+
+      <div class="tp" role="tabpanel" id="tp-ecr" aria-labelledby="tab-ecr">
+        <div class="row"><label for="size">Taille</label>
+          <div class="ctl"><input type="range" id="size" min="24" max="480" step="1"><input class="num" type="number" id="sizeNum" min="8" max="2000" step="1" aria-label="Taille en pixels"><span class="val" id="sizePt"></span></div></div>
+        <div class="row" id="rowWeight" hidden><span class="lbl" id="lblWeight">Graisse</span>
+          <div class="ctl" id="weightCtl"></div></div>
+        <div class="row"><span class="lbl" id="lblKashida">Étirement</span>
+          <div class="ctl"><div class="seg" id="kashida" role="group" aria-labelledby="lblKashida"></div><span class="hint" id="kashidaHint">Kashida : allonge la liaison avant la dernière lettre de chaque mot</span></div></div>
+        <div class="row"><label for="ws">Espace des mots</label>
+          <div class="ctl"><input type="range" id="ws" min="0.2" max="4" step="0.05"><span class="val" id="wsVal"></span></div></div>
+        <div class="row"><span class="lbl">Tashkīl</span>
+          <div class="ctl"><label class="check"><input type="checkbox" id="harakat"> Afficher les voyelles et la chadda</label></div></div>
+        <div class="row" id="rowColorFont" hidden><span class="lbl">Police en couleur</span>
+          <div class="ctl"><label class="check"><input type="checkbox" id="colorFont"> Garder les couleurs propres à la police</label></div></div>
+        <div class="row" id="rowAlign" hidden><span class="lbl" id="lblAlign">Alignement</span>
+          <div class="ctl"><div class="seg" id="align" role="group" aria-labelledby="lblAlign"></div></div></div>
+        <div class="row" id="rowLh" hidden><label for="lh">Interligne</label>
+          <div class="ctl"><input type="range" id="lh" min="0.6" max="2.2" step="0.05"><span class="val" id="lhVal"></span></div></div>
+      </div>
+
+      <div class="tp" role="tabpanel" id="tp-forme" aria-labelledby="tab-forme" hidden>
+        <p class="shape-title" id="shapeTitle"></p>
+        <div class="tp-inner" id="shapeParams"></div>
+        <div class="row"><label for="shWidth">Largeur</label>
+          <div class="ctl"><input type="range" id="shWidth" min="40" max="250" step="1"><span class="val" id="shWidthVal"></span></div></div>
+        <div class="row"><label for="shRot">Inclinaison</label>
+          <div class="ctl"><input type="range" id="shRot" min="-180" max="180" step="1"><span class="val" id="shRotVal"></span></div></div>
+        <div class="tp-inner" id="compParams"></div>
+        <p class="hint" id="shapeHint">Largeur : resserre ou étale les lettres sans changer leur hauteur.</p>
+      </div>
+
+      <div class="tp" role="tabpanel" id="tp-col" aria-labelledby="tab-col" hidden>
+        <div class="row"><span class="lbl" id="lblInk">Encre</span>
+          <div class="ctl"><div class="seg" id="inkType" role="group" aria-labelledby="lblInk"></div></div></div>
+        <div class="row top" id="rowInkSolid"><span class="lbl">Couleur</span>
+          <div class="ctl" id="inkPick"></div></div>
+        <div id="rowInkGrad" class="sub-ctl gedit" hidden></div>
+        <div class="row"><span class="lbl">Contour</span>
+          <div class="ctl"><label class="check"><input type="checkbox" id="strokeOn"> Ajouter un contour</label></div></div>
+        <div id="strokeCtl" class="sub-ctl" hidden>
+          <div class="ctl"><input type="color" id="strokeColor" aria-label="Couleur du contour"><input type="range" id="strokeW" min="1" max="40" step="1" aria-label="Épaisseur du contour"><span class="val" id="strokeWVal"></span></div>
+        </div>
+        <div class="row"><span class="lbl">Ombre</span>
+          <div class="ctl"><label class="check"><input type="checkbox" id="shadowOn"> Ombre portée</label></div></div>
+        <div id="shadowCtl" class="sub-ctl" hidden>
+          <div class="ctl"><input type="color" id="shadowColor" aria-label="Couleur de l'ombre"><span class="hint">Opacité</span><input type="range" id="shadowOp" min="0.05" max="1" step="0.05" aria-label="Opacité de l'ombre"><span class="val" id="shadowOpVal"></span></div>
+          <div class="ctl"><span class="hint">Décalage</span><input type="range" id="shadowDist" min="0" max="60" step="1" aria-label="Décalage de l'ombre"><span class="val" id="shadowDistVal"></span></div>
+          <div class="ctl"><span class="hint">Flou</span><input type="range" id="shadowBlur" min="0" max="40" step="1" aria-label="Flou de l'ombre"><span class="val" id="shadowBlurVal"></span></div>
+          <p class="hint">Le flou est conservé en PNG, JPG, WEBP et SVG ; en PDF et EPS l'ombre reste nette.</p>
+        </div>
+      </div>
+
+      <div class="tp" role="tabpanel" id="tp-fx" aria-labelledby="tab-fx" hidden>
+        <p class="hint" id="fxWait" hidden>Chargement de la bibliothèque d’effets…</p>
+        <div class="row"><label for="fxWeight">Épaisseur des lettres</label>
+          <div class="ctl"><input type="range" id="fxWeight" min="-4" max="8" step="0.25"><span class="val" id="fxWeightVal"></span></div></div>
+        <div id="fxList"></div>
+        <p class="hint">Tous ces effets sont vectoriels : ils restent nets en SVG, PDF et EPS. Le halo néon devient des anneaux translucides en PDF et EPS.</p>
+      </div>
+
+      <div class="tp" role="tabpanel" id="tp-cadre" aria-labelledby="tab-cadre" hidden>
+        <div class="othumbs" id="frameThumbs" role="group" aria-label="Forme du cadre"></div>
+        <div class="tp-inner" id="frameCtl">
+          <div class="row"><label for="frW">Épaisseur</label>
+            <div class="ctl"><input type="range" id="frW" min="0.5" max="10" step="0.1"><span class="val" id="frWVal"></span></div></div>
+          <div class="row"><label for="frPad">Marge intérieure</label>
+            <div class="ctl"><input type="range" id="frPad" min="0" max="60" step="1"><span class="val" id="frPadVal"></span></div></div>
+          <div class="row"><span class="lbl">Filet</span>
+            <div class="ctl"><label class="check"><input type="checkbox" id="frDouble"> Double filet</label></div></div>
+          <div class="row"><span class="lbl" id="lblFrInk">Couleur</span>
+            <div class="ctl"><div class="seg" id="frInk" role="group" aria-labelledby="lblFrInk"></div><input type="color" id="frColor" aria-label="Couleur du cadre"></div></div>
+          <div class="row"><span class="lbl">Fond du cadre</span>
+            <div class="ctl"><label class="check"><input type="checkbox" id="frPanelOn"> Remplir</label><input type="color" id="frPanel" aria-label="Couleur de remplissage du cadre"></div></div>
+          <div class="row"><span class="lbl" id="lblFrFit">Placement</span>
+            <div class="ctl"><div class="seg" id="frFit" role="group" aria-labelledby="lblFrFit"></div></div></div>
+          <p class="hint" id="frHint"></p>
+        </div>
+        <p class="hint">Le cadre fait partie du dessin vectoriel : il sort en SVG, PDF, EPS et dans les fichiers de découpe.</p>
+      </div>
+
+      <div class="tp" role="tabpanel" id="tp-bg" aria-labelledby="tab-bg" hidden>
+        <div class="row"><span class="lbl" id="lblBg">Fond</span>
+          <div class="ctl"><div class="seg" id="bgType" role="group" aria-labelledby="lblBg"></div></div></div>
+        <div class="row top" id="rowBgSolid"><span class="lbl">Couleur</span>
+          <div class="ctl" id="bgPick"></div></div>
+        <div id="rowBgGrad" class="sub-ctl gedit" hidden></div>
+        <div id="rowBgImg" class="sub-ctl" hidden>
+          <label class="filebtn"><input type="file" id="bgFile" accept="image/png,image/jpeg,image/webp" class="sr">Choisir une photo…</label>
+          <span class="hint" id="bgFileName">Aucune image choisie. La photo remplit le format, recadrée au centre.</span>
+          <div class="ctl"><span class="hint">Voile</span><input type="range" id="veil" min="0" max="0.85" step="0.05" aria-label="Voile sur la photo"><span class="val" id="veilVal"></span><div class="seg" id="veilColor" role="group" aria-label="Couleur du voile"></div></div>
+        </div>
+        <p class="hint" id="bgHint">Transparent : idéal pour un logo, un tampon ou une découpe. Le JPG reçoit alors un fond blanc.</p>
+        <div class="row top"><span class="lbl">Motif</span>
+          <div class="ctl"><div class="othumbs" id="patThumbs" role="group" aria-label="Motif géométrique" style="flex:1 1 100%"></div></div></div>
+        <div id="patCtl" class="sub-ctl" hidden>
+          <div class="ctl"><input type="color" id="patColor" aria-label="Couleur du motif"><span class="hint">Opacité</span><input type="range" id="patOp" min="0.05" max="1" step="0.05" aria-label="Opacité du motif"><span class="val" id="patOpVal"></span></div>
+          <div class="ctl"><span class="hint">Taille</span><input type="range" id="patScale" min="4" max="40" step="1" aria-label="Taille du motif"><span class="val" id="patScaleVal"></span></div>
+          <div class="ctl"><span class="hint">Trait</span><input type="range" id="patW" min="30" max="400" step="10" aria-label="Épaisseur du trait du motif"><span class="val" id="patWVal"></span></div>
+        </div>
+      </div>
+
+      <div class="tp" role="tabpanel" id="tp-fmt" aria-labelledby="tab-fmt" hidden>
+        <div class="fmt-grid" id="formats" role="group" aria-label="Format de l'image"></div>
+        <div class="row" id="rowMargin"><label for="margin">Marge</label>
+          <div class="ctl"><input type="range" id="margin" min="0" max="240" step="2"><span class="val" id="marginVal"></span></div></div>
+        <div class="row" id="rowCustom" hidden><span class="lbl">Dimensions</span>
+          <div class="ctl"><input class="num" type="number" id="cw" min="50" max="12000" step="1" aria-label="Largeur en pixels"> × <input class="num" type="number" id="ch" min="50" max="12000" step="1" aria-label="Hauteur en pixels"> px</div></div>
+        <div class="row" id="rowFit" hidden><span class="lbl">Texte</span>
+          <div class="ctl"><button class="chip" type="button" id="fitBtn">Ajuster au format</button><span class="hint">Remplit environ 84 % du cadre</span></div></div>
+        <div class="row" id="rowPhys"><span class="lbl">Taille réelle</span>
+          <div class="ctl"><label class="check"><input type="checkbox" id="physOn"> Imposer la largeur</label><input class="num" type="number" id="physVal" min="0.1" max="100000" step="0.1" aria-label="Largeur réelle"><div class="seg" id="physUnit" role="group" aria-label="Unité de la largeur"></div></div></div>
+        <p class="hint" id="physHint">Pour une enseigne, une gravure ou une découpe : le PDF, l’EPS, le SVG et le DXF sortent à cette largeur exacte.</p>
+      </div>
+
+      <div class="export" id="exportBox">
+        <h3>Télécharger</h3>
+        <section class="vec" aria-labelledby="hVec">
+          <div class="vec-head"><span class="badge">Vectoriel</span><h4 id="hVec">Qualité parfaite à toutes les tailles</h4></div>
+          <p class="hint">Des contours mathématiques, sans pixels : agrandissez sans limite, de la carte de visite à l’enseigne ou à la façade, sans jamais de flou.</p>
+          <div class="dl dl-vec">
+            <button type="button" data-x="svg" class="big"><b>SVG</b><small>Illustrator, Inkscape, Figma, web</small></button>
+            <button type="button" data-x="pdf" class="big"><b>PDF</b><small>imprimeur, taille réelle</small></button>
+            <button type="button" data-x="zip" class="pack"><b>Pack vectoriel complet .zip</b><small>SVG · PDF · EPS · DXF · découpe · PNG</small></button>
+          </div>
+          <p class="hint">Le pack ajoute l’EPS (CorelDRAW, logiciels d’imprimerie) et le DXF en millimètres (laser, CNC, plasma).</p>
+        </section>
+        <section aria-labelledby="hRast">
+          <h4 id="hRast">Images en pixels</h4>
+          <div class="row"><span class="lbl" id="lblScale">Résolution</span>
+            <div class="ctl"><div class="seg" id="scale" role="group" aria-labelledby="lblScale"></div><span class="val" id="scaleVal"></span></div></div>
+          <div class="dl">
+            <button type="button" data-x="png">PNG<small>transparence</small></button>
+            <button type="button" data-x="jpg">JPG<small>photo légère</small></button>
+            <button type="button" data-x="webp">WEBP<small>web</small></button>
+          </div>
+          <p class="hint">Une image en pixels devient floue si on l’agrandit au-delà de sa résolution : pour l’impression grand format, prenez le SVG ou le PDF.</p>
+        </section>
+        <section aria-labelledby="hMore">
+          <h4 id="hMore">Découpe, comparaison et partage</h4>
+          <div class="dl dl4">
+            <button type="button" data-x="cut">SVG découpe<small>contours fusionnés</small></button>
+            <button type="button" data-x="copy" id="copyBtn">Copier l’image<small>presse-papiers</small></button>
+            <button type="button" data-x="sheet">Planche PDF<small id="sheetSub">styles favoris</small></button>
+            <button type="button" data-x="batch">Lot .zip<small id="batchSub">SVG + PNG par style</small></button>
+          </div>
+        </section>
+        <p class="status" id="status" role="status" aria-live="polite"></p>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="foot">
+    <span>Mise en forme des lettres : HarfBuzz, le moteur des navigateurs et d'Android.</span>
+    <span id="engineInfo"></span>
+    <span>Polices sous licences libres (SIL OFL, Apache, Bitstream Vera).</span>
+  </footer>
+</div>
+
+<div class="mbar" id="mbar" hidden><span id="mbarText"></span><button type="button" id="mbarBtn">Régler et télécharger</button></div>
+<div class="toast" id="toast" aria-hidden="true"></div>
+
+<dialog id="about" aria-labelledby="aboutTitle">
+  <div class="dlg">
+    <h2 id="aboutTitle">Polices et licences</h2>
+    <p>Toutes les polices de la galerie sont publiées sous licence libre (SIL Open Font License 1.1, ou Apache 2.0 et Bitstream Vera pour quelques-unes) : vous pouvez utiliser les images et fichiers produits librement, y compris pour un usage commercial (logo, enseigne, impression, gravure). Le texte de licence de la police utilisée est joint au pack .zip.</p>
+    <p>Pour une police importée, vérifiez sa propre licence avant un usage commercial. Les polices importées restent dans votre navigateur et ne sont envoyées nulle part.</p>
+    <ul id="licList"></ul>
+    <p class="note-line">Logiciels : HarfBuzz (licence MIT), harfbuzzjs (MIT), Clipper d'Angus Johnson (licence Boost) pour la fusion des contours et les effets.</p>
+    <button class="close" type="button" id="aboutClose">Fermer</button>
+  </div>
+</dialog>
+
+<dialog id="designs" aria-labelledby="designsTitle">
+  <div class="dlg">
+    <h2 id="designsTitle">Mes créations</h2>
+    <p>Vos créations restent enregistrées dans ce navigateur : texte, style, forme, couleurs, effets, cadre, fond, photo et format.</p>
+    <form class="dsave" id="dsaveForm"><input type="text" id="dname" maxlength="80" placeholder="Nom de la création" aria-label="Nom de la création" autocomplete="off"><button type="submit" class="btn primary">Enregistrer la création actuelle</button></form>
+    <div class="dgrid" id="dgrid"></div>
+    <p class="note-line" id="dempty">Aucune création enregistrée pour l’instant.</p>
+    <section class="dtransfer" aria-labelledby="dtransferTitle">
+      <h3 id="dtransferTitle">Passer à un autre appareil ou à une autre fenêtre</h3>
+      <p class="note-line">Le code d’une création reprend le texte et tous les réglages (sauf la photo de fond). Collez-le dans l’atelier ouvert ailleurs : dans la zone de texte de l’étape 1 ou dans le champ ci-dessous.</p>
+      <div class="dsave"><button class="btn" type="button" id="dcodeCopy">Copier le code de la création actuelle</button><input type="text" id="dcodeIn" placeholder="Coller un code ici (Ctrl+V)" aria-label="Coller le code d’une création" autocomplete="off" spellcheck="false"></div>
+      <textarea class="codebox" id="dcodeOut" rows="2" readonly hidden aria-label="Code de la création actuelle"></textarea>
+    </section>
+    <button class="close" type="button" id="designsClose">Fermer</button>
+  </div>
+</dialog>
+
+<dialog id="dlfb" aria-labelledby="dlfbTitle">
+  <div class="dlg">
+    <h2 id="dlfbTitle">Votre fichier est prêt</h2>
+    <p class="dlfb-file"><b id="dlfbName"></b> · <span id="dlfbSize"></span></p>
+    <p>Cette fenêtre (par exemple l’application Claude sur ordinateur) ne laisse pas l’atelier enregistrer un fichier. Voici comment le récupérer :</p>
+    <p class="dlfb-warn" id="dlfbNote" hidden></p>
+    <section class="dlfb-way" aria-labelledby="dlfbW1">
+      <h3 id="dlfbW1">Le télécharger depuis votre navigateur</h3>
+      <p>Ouvrez l’atelier dans Chrome, Edge, Safari ou Firefox : le téléchargement y fonctionne. Votre création vous suit grâce à son code, copié en même temps : dans l’atelier ouvert, cliquez dans la zone de texte de l’étape 1 et collez (Ctrl+V).</p>
+      <div class="btnrow"><a class="btn primary" id="dlfbOpen" href="#" target="_blank" rel="noopener">Copier le code et ouvrir le navigateur</a></div>
+      <label class="dlfb-code"><span>Code de votre création (si la copie n’a pas marché : sélectionnez-le puis Ctrl+C)</span><textarea class="codebox" id="dlfbCode" rows="2" readonly spellcheck="false"></textarea></label>
+      <p class="note-line">Adresse de l’atelier : <span id="dlfbUrl"></span></p>
+    </section>
+    <section class="dlfb-way" id="dlfbCopyWay" aria-labelledby="dlfbW2">
+      <h3 id="dlfbW2">Ou le copier pour le coller dans un autre logiciel</h3>
+      <p id="dlfbCopyHint"></p>
+      <div class="btnrow"><button class="btn" type="button" id="dlfbCopy">Copier</button></div>
+    </section>
+    <p class="note-line"><a id="dlfbDirect" href="#" download>Essayer quand même le téléchargement direct</a> · <span id="dlfbTech"></span></p>
+    <button class="close" type="button" id="dlfbClose">Fermer</button>
+  </div>
+</dialog>
+
+<dialog id="lib" aria-labelledby="libTitle">
+  <div class="dlg">
+    <h2 id="libTitle">Bibliothèque de textes</h2>
+    <div class="libcats" id="libCats" role="group" aria-label="Catégories"></div>
+    <div class="tools"><span class="label">En touchant un texte :</span><div class="lseg" id="libMode" role="group" aria-label="Mode d’insertion"></div></div>
+    <div class="libgrid" id="libGrid"></div>
+    <p class="note-line">Les sens en français sont donnés à titre indicatif.</p>
+    <button class="close" type="button" id="libClose">Fermer</button>
+  </div>
+</dialog>
+
+<dialog id="imitate" aria-labelledby="imTitle">
+  <div class="dlg">
+    <h2 id="imTitle">Imiter le style d’un tableau</h2>
+    <div class="im-body">
+      <img id="imRef" alt="Votre image de référence">
+      <div class="im-res">
+        <p id="imStatus" role="status" aria-live="polite"></p>
+        <div class="im-prev" id="imPrev" hidden></div>
+        <dl class="im-facts" id="imFacts" hidden></dl>
+      </div>
+    </div>
+    <div class="btnrow">
+      <button class="btn primary" type="button" id="imApply" disabled>Appliquer ce style</button>
+      <button class="btn" type="button" id="imApplyText" hidden>Appliquer avec le texte du tableau</button>
+      <button class="btn" type="button" id="imSave" disabled>Enregistrer dans Mes modèles</button>
+      <button class="btn" type="button" id="imRetry" hidden>Relancer l’analyse</button>
+      <button class="btn" type="button" id="imStop" hidden>Arrêter</button>
+    </div>
+    <p class="note-line">L’image reste dans votre navigateur ; elle n’est envoyée à Claude que pour cette analyse. L’atelier reproduit le style (écriture, couleurs, composition) avec ses propres polices, jamais l’œuvre elle-même.</p>
+    <button class="close" type="button" id="imClose">Fermer</button>
+  </div>
+</dialog>
+
+<dialog id="viewer" class="viewer" aria-labelledby="viewerTitle">
+  <div class="vw">
+    <div class="vw-head">
+      <h2 id="viewerTitle">Plein écran</h2>
+      <div class="tabs" role="tablist" aria-label="Vues">
+        <button class="tab" role="tab" id="vt-pv" aria-controls="vp-pv" aria-selected="true" type="button">Aperçu</button>
+        <button class="tab" role="tab" id="vt-mock" aria-controls="vp-mock" aria-selected="false" type="button" tabindex="-1">Mise en situation</button>
+        <button class="tab" role="tab" id="vt-cmp" aria-controls="vp-cmp" aria-selected="false" type="button" tabindex="-1">Comparer les styles</button>
+      </div>
+      <div class="vw-acts qdl-b">
+        <button type="button" data-x="svg">SVG</button>
+        <button type="button" data-x="pdf">PDF</button>
+        <button type="button" class="ghost" id="viewerClose">Fermer</button>
+      </div>
+    </div>
+    <div class="vw-body">
+      <div class="vw-pane" role="tabpanel" id="vp-pv" aria-labelledby="vt-pv">
+        <div class="pvbar">
+          <div class="pvgrp">
+            <button class="ib" id="vzOut" type="button" aria-label="Zoom arrière"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+            <button class="zval" id="vzVal" type="button" title="Taille réelle (100 %)">100 %</button>
+            <button class="ib" id="vzIn" type="button" aria-label="Zoom avant"><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg></button>
+            <button class="ib" id="vzFit" type="button">Ajuster</button>
+          </div>
+          <span class="hint">Zoomez autant que vous voulez : le dessin est vectoriel, il reste net. Molette, pincement ou double-clic.</span>
+        </div>
+        <div class="preview pv-check" id="vpreview" tabindex="0" role="img" aria-label="Aperçu en grand">
+          <div class="stage" id="vstage"></div>
+        </div>
+      </div>
+      <div class="vw-pane" role="tabpanel" id="vp-mock" aria-labelledby="vt-mock" hidden>
+        <div class="vw-head"><div class="mockchips" id="mockChips" role="group" aria-label="Décors"></div><button class="chip" type="button" id="mockDl">Télécharger cette mise en situation (PNG)</button></div>
+        <div class="mockbox" id="mockBox"></div>
+      </div>
+      <div class="vw-pane" role="tabpanel" id="vp-cmp" aria-labelledby="vt-cmp" hidden>
+        <div class="vw-head"><div class="seg" id="cmpSrc" role="group" aria-label="Styles comparés"></div><span class="hint" id="cmpHint"></span></div>
+        <div class="cmpgrid" id="cmpGrid"></div>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<script>/*@ENGINE@*/</script>
+<script>/*@SHAPE@*/</script>
+<script>/*@FX@*/</script>
+<script>/*@ORNAMENT@*/</script>
+<script>/*@EXPORT@*/</script>
+<script>/*@MOCKUP@*/</script>
+<script>/*@APP@*/</script>

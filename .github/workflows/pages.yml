@@ -1,0 +1,36 @@
+# Publie le dossier site/ sur GitHub Pages.
+# Tant que le dépôt est privé sur un compte gratuit, GitHub Pages n'est pas disponible : la publication est simplement sautée.
+# Pour publier : rendre le dépôt public (ou, avec GitHub Pro, créer la variable de dépôt PAGES_ENABLED = true),
+# puis Settings → Pages → Source : « GitHub Actions », et lancer ce workflow une première fois.
+name: Publier le site
+
+on:
+  push:
+    branches: [main]
+    paths: ['site/**', '.github/workflows/pages.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publier:
+    if: ${{ !github.event.repository.private || vars.PAGES_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploiement.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploiement
+        uses: actions/deploy-pages@v4
