@@ -42,7 +42,7 @@
     ['Médaillon ailé', 'Une formule coupée en trois : le début dans un médaillon, la suite en deux ailes de part et d’autre, souvent reliées par un long trait (kashida).', 'medaillon-ailes'],
     ['Lettres semées', 'Un mot en grand, entouré de petites lettres qui flottent autour de lui : un écho contemporain entre le mot et l’alphabet.', 'lettres-semees'],
     ['Koufi carré', 'Les lettres deviennent un dédale de lignes droites qui remplit un carré, les vides répondant aux pleins. On le voit sur les murs, en brique et en céramique.', null],
-    ['Figures', 'Des phrases qui dessinent un visage, un lion ou un cheval : un genre prisé à l’époque ottomane.', null]
+    ['Figures', 'Des phrases qui dessinent une barque, un oiseau, un lion ou un cheval : un genre prisé à l’époque ottomane. L’atelier propose des silhouettes à remplir avec votre texte (modèles « Figures »).', 'fig-barque']
   ];
   const lnState = { tab: 'lettres', letter: 'ب', script: 'naskh', nib: 1, model: true, exScript: 'naskh', exNib: 2.4, built: false };
   const lnScript = id => LN_SCRIPTS.find(s => s.id === id) || LN_SCRIPTS[0];

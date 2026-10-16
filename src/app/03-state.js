@@ -29,7 +29,7 @@
     bg: { type: 'solid', color: '#0e1a3a', stops: stopsOf(PARCH), angle: 90, gk: 'linear', veil: 0.3, veilColor: 'dark' },
     format: { id: 'auto', margin: 56, w: 1200, h: 800 },
     shape: { type: 'straight', bend: 90, cover: 60, side: 'top', spin: 0, ring: 'none', ringW: 8, height: 50, ratio: 60, amp: 30, waves: 1.5, intensity: 40, gap: 130, sides: 6, round: 35, sep: 'star', free: null, flip: false, width: 100, rotate: 0, repeat: 'none', copies: 6, spread: 110, mgap: 8,
-      fillShape: 'oval', wrap: 'auto', fratio: 100, grow: 40, stretch: 10, lead: 18, center: 1, rgap: 14, rfill: 'on', rlines: 'none', tile: 'capsule', title: 'top', palette: 'pastel', cols: 0, tgap: 10, swash: 'on' },
+      fillShape: 'oval', face: 'right', decor: 'on', wrap: 'auto', fratio: 100, grow: 40, stretch: 10, lead: 18, center: 1, rgap: 14, rfill: 'on', rlines: 'none', tile: 'capsule', title: 'top', palette: 'pastel', cols: 0, tgap: 10, swash: 'on' },
     phys: { on: false, value: 60, unit: 'cm' },
     // réglages d'interface (hors historique)
     scale: 2, filter: 'all', tab: 'ecr', tool: 'texte', favs: [], cardColors: false, pvBg: 'check', dims: false, guides: false, gtab: 'styles', mdTheme: 'all', mdSrc: 'mine',
@@ -124,7 +124,9 @@
     sh.copies = Math.round(clampN(sh.copies, 2, 16, 6));
     sh.sides = Math.round(clampN(sh.sides, 3, 12, 6));
     sh.width = clampN(sh.width, 20, 400, 100);
-    sh.fillShape = oneOf(sh.fillShape, FILL_OPTS.map(x => x[0]), 'oval');
+    sh.fillShape = oneOf(sh.fillShape, FILL_OPTS.concat(FIG_OPTS).map(x => x[0]), 'oval');
+    sh.face = oneOf(sh.face, ['right', 'left'], 'right');
+    sh.decor = oneOf(sh.decor, ['on', 'off'], 'on');
     sh.wrap = oneOf(sh.wrap, ['auto', 'off'], 'auto');
     sh.rfill = oneOf(sh.rfill, ['on', 'off'], 'on');
     sh.swash = oneOf(sh.swash, ['on', 'off'], 'on');

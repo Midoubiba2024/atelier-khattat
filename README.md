@@ -5,7 +5,7 @@ Une phrase en arabe, près de 200 styles calligraphiques, 86 modèles de tableau
 ## Ce que fait l'atelier
 
 - **195 styles d'écriture** en 12 familles : naskh, thuluth, diwani, ruqʿa, kufi, maghribi, nastaʿlīq, soudani, décoratif, couleur, moderne. Toutes les polices sont sous licence libre.
-- **86 modèles de tableaux** en 10 thèmes : shamsa, levha, musanna, mihrab, sceaux, compositions (pyramide, œuf, goutte, médaillon en anneaux, mosaïque, tughra, médaillon ailé, hilye, lettres semées), prénoms, fêtes, mariage, motifs géométriques, découpe…
+- **100 modèles de tableaux** en 11 thèmes : shamsa, levha, musanna, mihrab, sceaux, compositions (pyramide, œuf, goutte, médaillon en anneaux, mosaïque, tughra, médaillon ailé, hilye, lettres semées), figures (barque, poisson, oiseau, papillon, mosquée, lampe, lanterne, vase, croissant, étoile, arbre, tulipe, grenade), prénoms, fêtes, mariage, motifs géométriques, découpe…
 - **Variations** : six mises en page de votre phrase tirées au sort (écriture, ambiance, forme), appliquées en un clic.
 - **Tashkīl** :
   - 8 niveaux : complet, sans soukoun, partiel (allégé), sans les fins de mots (lecture à la pause), fins de mots (iʿrāb), chadda et tanwīn, chadda seule, aucun. Le texte garde son tashkīl complet ; chaque niveau en dessine une partie selon des règles fixes, sans jamais changer une lettre ;
@@ -15,6 +15,7 @@ Une phrase en arabe, près de 200 styles calligraphiques, 86 modèles de tableau
 - **Mise en forme** :
   - 26 formes : arc, cercle, sceau, cœur, vague, spirale, loupe, tughra… ;
   - compositions par lignes : remplir une forme (pyramide, ovale, œuf, goutte, mihrab…), anneaux concentriques, mosaïque de tuiles colorées, tughra, médaillon ailé, panneau hilye ;
+  - calligraphie figurative : la phrase remplit une des 13 figures de l'atelier (barque, poisson, oiseau, papillon, mosquée, lampe de mosquée, lanterne, vase, croissant, étoile à huit branches, arbre, tulipe, grenade) ; la bordure dessine la silhouette, des détails la complètent (mât, queue, minarets, chaînes…), la figure se tourne vers la gauche ou la droite, et le papillon reflète la phrase d'une aile à l'autre. Les silhouettes sont dessinées par l'atelier, aucune n'est copiée d'une œuvre ;
   - répétitions en miroir, en rosace et en kaléidoscope ;
   - une couleur par ligne, contre-formes colorées, lettres semées autour du texte ;
   - une légende en lettres latines sous le dessin ou au-dessus (prénom, traduction), en quatre polices ;

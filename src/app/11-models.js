@@ -58,6 +58,11 @@
     if (words <= 2 && chars <= 12) { add(0.6, { repeat: 'rosette', copies: 8, spread: 100 }, 'square', true); add(0.5, { repeat: 'kaleido', copies: 8, spread: 90 }, 'square', true); add(0.5, { repeat: 'mirror', mgap: 4 }, 'auto'); }
     if (lines >= 2 && lines <= 3) add(1, { type: 'seal', cover: 70, ring: 'double', ringW: 6, sep: 'star' }, 'square', true);
     if (words >= 4 || chars > 22) add(1.4, { type: 'fill', fillShape: pickOne(['oval', 'egg', 'circle', 'drop', 'arch']), wrap: 'auto', grow: 55, stretch: 10, lead: 16, ring: 'single', ringW: 5 }, 'portrait');
+    // figure : la phrase remplit une silhouette (barque, poisson, mosquée…), au format qui lui convient
+    if (words >= 2 && chars <= 160) {
+      const fg = pickOne([['boat', 'square'], ['fish', 'landscape'], ['bird', 'landscape'], ['butterfly', 'square'], ['mosque', 'square'], ['lamp', 'portrait'], ['lantern', 'portrait'], ['vase', 'portrait'], ['crescent', 'square'], ['star8', 'square'], ['tree', 'portrait'], ['tulip', 'portrait'], ['pomegranate', 'square']]);
+      add(1, { type: 'fill', fillShape: fg[0], wrap: 'auto', grow: 45, stretch: 30, lead: 10, ring: 'single', ringW: 5 }, fg[1]);
+    }
     if (words >= 6) add(0.8, { type: 'rings', center: 1, rgap: 14, rlines: 'thin', sep: 'dot', ring: 'single', ringW: 5 }, 'square', true);
     if (lines === 1 && words >= 3 && words <= 6) add(0.6, { type: 'wings', ring: 'single', swash: 'on' }, 'banner');
     const total = shapes.reduce((a, s) => a + s.w, 0);
@@ -70,7 +75,8 @@
         frame: m.frame ? clone(m.frame) : null, pattern: m.pattern ? clone(m.pattern) : null, format: s.fmt, tkLevel: S.tkLevel };
       if (!look.frame && Math.random() < 0.4) look.frame = s.round ? { type: 'circle', width: 1.6, double: true, pad: 12 } : { type: pickOne(['rect', 'cartouche', 'arch', 'round', 'octagon']), width: 1.6, double: Math.random() < 0.5, pad: 16 };
       const fo = fontById(f), sh = SHAPES.find(x => x.id === (s.sh.type || 'straight')), rp = s.sh.repeat ? REPEATS.find(r => r[0] === s.sh.repeat) : null;
-      out.push({ id: 'var' + Date.now().toString(36) + i, name: fo ? fo.name : f, note: m.name + (rp ? ' · ' + rp[1] : sh && sh.id !== 'straight' ? ' · ' + sh.name : ''), look, mood: m.id, variation: true });
+      const fg = s.sh.type === 'fill' && FIG_OPTS.find(x => x[0] === s.sh.fillShape);
+      out.push({ id: 'var' + Date.now().toString(36) + i, name: fo ? fo.name : f, note: m.name + (rp ? ' · ' + rp[1] : fg ? ' · ' + fg[1] : sh && sh.id !== 'straight' ? ' · ' + sh.name : ''), look, mood: m.id, variation: true });
     }
     return out;
   }

@@ -102,6 +102,7 @@
     ['classique', 'Tableaux classiques', 'Les grands genres de la calligraphie : shamsa, levha, musanna, mihrab, qitʿa, page enluminée.'],
     ['medaillon', 'Médaillons et sceaux', 'Compositions circulaires et fermées : médaillons, sceaux, rosaces, étoiles, couronnes.'],
     ['compositions', 'Compositions', 'La phrase organise tout le tableau : pyramide, œuf, goutte, médaillons en anneaux, mosaïques de tuiles, rosaces en miroir, tughra, hilye.'],
+    ['figures', 'Figures', 'La phrase dessine une figure : barque, poisson, oiseau, papillon, mosquée, lampe, lanterne, vase, croissant, étoile, arbre, tulipe, grenade. Écrivez votre texte : la silhouette se remplit, la bordure et les détails la dessinent.'],
     ['versets', 'Versets et invocations', 'Pour une invocation ou un verset court, avec des compositions sobres et lisibles.'],
     ['prenoms', 'Prénoms', 'Pour un prénom : cœur, relief, néon, miroir, autocollant, pastel.'],
     ['fetes', 'Fêtes et vœux', 'Cartes de vœux : Aïd, Ramadan, anniversaire, nouvel an, félicitations.'],
@@ -183,6 +184,35 @@
     { font: 'aref-ruqaa-bold', fx: { scatter: { on: true, color: '#9B2C4A', density: 60, size: 22, alpha: true } }, fill: SOL('#1B1712'), bg: SOL('#FFFFFF'), format: 'square' });
   M('compositions', 'hilye', 'Panneau hilye', 'D’après le plan des hilye ottomanes : bandeau, rond central dans son croissant, quatre médaillons d’angle, bandeau du verset, panneau du bas ; une ligne par compartiment.', 'بسم الله الرحمن الرحيم\nوَإِنَّكَ لَعَلَىٰ خُلُقٍ عَظِيمٍ\nأبو بكر\nعمر\nعثمان\nعلي\nوَمَا أَرْسَلْنَاكَ إِلَّا رَحْمَةً لِّلْعَالَمِينَ\nصلى الله عليه وسلم',
     { font: 'layla-thuluth', shape: { type: 'hilye', palette: 'gold' }, fill: SOL('#1B1712'), bg: SOL('#3B2A1A'), harakat: true, format: 'portrait' });
+  // Figures : la phrase remplit une silhouette (calligraphie figurative) ; contours et détails dessinés par l’atelier
+  M('figures', 'fig-barque', 'Barque de la bénédiction', '« Au nom de Dieu, sa course et son mouillage » (Coran 11:41), la formule des navires : la voile et la coque sont écrites, le mât et la vague dessinés.', 'بِسْمِ اللَّهِ مَجْرَاهَا وَمُرْسَاهَا',
+    { font: 'mirza-bold', shape: { type: 'fill', fillShape: 'boat', grow: 40, stretch: 30, lead: 10, ring: 'single', ringW: 5 }, fill: LIN(GOLD2), bg: RAD(['#173A63', '#0A1A33']), harakat: true, format: 'square' });
+  M('figures', 'fig-poisson', 'Poisson de Jonas', 'L’invocation de Jonas dans le ventre du poisson (Coran 21:87) remplit le corps ; la tête, la queue et les nageoires sont à l’encre.', 'لَا إِلَٰهَ إِلَّا أَنتَ سُبْحَانَكَ إِنِّي كُنتُ مِنَ الظَّالِمِينَ',
+    { font: 'aref-ruqaa-bold', shape: { type: 'fill', fillShape: 'fish', grow: 40, stretch: 30, lead: 10, ring: 'single', ringW: 5 }, fill: SOL('#0B4F6C'), bg: LIN(['#F1FAF8', '#D5EDEA']), harakat: true, format: 'landscape' });
+  M('figures', 'fig-oiseau', 'Oiseau de la basmala', 'La basmala prend la forme d’un oiseau, un thème cher aux calligraphes ottomans et persans : le corps est écrit, la tête et la queue dessinées.', 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+    { font: 'amiri-bold', shape: { type: 'fill', fillShape: 'bird', grow: 45, stretch: 30, lead: 10, ring: 'single', ringW: 5 }, fill: SOL('#2B2118'), bg: LIN(PARCH), harakat: true, format: 'landscape' });
+  M('figures', 'fig-oiseaux', 'Oiseaux affrontés', 'Deux oiseaux se font face : la phrase et son reflet, la symétrie musanna appliquée à une figure.', 'السَّلَامُ عَلَيْكُمْ',
+    { font: 'bouazzi-maghribi', shape: { type: 'fill', fillShape: 'bird', face: 'left', repeat: 'mirror', mgap: 6, grow: 45, stretch: 30, lead: 10, ring: 'single', ringW: 6 }, fill: SOL('#7A1F3D'), bg: SOL('#FFF7EC'), harakat: true, format: 'landscape' });
+  M('figures', 'fig-papillon', 'Papillon en miroir', 'Une aile porte la phrase, l’autre son reflet : un papillon musanna, aux ailes bordées d’un filet.', 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ',
+    { font: 'layla-diwani', shape: { type: 'fill', fillShape: 'butterfly', grow: 45, stretch: 30, lead: 10, ring: 'single', ringW: 5 }, fill: LIN(['#5B2A86', '#B5179E']), bg: SOL('#FFF8F2'), format: 'square' });
+  M('figures', 'fig-mosquee', 'Mosquée', '« Les mosquées sont à Dieu » (Coran 72:18) : la coupole et la salle sont écrites, les minarets se dressent de chaque côté.', 'وَأَنَّ الْمَسَاجِدَ لِلَّهِ فَلَا تَدْعُوا مَعَ اللَّهِ أَحَدًا',
+    { font: 'amiri-bold', shape: { type: 'fill', fillShape: 'mosque', grow: 40, stretch: 30, lead: 10, ring: 'single', ringW: 5 }, fill: LIN(GOLD2), bg: SOL('#0B3B2E'), harakat: true, format: 'square' });
+  M('figures', 'fig-lampe', 'Lampe de mosquée', 'Le verset de la Lumière (Coran 24:35), écrit dans une lampe suspendue, comme sur les lampes de verre émaillé des mosquées mameloukes.', 'اللَّهُ نُورُ السَّمَاوَاتِ وَالْأَرْضِ',
+    { font: 'scheherazade-bold', shape: { type: 'fill', fillShape: 'lamp', grow: 40, stretch: 30, lead: 10, ring: 'single', ringW: 5 }, fill: LIN(GOLD2), bg: RAD(['#1F3B57', '#0A1626']), harakat: true, format: 'portrait' });
+  M('figures', 'fig-lanterne', 'Lanterne du Ramadan', 'Le fanous des soirées de Ramadan, avec son chapeau, son anneau et sa pointe.', 'رَمَضَانُ كَرِيمٌ',
+    { font: 'el-messiri-bold', shape: { type: 'fill', fillShape: 'lantern', grow: 50, stretch: 30, lead: 10, ring: 'double', ringW: 4 }, fill: LIN(['#FFE08A', '#F59E0B']), bg: RAD(['#3B1D6B', '#160B2E']), format: 'portrait' });
+  M('figures', 'fig-vase', 'Vase', 'Un vase de céramique : le col, l’épaule et la panse portent la phrase.', 'الصَّبْرُ مِفْتَاحُ الْفَرَجِ',
+    { font: 'kitab-bold', shape: { type: 'fill', fillShape: 'vase', grow: 45, stretch: 30, lead: 10, ring: 'double', ringW: 4 }, fill: SOL('#1E3A8A'), bg: SOL('#F6F1E7'), harakat: true, format: 'portrait' });
+  M('figures', 'fig-croissant', 'Croissant de fête', 'Un croissant et son étoile à huit branches : « Que chaque année vous trouve en bonne santé », le vœu de toutes les fêtes.', 'كُلُّ عَامٍ وَأَنْتُمْ بِخَيْرٍ',
+    { font: 'rakkas', shape: { type: 'fill', fillShape: 'crescent', grow: 50, stretch: 30, lead: 10, ring: 'single', ringW: 5 }, fill: LIN(GOLD2), bg: RAD(['#14315C', '#081428']), harakat: true, format: 'square' });
+  M('figures', 'fig-etoile', 'Étoile à huit branches', 'L’étoile des zelliges et des manuscrits, à double filet, autour d’une formule.', 'مَا شَاءَ اللَّهُ',
+    { font: 'reem-kufi-bold', shape: { type: 'fill', fillShape: 'star8', grow: 50, stretch: 30, lead: 10, ring: 'double', ringW: 4 }, fill: SOL('#0F4C81'), bg: SOL('#FFFFFF'), pattern: { type: 'stars8', color: '#0f4c81', opacity: 0.06, scale: 10 }, format: 'square' });
+  M('figures', 'fig-arbre', 'Arbre de la bonne parole', '« Une bonne parole est comme un bel arbre » (Coran 14:24) : le feuillage est fait du verset, le tronc le porte.', 'أَلَمْ تَرَ كَيْفَ ضَرَبَ اللَّهُ مَثَلًا كَلِمَةً طَيِّبَةً كَشَجَرَةٍ طَيِّبَةٍ أَصْلُهَا ثَابِتٌ وَفَرْعُهَا فِي السَّمَاءِ',
+    { font: 'aref-ruqaa-bold', shape: { type: 'fill', fillShape: 'tree', fratio: 115, grow: 40, stretch: 30, lead: 8, ring: 'single', ringW: 5 }, fill: SOL('#1F5F3A'), bg: LIN(['#FAF6E8', '#E9DFC2']), harakat: true, format: 'portrait' });
+  M('figures', 'fig-tulipe', 'Tulipe ottomane', 'La tulipe, fleur emblème de l’art ottoman : la coupe porte un mot ou un prénom, les pétales et les feuilles l’entourent.', 'الْحَمْدُ لِلَّهِ',
+    { font: 'gulzar', shape: { type: 'fill', fillShape: 'tulip', grow: 50, stretch: 30, lead: 10, ring: 'single', ringW: 5 }, fill: SOL('#B3261E'), bg: SOL('#FFF7EC'), format: 'portrait' });
+  M('figures', 'fig-grenade', 'Grenade', '« Des fruits, des palmiers et des grenades » (Coran 55:68) : la grenade, fruit du paradis dans l’art islamique, avec sa couronne et sa feuille.', 'فِيهِمَا فَاكِهَةٌ وَنَخْلٌ وَرُمَّانٌ',
+    { font: 'harmattan-bold', shape: { type: 'fill', fillShape: 'pomegranate', grow: 45, stretch: 30, lead: 10, ring: 'single', ringW: 5 }, fill: SOL('#8E1B2E'), bg: SOL('#FFF4EC'), harakat: true, format: 'square' });
   // Versets : couleurs et fonds
   M('versets', 'iqra', 'Iqraʾ', '« Lis, au nom de ton Seigneur » : thuluth d’or aux voyelles turquoise, sur nuit.', 'اقْرَأْ\nبِاسْمِ رَبِّكَ',
     { font: 'layla-thuluth', fill: LIN(GOLD2), bg: RAD(['#14234A', '#060B1C']), fx: { marks: { on: true, color: '#2BB3A8' } }, lineHeight: 1.1, harakat: true, shadow: SHADOW(0.45, 3, 6), format: 'portrait' });

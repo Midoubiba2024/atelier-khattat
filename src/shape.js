@@ -363,9 +363,248 @@
     }
     return o;
   }
+  // ---------------------------------------------------------------------------
+  // Figures (calligraphie figurative) : la phrase remplit le corps d'une silhouette (voile et coque, corps du poisson,
+  // coupole et salle…) ; des pièces pleines, à l'encre du texte, la complètent (mât, queue, minarets…).
+  // Silhouettes originales de l'atelier. Repère brut : y vers le bas ; contours en sens horaire à l'écran, trous en sens inverse.
+  // ---------------------------------------------------------------------------
+  const FIGS = (() => {
+    const D = Math.PI / 180;
+    // tracé : segments, courbes de Bézier et arcs d'ellipse (angles en degrés, croissants = sens horaire à l'écran)
+    function Pen(x, y) {
+      const p = [x, y];
+      let cx = x, cy = y;
+      const api = {
+        p,
+        L(x, y) { p.push(x, y); cx = x; cy = y; return api; },
+        C(x1, y1, x2, y2, x, y, n) {
+          n = n || 28;
+          for (let i = 1; i <= n; i++) { const t = i / n, u = 1 - t; p.push(u * u * u * cx + 3 * u * u * t * x1 + 3 * u * t * t * x2 + t * t * t * x, u * u * u * cy + 3 * u * u * t * y1 + 3 * u * t * t * y2 + t * t * t * y); }
+          cx = x; cy = y; return api;
+        },
+        Q(x1, y1, x, y, n) { return api.C(cx + 2 / 3 * (x1 - cx), cy + 2 / 3 * (y1 - cy), x + 2 / 3 * (x1 - x), y + 2 / 3 * (y1 - y), x, y, n); },
+        A(ox, oy, rx, ry, a0, a1, n) {
+          n = n || Math.max(6, Math.ceil(Math.abs(a1 - a0) / 5));
+          for (let i = 1; i <= n; i++) { const a = (a0 + (a1 - a0) * i / n) * D; p.push(ox + rx * Math.cos(a), oy + ry * Math.sin(a)); }
+          cx = p[p.length - 2]; cy = p[p.length - 1]; return api;
+        },
+        end() { if (p.length > 4 && Math.hypot(p[0] - p[p.length - 2], p[1] - p[p.length - 1]) < 1e-9) p.length -= 2; return p; }
+      };
+      return api;
+    }
+    // demi-contour droit, du haut de l'axe (x = 0) au bas de l'axe → contour symétrique complet
+    const sym = h => { const o = h.slice(); for (let i = h.length - 4; i >= 2; i -= 2) o.push(-h[i], h[i + 1]); return o; };
+    const area = p => { let a = 0; for (let i = 0; i < p.length; i += 2) { const j = (i + 2) % p.length; a += p[i] * p[j + 1] - p[j] * p[i + 1]; } return a; };
+    const rev = p => { const o = []; for (let i = p.length - 2; i >= 0; i -= 2) o.push(p[i], p[i + 1]); return o; };
+    const cw = p => area(p) < 0 ? rev(p) : p;
+    const hole = p => area(p) > 0 ? rev(p) : p;
+    const disk = (x, y, r) => { const o = [], n = Math.max(16, Math.ceil(r * 160)); for (let i = 0; i < n; i++) { const a = TAU * i / n; o.push(x + r * Math.cos(a), y + r * Math.sin(a)); } return o; };
+    const ringAt = (x, y, r, w) => [disk(x, y, r + w / 2), hole(disk(x, y, r - w / 2))];
+    const mx = p => cw(p.map((v, i) => i % 2 ? v : -v));
+    const rot = (p, deg) => { const c = Math.cos(deg * D), s = Math.sin(deg * D), o = []; for (let i = 0; i < p.length; i += 2) o.push(p[i] * c - p[i + 1] * s, p[i] * s + p[i + 1] * c); return o; };
+    const bezAt = (a, b, c, d, t) => { const u = 1 - t; return [u * u * u * a[0] + 3 * u * u * t * b[0] + 3 * u * t * t * c[0] + t * t * t * d[0], u * u * u * a[1] + 3 * u * u * t * b[1] + 3 * u * t * t * c[1] + t * t * t * d[1]]; };
+    const bezPts = (B, t0, t1, n) => { const o = []; for (let i = 0; i <= n; i++) { const q = bezAt(B[0], B[1], B[2], B[3], t0 + (t1 - t0) * i / n); o.push(q[0], q[1]); } return o; };
+    // normales d'une ligne ouverte (côté gauche du sens de parcours)
+    function normals(pts) {
+      const o = [], n = pts.length / 2;
+      for (let k = 0; k < n; k++) {
+        const a = Math.max(0, k - 1), b = Math.min(n - 1, k + 1);
+        let tx = pts[2 * b] - pts[2 * a], ty = pts[2 * b + 1] - pts[2 * a + 1];
+        const l = Math.hypot(tx, ty) || 1;
+        o.push(ty / l, -tx / l);
+      }
+      return o;
+    }
+    const shiftLine = (pts, d) => { const N = normals(pts); return pts.map((v, i) => v + N[i] * d); };
+    // trait d'épaisseur w le long d'une ligne ouverte
+    const stroke = (pts, w) => cw(shiftLine(pts, w / 2).concat(rev(shiftLine(pts, -w / 2))));
+    // étoile à n branches, première pointe vers le haut
+    const star = (x, y, R, r, n) => { const o = []; for (let j = 0; j < 2 * n; j++) { const a = -Math.PI / 2 + j * Math.PI / n, q = j % 2 ? r : R; o.push(x + q * Math.cos(a), y + q * Math.sin(a)); } return o; };
+    // croissant : disque de rayon R moins un disque de rayon r décalé de d vers la droite ; ouverture tournée de deg
+    function crescent(cx, cy, R, d, r, deg) {
+      const x = (R * R - r * r + d * d) / (2 * d), y = Math.sqrt(R * R - x * x);
+      const t1 = Math.atan2(y, x) / D, f1 = Math.atan2(y, x - d) / D;
+      const P = Pen(x, y).A(0, 0, R, R, t1, 360 - t1, 90).A(d, 0, r, r, 360 - f1, f1, 80).end();
+      return cw(rot(P, deg).map((v, i) => v + (i % 2 ? cy : cx)));
+    }
+    // coins arrondis (rayon r) d'un polygone
+    function fillet(p, r) {
+      const o = [], n = p.length / 2;
+      for (let k = 0; k < n; k++) {
+        const a = (k + n - 1) % n, b = (k + 1) % n, V = [p[2 * k], p[2 * k + 1]];
+        const da = Math.hypot(p[2 * a] - V[0], p[2 * a + 1] - V[1]), db = Math.hypot(p[2 * b] - V[0], p[2 * b + 1] - V[1]);
+        const q = Math.min(r, da / 2, db / 2);
+        const A = [V[0] + (p[2 * a] - V[0]) * q / da, V[1] + (p[2 * a + 1] - V[1]) * q / da], B = [V[0] + (p[2 * b] - V[0]) * q / db, V[1] + (p[2 * b + 1] - V[1]) * q / db];
+        for (let i = 0; i <= 6; i++) { const t = i / 6, u = 1 - t; o.push(u * u * A[0] + 2 * u * t * V[0] + t * t * B[0], u * u * A[1] + 2 * u * t * V[1] + t * t * B[1]); }
+      }
+      return o;
+    }
+    // ordonnée d'une ligne échantillonnée à l'abscisse x
+    const yAt = (pts, x) => { for (let i = 0; i + 3 < pts.length; i += 2) { const a = pts[i], b = pts[i + 2]; if ((a - x) * (b - x) <= 0 && a !== b) return pts[i + 1] + (pts[i + 3] - pts[i + 1]) * (x - a) / (b - a); } return pts[1]; };
+    const F = {};
+    // barque : voile triangulaire bombée et coque relevée à la proue et à la poupe ; mât, fanion, vague
+    F.boat = () => {
+      const m = -0.18;
+      const body = Pen(m, -1.0).C(0.22, -0.78, 0.66, -0.30, 0.80, 0.20).C(0.98, 0.20, 1.12, 0.10, 1.24, -0.12)
+        .C(1.12, 0.36, 0.66, 0.66, 0.0, 0.66).C(-0.66, 0.66, -1.06, 0.40, -1.20, -0.04).C(-1.08, 0.12, -0.92, 0.20, -0.72, 0.20).L(m, 0.20).end();
+      const wave = [];
+      for (let i = 0; i <= 60; i++) { const x = -1.16 + 2.32 * i / 60; wave.push(x, 0.80 + 0.035 * Math.sin(i / 60 * TAU * 3.5)); }
+      return { body: cw(body), decor: [cw([m - 0.075, -1.24, m - 0.03, -1.24, m - 0.03, 0.20, m - 0.075, 0.20]), cw([m - 0.03, -1.24, m + 0.27, -1.165, m - 0.03, -1.09]), stroke(wave, 0.035)] };
+    };
+    // poisson : corps (texte) ; tête pleine et son œil, queue fourchue, nageoires
+    F.fish = () => {
+      const U = [[-0.62, -0.12], [-0.25, -0.70], [0.62, -0.74], [1.06, -0.02]], Lo = [[1.06, -0.02], [0.72, 0.62], [-0.25, 0.62], [-0.62, 0.12]];
+      const tu = 0.80, tl = 0.20, g = 0.035;
+      const u1 = bezAt(...U, tu), l1 = bezAt(...Lo, tl);
+      const body = Pen(U[0][0], U[0][1]);
+      const up = bezPts(U, 0, tu, 30), lo = bezPts(Lo, tl, 1, 30);
+      for (let i = 2; i < up.length; i += 2) body.L(up[i], up[i + 1]);
+      body.Q((u1[0] + l1[0]) / 2 - 0.26, (u1[1] + l1[1]) / 2, l1[0], l1[1], 24);
+      for (let i = 2; i < lo.length; i += 2) body.L(lo[i], lo[i + 1]);
+      const ua = bezAt(...U, tu + g), la = bezAt(...Lo, tl - g);
+      const head = Pen(ua[0], ua[1]), hu = bezPts(U, tu + g, 1, 24), hl = bezPts(Lo, 0, tl - g, 24);
+      for (let i = 2; i < hu.length; i += 2) head.L(hu[i], hu[i + 1]);
+      for (let i = 2; i < hl.length; i += 2) head.L(hl[i], hl[i + 1]);
+      head.Q((ua[0] + la[0]) / 2 - 0.21, (ua[1] + la[1]) / 2, ua[0], ua[1], 24);
+      const decor = [cw(head.end()), hole(disk(0.80, -0.17, 0.065)), disk(0.815, -0.18, 0.03)];
+      decor.push(cw(Pen(-0.67, -0.10).C(-0.86, -0.22, -1.00, -0.50, -1.16, -0.64).C(-1.10, -0.36, -1.00, -0.12, -0.94, 0.0)
+        .C(-1.00, 0.12, -1.10, 0.36, -1.16, 0.62).C(-1.00, 0.50, -0.86, 0.22, -0.67, 0.10).end()));
+      // nageoire dorsale, rabattue vers la queue ; nageoire anale
+      const db = shiftLine(bezPts(U, 0.30, 0.60, 20), 0.05), n = db.length;
+      const dorsal = Pen(db[0], db[1]);
+      for (let i = 2; i < n; i += 2) dorsal.L(db[i], db[i + 1]);
+      dorsal.Q(db[n - 2] - 0.02, db[n - 1] - 0.20, db[n - 2] - 0.34, db[n - 1] - 0.28).Q(db[0] - 0.02, db[1] - 0.10, db[0], db[1]);
+      const ab = shiftLine(bezPts(Lo, 0.62, 0.84, 14), 0.05), m = ab.length;
+      const anal = Pen(ab[0], ab[1]);
+      for (let i = 2; i < m; i += 2) anal.L(ab[i], ab[i + 1]);
+      anal.Q(ab[m - 2] - 0.02, ab[m - 1] + 0.14, ab[m - 2] - 0.16, ab[m - 1] + 0.20).Q(ab[0] - 0.02, ab[1] + 0.06, ab[0], ab[1]);
+      decor.push(cw(dorsal.end()), cw(anal.end()));
+      return { body: cw(body.end()), decor };
+    };
+    // colombe : corps (texte) ; tête pleine, œil et bec, queue en éventail, pattes
+    F.bird = () => {
+      const H = [0.60, -0.55], rh = 0.175, rp = rh + 0.05, pa = 168, pb = 42;
+      const P0 = [H[0] + rp * Math.cos(pa * D), H[1] + rp * Math.sin(pa * D)];
+      const belly = Pen(0.50, 0.40).C(0.12, 0.60, -0.45, 0.42, -0.74, 0.07).p;
+      const body = Pen(-0.74, -0.10).C(-0.40, -0.50, 0.05, -0.56, P0[0], P0[1]).A(H[0], H[1], rp, rp, pa, pb).C(0.90, -0.22, 0.86, 0.20, 0.50, 0.40);
+      for (let i = 2; i < belly.length; i += 2) body.L(belly[i], belly[i + 1]);
+      const at = a => [H[0] + rh * Math.cos(a * D), H[1] + rh * Math.sin(a * D)], b0 = at(-24), b1 = at(10);
+      const decor = [disk(H[0], H[1], rh), hole(disk(H[0] + 0.055, H[1] - 0.035, 0.038)), disk(H[0] + 0.062, H[1] - 0.04, 0.016)];
+      decor.push(cw([b0[0] - 0.03, b0[1] + 0.01, b0[0], b0[1], 0.96, H[1] + 0.015, b1[0], b1[1], b1[0] - 0.03, b1[1]]));
+      // queue en éventail, deux fentes entre les plumes
+      decor.push(cw(Pen(-0.79, -0.10).C(-1.0, -0.07, -1.22, 0.0, -1.43, 0.07).Q(-1.53, 0.21, -1.42, 0.36).C(-1.20, 0.27, -1.0, 0.15, -0.79, 0.07).end()));
+      for (const [a, b] of [[[-0.98, -0.02], [-1.40, 0.14]], [[-0.98, 0.05], [-1.37, 0.26]]]) {
+        const q = []; for (let i = 0; i <= 8; i++) q.push(a[0] + (b[0] - a[0]) * i / 8, a[1] + (b[1] - a[1]) * i / 8);
+        decor.push(hole(stroke(q, 0.018)));
+      }
+      for (const x of [0.10, 0.28]) {
+        const y = yAt(belly, x + 0.02) + 0.05;
+        decor.push(cw([x, y, x + 0.04, y, x + 0.065, 0.82, x + 0.18, 0.82, x + 0.18, 0.85, x - 0.03, 0.85, x - 0.03, 0.82, x + 0.025, 0.82]));
+      }
+      return { body: cw(body.end()), decor };
+    };
+    // papillon : une aile (texte), reflétée de l'autre côté de l'axe ; corps et antennes au milieu
+    F.butterfly = () => {
+      const a = 0.09;
+      const wing = Pen(a, -0.26).C(0.24, -0.78, 0.66, -1.02, 0.98, -0.96).C(1.14, -0.78, 1.04, -0.20, 0.78, -0.04)
+        .C(1.00, 0.18, 0.96, 0.62, 0.66, 0.82).C(0.40, 0.98, 0.14, 0.62, a, 0.30).end();
+      const body = sym(Pen(0, -0.62).A(0, -0.52, 0.075, 0.10, -90, 90).L(0.055, -0.40).C(0.065, -0.10, 0.06, 0.40, 0, 0.74).end());
+      const ant = [];
+      for (let i = 0; i <= 24; i++) { const t = i / 24; ant.push(0.02 + 0.30 * t + 0.10 * t * t, -0.60 - 0.42 * t + 0.10 * t * t * t); }
+      const side = [stroke(ant, 0.025), disk(ant[ant.length - 2], ant[ant.length - 1], 0.035)];
+      return { body: cw(wing), decor: [cw(body)].concat(side, side.map(mx)), mirror: true };
+    };
+    // mosquée : coupole et salle (texte) ; minarets, croissant au sommet, sol
+    F.mosque = () => {
+      const half = Pen(0, -0.88).C(0.05, -0.74, 0.24, -0.66, 0.40, -0.53).C(0.58, -0.39, 0.64, -0.16, 0.52, 0.02).C(0.48, 0.08, 0.43, 0.10, 0.40, 0.11)
+        .L(0.40, 0.28).L(0.98, 0.28).L(0.98, 1.0).L(0, 1.0).end();
+      const minaret = cw([1.12, -0.90, 1.175, -0.62, 1.175, -0.20, 1.215, -0.20, 1.215, -0.14, 1.175, -0.10, 1.175, 1.0,
+        1.065, 1.0, 1.065, -0.10, 1.025, -0.14, 1.025, -0.20, 1.065, -0.20, 1.065, -0.62]);
+      return { body: cw(sym(half)), decor: [minaret, mx(minaret), cw([-0.012, -1.07, 0.012, -1.07, 0.012, -0.905, -0.012, -0.905]), disk(0, -0.97, 0.032),
+        crescent(0, -1.15, 0.08, 0.034, 0.066, -90), cw([-1.27, 1.03, 1.27, 1.03, 1.27, 1.065, -1.27, 1.065])] };
+    };
+    // lampe de mosquée : col évasé et panse (texte) ; pied, rebord, anses, chaînes et anneau
+    F.lamp = () => {
+      const half = Pen(0, -0.78).L(0.60, -0.78).C(0.52, -0.50, 0.40, -0.34, 0.40, -0.18).C(0.66, -0.12, 0.76, 0.05, 0.73, 0.20)
+        .C(0.70, 0.40, 0.52, 0.56, 0.30, 0.60).L(0, 0.60).end();
+      const decor = [cw(sym([0, 0.64, 0.20, 0.64, 0.30, 0.78, 0, 0.78])), cw([-0.66, -0.86, 0.66, -0.86, 0.66, -0.82, -0.66, -0.82])];
+      for (const s of [1, -1]) decor.push(...ringAt(s * 0.81, 0.03, 0.05, 0.026), stroke([s * 0.80, -0.02, s * 0.74, -0.92, s * 0.05, -1.18], 0.02));
+      decor.push(...ringAt(0, -1.23, 0.055, 0.024));
+      return { body: cw(sym(half)), decor };
+    };
+    // lanterne : corps (texte) ; chapeau, anneau, pointe
+    F.lantern = () => {
+      const half = Pen(0, -0.62).L(0.32, -0.62).L(0.60, -0.30).L(0.60, 0.22).L(0.34, 0.56).L(0, 0.56).end();
+      const cap = sym(Pen(0, -0.99).C(0.12, -0.98, 0.34, -0.88, 0.36, -0.72).L(0.44, -0.72).L(0.44, -0.665).L(0, -0.665).end());
+      return { body: cw(fillet(sym(half), 0.08)), decor: [cw(cap), ...ringAt(0, -1.07, 0.06, 0.026),
+        cw(sym([0, 0.60, 0.40, 0.60, 0.40, 0.655, 0.24, 0.69, 0.035, 0.90, 0, 0.90])), disk(0, 0.93, 0.035)] };
+    };
+    // vase : col, épaule et panse (texte) ; lèvre et pied
+    F.vase = () => {
+      const half = Pen(0, -0.84).L(0.30, -0.84).C(0.22, -0.72, 0.18, -0.62, 0.20, -0.52).C(0.62, -0.36, 0.72, 0.06, 0.56, 0.36)
+        .C(0.46, 0.56, 0.34, 0.66, 0.24, 0.70).L(0, 0.70).end();
+      return { body: cw(sym(half)), decor: [cw(sym([0, -0.93, 0.36, -0.93, 0.34, -0.885, 0, -0.885])), cw(sym([0, 0.745, 0.20, 0.745, 0.34, 0.88, 0, 0.88]))] };
+    };
+    // croissant (texte) ; étoile à huit branches entre les cornes
+    F.crescent = () => ({ body: crescent(0, 0, 1, 0.42, 0.80, -22), decor: [cw(rot(star(0.80, 0, 0.24, 0.18, 8), -22))] });
+    // étoile à huit branches (khatim)
+    F.star8 = () => ({ body: cw(fillet(star(0, 0, 1, 0.765, 8), 0.035)), decor: [] });
+    // arbre : feuillage (texte) ; tronc et sol
+    F.tree = () => {
+      const p = [];
+      for (let i = 0; i < 240; i++) { const t = TAU * i / 240, f = 1 + 0.045 * Math.cos(10 * t); p.push(0.80 * f * Math.cos(t), -0.28 + 0.66 * f * Math.sin(t)); }
+      return { body: cw(p), decor: [cw(sym(Pen(0, 0.352).L(0.075, 0.352).C(0.07, 0.56, 0.09, 0.78, 0.25, 1.0).L(0, 1.0).end())), cw([-0.52, 1.0, 0.52, 1.0, 0.52, 1.035, -0.52, 1.035])] };
+    };
+    // tulipe : coupe (texte) ; trois pétales, tige et feuilles
+    F.tulip = () => {
+      const half = Pen(0, -0.46).L(0.48, -0.50).C(0.56, -0.14, 0.56, 0.20, 0.40, 0.42).C(0.28, 0.56, 0.14, 0.62, 0, 0.62).end();
+      const side = cw(Pen(0.24, -0.515).C(0.30, -0.70, 0.44, -0.86, 0.56, -0.92).C(0.58, -0.80, 0.56, -0.66, 0.50, -0.55).end());
+      const leaf = cw(Pen(0.02, 1.20).C(0.20, 1.02, 0.40, 0.86, 0.62, 0.80).C(0.52, 0.98, 0.32, 1.14, 0.03, 1.26).end());
+      const stem = [];
+      for (let i = 0; i <= 20; i++) { const t = i / 20; stem.push(0.03 * Math.sin(t * Math.PI), 0.66 + 0.62 * t); }
+      return { body: cw(sym(half)), decor: [cw([-0.17, -0.505, 0, -0.62, 0.17, -0.505]), cw(Pen(-0.20, -0.51).C(-0.14, -0.70, -0.06, -0.88, 0, -1.0).C(0.06, -0.88, 0.14, -0.70, 0.20, -0.51).L(0, -0.53).end()),
+        side, mx(side), stroke(stem, 0.05), leaf, mx(leaf)] };
+    };
+    // grenade : fruit (texte) ; couronne et feuille
+    F.pomegranate = () => {
+      const p = [];
+      for (let i = 0; i < 240; i++) { const t = TAU * i / 240; p.push(0.92 * Math.cos(t) * (1 - 0.06 * Math.sin(t)), 0.86 * Math.sin(t)); }
+      return { body: cw(p), decor: [cw(sym([0, -0.885, 0.16, -0.885, 0.13, -0.99, 0.27, -1.17, 0.12, -1.07, 0.08, -1.23, 0, -1.10])),
+        cw(Pen(0.18, -0.96).C(0.30, -1.12, 0.48, -1.20, 0.70, -1.20).C(0.58, -1.04, 0.40, -0.96, 0.18, -0.96).end())] };
+    };
+    return F;
+  })();
+  const FIG_KINDS = Object.keys(FIGS);
+  const figCache = new Map();
+  // figure dans le repère des formes : corps de hauteur 2 centré ; décor et axe du miroir suivent. left : tournée vers la gauche
+  function figure(kind, ratio, left) {
+    if (!Object.prototype.hasOwnProperty.call(FIGS, kind)) return null;
+    const k = Math.min(3, Math.max(0.33, (ratio || 100) / 100)), key = kind + '|' + k + '|' + (left ? 1 : 0);
+    let f = figCache.get(key);
+    if (f) return f;
+    const raw = FIGS[kind](), B = raw.body;
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (let i = 0; i < B.length; i += 2) {
+      if (B[i] < x0) x0 = B[i]; if (B[i] > x1) x1 = B[i];
+      if (B[i + 1] < y0) y0 = B[i + 1]; if (B[i + 1] > y1) y1 = B[i + 1];
+    }
+    const s = 2 / (y1 - y0), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, sx = (left ? -s : s) / k;
+    const T = p => {
+      const o = p.map((v, i) => i % 2 ? (v - cy) * s : (v - cx) * sx);
+      if (!left) return o;
+      const r = [];
+      for (let i = o.length - 2; i >= 0; i -= 2) r.push(o[i], o[i + 1]);
+      return r;
+    };
+    f = { body: densify(T(B), 0.04), decor: raw.decor.map(T), mirror: !!raw.mirror, axis: -cx * sx };
+    figCache.set(key, f);
+    return f;
+  }
   // contours à remplir : hauteur 2, centrés, sens horaire à l'écran ; ratio > 100 : plus haut (plus étroit)
-  const FILL_KINDS = ['tri', 'oval', 'egg', 'circle', 'capsule', 'drop', 'arch', 'diamond', 'hexagon', 'octagon', 'heart', 'rect', 'round'];
+  const FILL_KINDS = ['tri', 'oval', 'egg', 'circle', 'capsule', 'drop', 'arch', 'diamond', 'hexagon', 'octagon', 'heart', 'rect', 'round'].concat(FIG_KINDS);
   function fillLoop(kind, ratio) {
+    const fg = figure(kind, ratio, false);
+    if (fg) return fg.body.slice();
     const k = Math.min(3, Math.max(0.33, (ratio || 100) / 100));
     let p = [];
     const ell = (A, f) => { for (let i = 0; i < 240; i++) { const t = TAU * i / 240; p.push(A * Math.cos(t) * (f ? f(t) : 1), Math.sin(t)); } };
@@ -524,15 +763,30 @@
       best.scale = best.rows.reduce((a, r) => a + r.s, 0) / n || 1;
       return best;
     };
-    // centré d'abord ; un autre alignement n'est retenu que s'il agrandit nettement le texte (pyramide, goutte…)
+    // part de la forme couverte par les lignes (boîtes des lignes, étirement compris)
+    let A0 = 0;
+    for (let i = 0; i < P.length; i += 2) { const j = (i + 2) % P.length; A0 += P[i] * P[j + 1] - P[j] * P[i + 1]; }
+    A0 = Math.abs(A0) / 2 || 1;
+    const cover = r => r.rows.reduce((a, q, i) => a + q.s * rows[i].h * q.s * q.sx * rows[i].w, 0) / A0;
+    // remplissage d'une figure : surface couverte, hauteur occupée, et aucune ligne minuscule à côté des autres
+    const fillQ = r => {
+      const q0 = r.rows[0], q1 = r.rows[n - 1], span = Math.max(0, (q1.y + q1.s * rows[n - 1].h - q0.y) / H0);
+      let mn = Infinity, mxs = 0;
+      for (const q of r.rows) { if (q.s < mn) mn = q.s; if (q.s > mxs) mxs = q.s; }
+      const ratio = mxs > 0 ? mn / mxs : 0;
+      return cover(r) * Math.sqrt(span) * (ratio < 0.3 ? (ratio / 0.3) * (ratio / 0.3) : 1);
+    };
+    // centré d'abord ; un autre alignement n'est retenu que s'il agrandit nettement le texte (pyramide, goutte…),
+    // ou, pour une figure (o.score = 'area'), s'il la remplit nettement mieux
+    const better = (r, w) => o.score === 'area' ? fillQ(r) > fillQ(w) * 1.02 : r.scale > w.scale * 1.02;
     let win = solve();
     for (const a of o.align == null ? [1, 0.75, 0.25, 0] : []) {
       al = a;
       const r = solve();
-      if (r.scale > win.scale * 1.02) win = r;
+      if (better(r, win)) win = r;
     }
     if (o.align != null) { al = o.align; win = solve(); }
-    return { rows: win.rows, scale: win.scale };
+    return { rows: win.rows, scale: win.scale, area: cover(win), fill: fillQ(win) };
   }
   function pushAllS(a, b) { for (let i = 0; i < b.length; i++) a.push(b[i]); return a; }
   const tileLoopAt = (L, cx, cy, k0) => L.map((v, i) => i % 2 ? cy + v * k0 : cx + v * k0);
@@ -697,8 +951,9 @@
     } else if (type === 'fill') {
       // remplir une forme : chaque ligne occupe la largeur de la forme à sa hauteur
       const G = lineGroups(c, sp, tinfo).filter(Boolean);
-      const P = fillLoop(sh.fillShape || 'oval', sh.fratio);
-      const R = fitRows(G.map(g => ({ w: g.w, h: g.h })), P, { lead: (sh.lead == null ? 18 : sh.lead) / 100, grow: (sh.grow == null ? 40 : sh.grow) / 100, stretch: (sh.stretch == null ? 10 : sh.stretch) / 100 });
+      const FG = figure(sh.fillShape, sh.fratio, sh.face === 'left');
+      const P = FG ? FG.body : fillLoop(sh.fillShape || 'oval', sh.fratio);
+      const R = fitRows(G.map(g => ({ w: g.w, h: g.h })), P, { lead: (sh.lead == null ? 18 : sh.lead) / 100, grow: (sh.grow == null ? 40 : sh.grow) / 100, stretch: (sh.stretch == null ? 10 : sh.stretch) / 100, score: FG ? 'area' : null });
       if (R) {
         const Q = 1 / R.scale, fns = new Map();
         let hm = 0;
@@ -708,13 +963,23 @@
           const fn = (x, y) => [(r.cx + (x - xm) * r.s * r.sx) * Q, (r.y + (y - g.y0) * r.s) * Q];
           for (const k of g.idx) fns.set(k, fn);
         });
-        perSpan = (part, s, k) => { const fn = fns.get(k); return fn ? eachPoint(part, fn) : part; };
+        // figure en miroir (papillon) : chaque ligne est reflétée de l'autre côté de l'axe
+        const ax = FG && FG.mirror ? FG.axis * Q : null, mir = cm => reversePath(eachPoint(cm, (x, y) => [2 * ax - x, y]));
+        perSpan = (part, s, k) => {
+          const fn = fns.get(k);
+          if (!fn) return part;
+          const m = eachPoint(part, fn);
+          return ax == null ? m : m.concat(mir(m));
+        };
         info.rows = G.length;
         if (sh.ring && sh.ring !== 'none') {
           const PQ = P.map(v => v * Q), w = Math.max(1, hm * (sh.ringW || 8) / 100 * 1.2), g0 = hm * 0.04;
-          extra.push(band(offsetLoop(PQ, g0 + w), offsetLoop(PQ, g0)));
-          if (sh.ring === 'double') extra.push(band(offsetLoop(PQ, g0 + w * 2.6), offsetLoop(PQ, g0 + w * 2)));
+          const bands = [band(offsetLoop(PQ, g0 + w), offsetLoop(PQ, g0))];
+          if (sh.ring === 'double') bands.push(band(offsetLoop(PQ, g0 + w * 2.6), offsetLoop(PQ, g0 + w * 2)));
+          for (const b of bands) { extra.push(b); if (ax != null) extra.push(mir(b)); }
         }
+        // pièces de la figure (mât, queue, minarets…), à l'encre du texte
+        if (FG && sh.decor !== 'off') for (const d of FG.decor) extra.push(loopToCmds(d.map(v => v * Q), false));
       }
     } else if (type === 'rings') {
       // médaillon : les premières lignes au centre, les suivantes en anneaux concentriques
@@ -1305,5 +1570,5 @@
   }
 
   root.KhattShape = { applyShape, compose, reversePath, normalizeFree, subdivide, follower, eachPoint, DEFAULT_FREE, roundedPolygon, offsetLoop, HEART,
-    fillLoop, fitRows, chordAt, FILL_KINDS, PALETTES };
+    fillLoop, fitRows, chordAt, FILL_KINDS, FIG_KINDS, figure, PALETTES };
 })(typeof self !== 'undefined' ? self : globalThis);

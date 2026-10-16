@@ -367,15 +367,20 @@
       art.innerHTML = thumbSVG(parts[0]);
     }
   }
+  // réglages d'une forme. Choix : [clé, libellé, options, condition d'affichage, action au choix] ;
+  // curseur : [clé, libellé, min, max, pas, unité, condition, affichage de la valeur]
+  let lblSeq = 0;
   function paramRows(box, params, obj, rebuild) {
     for (const p of params) {
       const key = p[0], label = p[1];
       const row = document.createElement('div');
       row.className = 'row';
       if (Array.isArray(p[2])) {
-        row.innerHTML = '<span class="lbl" id="lbl-sh-' + key + '">' + esc(label) + '</span><div class="ctl"><div class="seg" role="group" aria-labelledby="lbl-sh-' + key + '"></div></div>';
+        if (p[3] && !p[3](obj())) continue;
+        const lid = 'lbl-sh-' + key + '-' + (++lblSeq);
+        row.innerHTML = '<span class="lbl" id="' + lid + '">' + esc(label) + '</span><div class="ctl"><div class="seg" role="group" aria-labelledby="' + lid + '"></div></div>';
         box.appendChild(row);
-        seg(row.querySelector('.seg'), p[2], () => obj()[key], v => { obj()[key] = v; rebuild(); requestFit('overflow'); changed(); }, true);
+        seg(row.querySelector('.seg'), p[2], () => obj()[key], v => { obj()[key] = v; if (p[4]) p[4](obj(), v); rebuild(); requestFit('overflow'); changed(); }, true);
       } else {
         const min = p[2], max = p[3], step = p[4], unit = p[5], cond = p[6], show = p[7];
         if (cond && !cond(obj())) continue;

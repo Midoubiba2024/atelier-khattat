@@ -194,13 +194,15 @@
     }
     const h = (font.ascender - font.descender) * s * 0.8;
     const P = S.fillLoop(sh.fillShape || 'oval', sh.fratio);
-    const fo = { lead: (sh.lead == null ? 18 : sh.lead) / 100, grow: (sh.grow == null ? 40 : sh.grow) / 100, stretch: (sh.stretch == null ? 10 : sh.stretch) / 100 };
+    // figure : le découpage qui couvre le mieux la silhouette ; autres formes : celui qui donne les plus grandes lettres
+    const fig = !!(S.FIG_KINDS && S.FIG_KINDS.indexOf(sh.fillShape) >= 0);
+    const fo = { lead: (sh.lead == null ? 18 : sh.lead) / 100, grow: (sh.grow == null ? 40 : sh.grow) / 100, stretch: (sh.stretch == null ? 10 : sh.stretch) / 100, score: fig ? 'area' : null };
     let best = null;
     for (let k = 1; k <= Math.min(9, words.length); k++) {
       const tg = [];
       for (let i = 0; i < k; i++) { const c = S.chordAt(P, -0.85 + 1.7 * (i + 0.5) / k, 0); tg.push(c ? Math.max(0.05, c[1] - c[0]) : 0.05); }
-      const R = splitWords(ww, sp, words, tg), fit = S.fitRows(R.map(r => ({ w: r.w, h })), P, fo);
-      if (fit && (!best || fit.scale > best.score * 1.03)) best = { score: fit.scale, rows: R };
+      const R = splitWords(ww, sp, words, tg), fit = S.fitRows(R.map(r => ({ w: r.w, h })), P, fo), sc = fit && (fig ? fit.fill : fit.scale);
+      if (fit && (!best || sc > best.score * 1.03)) best = { score: sc, rows: R };
     }
     return best ? best.rows.map(r => r.words.join(' ')).join('\n') : text;
   }
