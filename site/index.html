@@ -2400,6 +2400,26 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     }
     return o;
   }
+  // même décalage, avec un raccord arrondi aux coins saillants : la bordure d'une figure fait le tour des pointes
+  // (proue, cornes du croissant…) d'un trait régulier, sans méplat ni encoche
+  function offsetRound(p, d) {
+    const n = p.length, o = [];
+    const en = (i, j) => { const tx = p[j] - p[i], ty = p[j + 1] - p[i + 1], l = Math.hypot(tx, ty) || 1; return [ty / l, -tx / l]; };
+    for (let i = 0; i < n; i += 2) {
+      const n1 = en((i - 2 + n) % n, i), n2 = en(i, (i + 2) % n), a1 = Math.atan2(n1[1], n1[0]);
+      let da = Math.atan2(n2[1], n2[0]) - a1;
+      while (da > Math.PI) da -= TAU;
+      while (da < -Math.PI) da += TAU;
+      if (Math.abs(da) < 0.15 || da * d < 0) {
+        const mx = n1[0] + n2[0], my = n1[1] + n2[1], l = Math.hypot(mx, my) || 1;
+        o.push(p[i] + mx / l * d, p[i + 1] + my / l * d);
+      } else {
+        const k = Math.max(2, Math.ceil(Math.abs(da) / 0.15));
+        for (let j = 0; j <= k; j++) { const t = a1 + da * j / k; o.push(p[i] + Math.cos(t) * d, p[i + 1] + Math.sin(t) * d); }
+      }
+    }
+    return o;
+  }
   function loopToCmds(p, reverse) {
     const c = [];
     const n = p.length / 2;
@@ -2497,7 +2517,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
     const rev = p => { const o = []; for (let i = p.length - 2; i >= 0; i -= 2) o.push(p[i], p[i + 1]); return o; };
     const cw = p => area(p) < 0 ? rev(p) : p;
     const hole = p => area(p) > 0 ? rev(p) : p;
-    const disk = (x, y, r) => { const o = [], n = Math.max(16, Math.ceil(r * 160)); for (let i = 0; i < n; i++) { const a = TAU * i / n; o.push(x + r * Math.cos(a), y + r * Math.sin(a)); } return o; };
+    const disk = (x, y, r) => { const o = [], n = Math.max(32, Math.ceil(r * 400)); for (let i = 0; i < n; i++) { const a = TAU * i / n; o.push(x + r * Math.cos(a), y + r * Math.sin(a)); } return o; };
     const ringAt = (x, y, r, w) => [disk(x, y, r + w / 2), hole(disk(x, y, r - w / 2))];
     const mx = p => cw(p.map((v, i) => i % 2 ? v : -v));
     const rot = (p, deg) => { const c = Math.cos(deg * D), s = Math.sin(deg * D), o = []; for (let i = 0; i < p.length; i += 2) o.push(p[i] * c - p[i + 1] * s, p[i] * s + p[i + 1] * c); return o; };
@@ -3072,9 +3092,9 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
         };
         info.rows = G.length;
         if (sh.ring && sh.ring !== 'none') {
-          const PQ = P.map(v => v * Q), w = Math.max(1, hm * (sh.ringW || 8) / 100 * 1.2), g0 = hm * 0.04;
-          const bands = [band(offsetLoop(PQ, g0 + w), offsetLoop(PQ, g0))];
-          if (sh.ring === 'double') bands.push(band(offsetLoop(PQ, g0 + w * 2.6), offsetLoop(PQ, g0 + w * 2)));
+          const PQ = P.map(v => v * Q), w = Math.max(1, hm * (sh.ringW || 8) / 100 * 1.2), g0 = hm * 0.04, off = FG ? offsetRound : offsetLoop;
+          const bands = [band(off(PQ, g0 + w), off(PQ, g0))];
+          if (sh.ring === 'double') bands.push(band(off(PQ, g0 + w * 2.6), off(PQ, g0 + w * 2)));
           for (const b of bands) { extra.push(b); if (ax != null) extra.push(mir(b)); }
         }
         // pièces de la figure (mât, queue, minarets…), à l'encre du texte
@@ -5403,7 +5423,7 @@ dialog.viewer{width:min(1440px,calc(100vw - 16px));height:calc(100vh - 16px);max
  "kawkabmono": "Copyright (c) 2015, Abdullah Arif (abdullah.a@gmail.com), with Reserved Font Name 'Kawkab Mono'."
 };
   // versions de l'atelier (versions.json, la plus récente en premier)
-  const VERSIONS = [{"v":"7.62","date":"2026-10-17","level":"moyenne","notes":["Nouvelle série de modèles « Figures » : votre phrase remplit une barque, un poisson, un oiseau, un papillon, une mosquée, une lampe de mosquée, une lanterne, un vase, un croissant, une étoile à huit branches, un arbre, une tulipe ou une grenade.","Dans « Remplir une forme », choisissez une de ces 13 figures : la bordure dessine sa silhouette et ses détails la complètent (mât, queue, nageoires, minarets, chaînes…). Tournez-la vers la gauche ou la droite, ou retirez les détails.","Les figures se remplissent sur toute leur hauteur : l’atelier choisit le découpage des lignes qui couvre le mieux la silhouette, sans ligne minuscule.","Le papillon reflète la phrase d’une aile à l’autre ; deux oiseaux tournés l’un vers l’autre, avec la composition « Miroir », forment des oiseaux affrontés.","Les variations proposent aussi des figures."]},{"v":"7.52","date":"2026-10-15","level":"moyenne","notes":["Tashkīl en 8 niveaux : complet, sans soukoun, partiel, sans les fins de mots (lecture à la pause), fins de mots (iʿrāb), chadda et tanwīn, chadda seule, aucun. Votre texte garde toujours son tashkīl complet : changer de niveau ne perd rien.","Les versets copiés de tanzil.net ou de quran.com sont reconnus : tanwīn, lettres muettes et signes de récitation restent justes à chaque niveau.","Pour chaque niveau, l’atelier explique ce qu’il garde et montre votre phrase telle qu’elle sera dessinée.","« Compléter le tashkīl » vocalise en entier un texte de la bibliothèque qui n’en a qu’une partie (أهلاً وسهلاً devient أَهْلًا وَسَهْلًا).","Les boutons « Retirer » et « Remettre le tashkīl » sont remplacés par les niveaux « Aucun » et « Complet »."]},{"v":"7.42","date":"2026-10-15","level":"minime","notes":["Le numéro de version s’affiche sous le nom de l’atelier ; un clic dessus montre les nouveautés de chaque version, et une pastille signale une version pas encore vue."]},{"v":"7.41","date":"2026-10-15","level":"grande","notes":["Téléphones et tablettes : l’atelier tient dans l’écran, l’aperçu se réduit quand on descend dans les réglages, les 9 outils restent visibles ; aperçu et réglages côte à côte en paysage.","Aperçu : repères (axes, tiers, marges), vignette de navigation au zoom avant, zoom animé ; ce qui dépasse du format reste visible en dézoomant.","Format fixe : la taille s’ajuste toute seule après un changement de forme (le panneau hilye ne déborde plus).","Légende en lettres latines sous la calligraphie : prénom, traduction.","Variations : six mises en page de votre phrase tirées au sort.","Partage : un lien qui ouvre la création sur n’importe quel appareil."]},{"v":"6.41","date":"2026-10-15","level":"minime","notes":["Tashkīl : un seul bouton pour le retirer, le remettre ou l’ajouter ; les textes de la bibliothèque et des modèles sont vocalisés."]},{"v":"6.4","date":"2026-10-15","level":"moyenne","notes":["Nouvelles compositions : tughra, médaillon ailé et panneau hilye ; effet « lettres semées » ; 4 modèles (86 en tout)."]},{"v":"6.3","date":"2026-10-15","level":"moyenne","notes":["Section « Apprendre à écrire » : les lettres dans sept écritures, l’étude d’une lettre avec un tracé noté, les genres de composition, la feuille d’exercice."]},{"v":"6.2","date":"2026-10-15","level":"moyenne","notes":["Compositions par lignes : remplir une forme, anneaux, mosaïque, kaléidoscope ; 18 modèles."]},{"v":"6.1","date":"2026-10-15","level":"grande","notes":["Nouvelle interface : barre d’outils, un panneau à la fois, aperçu toujours visible ; fenêtre « Télécharger »."]},{"v":"5.1","date":"2026-10-15","level":"","notes":["Première mise en ligne : 195 styles d’écriture, 64 modèles, tashkīl, exports vectoriels (SVG, PDF, EPS, DXF)."]}];
+  const VERSIONS = [{"v":"7.63","date":"2026-10-17","level":"minime","notes":["Figures : la bordure fait le tour des pointes d’un trait régulier (proue et poupe de la barque, cornes du croissant, sommet de la voile), et les petits anneaux (lampe, lanterne, œil des figures) sont bien ronds."]},{"v":"7.62","date":"2026-10-17","level":"moyenne","notes":["Nouvelle série de modèles « Figures » : votre phrase remplit une barque, un poisson, un oiseau, un papillon, une mosquée, une lampe de mosquée, une lanterne, un vase, un croissant, une étoile à huit branches, un arbre, une tulipe ou une grenade.","Dans « Remplir une forme », choisissez une de ces 13 figures : la bordure dessine sa silhouette et ses détails la complètent (mât, queue, nageoires, minarets, chaînes…). Tournez-la vers la gauche ou la droite, ou retirez les détails.","Les figures se remplissent sur toute leur hauteur : l’atelier choisit le découpage des lignes qui couvre le mieux la silhouette, sans ligne minuscule.","Le papillon reflète la phrase d’une aile à l’autre ; deux oiseaux tournés l’un vers l’autre, avec la composition « Miroir », forment des oiseaux affrontés.","Les variations proposent aussi des figures."]},{"v":"7.52","date":"2026-10-15","level":"moyenne","notes":["Tashkīl en 8 niveaux : complet, sans soukoun, partiel, sans les fins de mots (lecture à la pause), fins de mots (iʿrāb), chadda et tanwīn, chadda seule, aucun. Votre texte garde toujours son tashkīl complet : changer de niveau ne perd rien.","Les versets copiés de tanzil.net ou de quran.com sont reconnus : tanwīn, lettres muettes et signes de récitation restent justes à chaque niveau.","Pour chaque niveau, l’atelier explique ce qu’il garde et montre votre phrase telle qu’elle sera dessinée.","« Compléter le tashkīl » vocalise en entier un texte de la bibliothèque qui n’en a qu’une partie (أهلاً وسهلاً devient أَهْلًا وَسَهْلًا).","Les boutons « Retirer » et « Remettre le tashkīl » sont remplacés par les niveaux « Aucun » et « Complet »."]},{"v":"7.42","date":"2026-10-15","level":"minime","notes":["Le numéro de version s’affiche sous le nom de l’atelier ; un clic dessus montre les nouveautés de chaque version, et une pastille signale une version pas encore vue."]},{"v":"7.41","date":"2026-10-15","level":"grande","notes":["Téléphones et tablettes : l’atelier tient dans l’écran, l’aperçu se réduit quand on descend dans les réglages, les 9 outils restent visibles ; aperçu et réglages côte à côte en paysage.","Aperçu : repères (axes, tiers, marges), vignette de navigation au zoom avant, zoom animé ; ce qui dépasse du format reste visible en dézoomant.","Format fixe : la taille s’ajuste toute seule après un changement de forme (le panneau hilye ne déborde plus).","Légende en lettres latines sous la calligraphie : prénom, traduction.","Variations : six mises en page de votre phrase tirées au sort.","Partage : un lien qui ouvre la création sur n’importe quel appareil."]},{"v":"6.41","date":"2026-10-15","level":"minime","notes":["Tashkīl : un seul bouton pour le retirer, le remettre ou l’ajouter ; les textes de la bibliothèque et des modèles sont vocalisés."]},{"v":"6.4","date":"2026-10-15","level":"moyenne","notes":["Nouvelles compositions : tughra, médaillon ailé et panneau hilye ; effet « lettres semées » ; 4 modèles (86 en tout)."]},{"v":"6.3","date":"2026-10-15","level":"moyenne","notes":["Section « Apprendre à écrire » : les lettres dans sept écritures, l’étude d’une lettre avec un tracé noté, les genres de composition, la feuille d’exercice."]},{"v":"6.2","date":"2026-10-15","level":"moyenne","notes":["Compositions par lignes : remplir une forme, anneaux, mosaïque, kaléidoscope ; 18 modèles."]},{"v":"6.1","date":"2026-10-15","level":"grande","notes":["Nouvelle interface : barre d’outils, un panneau à la fois, aperçu toujours visible ; fenêtre « Télécharger »."]},{"v":"5.1","date":"2026-10-15","level":"","notes":["Première mise en ligne : 195 styles d’écriture, 64 modèles, tashkīl, exports vectoriels (SVG, PDF, EPS, DXF)."]}];
   const APP_VERSION = VERSIONS.length ? VERSIONS[0].v : '';
   // licences autres que la SIL Open Font License
   const LICNAME = {

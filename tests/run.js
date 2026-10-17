@@ -4,7 +4,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const { spawnSync } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const { ROOT, PORT, out } = require('./env');
 
 const NODE_TESTS = ['exports.node.js', 'formes.node.js', 'kashida.node.js', 'decoupe.node.js', 'tatweel.node.js', 'compositions.node.js', 'figures.node.js', 'tashkil.node.js', 'versions.node.js'];
@@ -29,16 +29,19 @@ function run(file) {
 
 (async () => {
   const results = NODE_TESTS.map(run);
-  // serveur local : on réutilise celui qui tourne déjà sur le port, sinon on en démarre un
-  let server = null;
-  const busy = await new Promise(res => {
+  // serveur local : on réutilise celui qui tourne déjà sur le port, sinon on en démarre un dans un processus à part
+  // (les tests tournent l'un après l'autre et bloquent ce processus : un serveur ici même ne répondrait pas)
+  const busy = () => new Promise(res => {
     const s = require('net').connect(PORT, '127.0.0.1', () => { s.end(); res(true); });
     s.on('error', () => res(false));
   });
-  if (!busy) { server = require('../tools/serve.js'); await new Promise(r => server.listening ? r() : server.once('listening', r)); }
-  else console.log('\n(serveur déjà actif sur le port ' + PORT + ')');
+  let server = null;
+  if (!(await busy())) {
+    server = spawn(process.execPath, [path.join(ROOT, 'tools/serve.js'), String(PORT)], { cwd: ROOT, stdio: 'ignore' });
+    for (let i = 0; i < 100 && !(await busy()); i++) await new Promise(r => setTimeout(r, 100));
+  } else console.log('\n(serveur déjà actif sur le port ' + PORT + ')');
   for (const f of BROWSER_TESTS.concat(EXTRA)) results.push(run(f));
-  if (server) server.close();
+  if (server) server.kill();
   const failed = results.filter(r => !r.ok);
   console.log('\n' + (failed.length ? failed.length + ' test(s) en échec : ' + failed.map(r => r.file).join(', ') : 'Tous les tests sont réussis (' + results.length + ').'));
   process.exit(failed.length ? 1 : 0);

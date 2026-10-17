@@ -1,6 +1,6 @@
 {
   "name": "atelier-khattat",
-  "version": "7.62.0",
+  "version": "7.63.0",
   "private": true,
   "description": "Atelier Khattat : une phrase en arabe, près de 200 styles calligraphiques, des modèles de tableaux et des exports vectoriels (SVG, PDF, EPS, DXF).",
   "scripts": {

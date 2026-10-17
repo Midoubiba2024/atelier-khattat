@@ -1,5 +1,11 @@
 [
   {
+    "v": "7.63", "date": "2026-10-17", "level": "minime",
+    "notes": [
+      "Figures : la bordure fait le tour des pointes d’un trait régulier (proue et poupe de la barque, cornes du croissant, sommet de la voile), et les petits anneaux (lampe, lanterne, œil des figures) sont bien ronds."
+    ]
+  },
+  {
     "v": "7.62", "date": "2026-10-17", "level": "moyenne",
     "notes": [
       "Nouvelle série de modèles « Figures » : votre phrase remplit une barque, un poisson, un oiseau, un papillon, une mosquée, une lampe de mosquée, une lanterne, un vase, un croissant, une étoile à huit branches, un arbre, une tulipe ou une grenade.",

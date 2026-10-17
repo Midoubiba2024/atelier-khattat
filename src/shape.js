@@ -301,6 +301,26 @@
     }
     return o;
   }
+  // même décalage, avec un raccord arrondi aux coins saillants : la bordure d'une figure fait le tour des pointes
+  // (proue, cornes du croissant…) d'un trait régulier, sans méplat ni encoche
+  function offsetRound(p, d) {
+    const n = p.length, o = [];
+    const en = (i, j) => { const tx = p[j] - p[i], ty = p[j + 1] - p[i + 1], l = Math.hypot(tx, ty) || 1; return [ty / l, -tx / l]; };
+    for (let i = 0; i < n; i += 2) {
+      const n1 = en((i - 2 + n) % n, i), n2 = en(i, (i + 2) % n), a1 = Math.atan2(n1[1], n1[0]);
+      let da = Math.atan2(n2[1], n2[0]) - a1;
+      while (da > Math.PI) da -= TAU;
+      while (da < -Math.PI) da += TAU;
+      if (Math.abs(da) < 0.15 || da * d < 0) {
+        const mx = n1[0] + n2[0], my = n1[1] + n2[1], l = Math.hypot(mx, my) || 1;
+        o.push(p[i] + mx / l * d, p[i + 1] + my / l * d);
+      } else {
+        const k = Math.max(2, Math.ceil(Math.abs(da) / 0.15));
+        for (let j = 0; j <= k; j++) { const t = a1 + da * j / k; o.push(p[i] + Math.cos(t) * d, p[i + 1] + Math.sin(t) * d); }
+      }
+    }
+    return o;
+  }
   function loopToCmds(p, reverse) {
     const c = [];
     const n = p.length / 2;
@@ -398,7 +418,7 @@
     const rev = p => { const o = []; for (let i = p.length - 2; i >= 0; i -= 2) o.push(p[i], p[i + 1]); return o; };
     const cw = p => area(p) < 0 ? rev(p) : p;
     const hole = p => area(p) > 0 ? rev(p) : p;
-    const disk = (x, y, r) => { const o = [], n = Math.max(16, Math.ceil(r * 160)); for (let i = 0; i < n; i++) { const a = TAU * i / n; o.push(x + r * Math.cos(a), y + r * Math.sin(a)); } return o; };
+    const disk = (x, y, r) => { const o = [], n = Math.max(32, Math.ceil(r * 400)); for (let i = 0; i < n; i++) { const a = TAU * i / n; o.push(x + r * Math.cos(a), y + r * Math.sin(a)); } return o; };
     const ringAt = (x, y, r, w) => [disk(x, y, r + w / 2), hole(disk(x, y, r - w / 2))];
     const mx = p => cw(p.map((v, i) => i % 2 ? v : -v));
     const rot = (p, deg) => { const c = Math.cos(deg * D), s = Math.sin(deg * D), o = []; for (let i = 0; i < p.length; i += 2) o.push(p[i] * c - p[i + 1] * s, p[i] * s + p[i + 1] * c); return o; };
@@ -973,9 +993,9 @@
         };
         info.rows = G.length;
         if (sh.ring && sh.ring !== 'none') {
-          const PQ = P.map(v => v * Q), w = Math.max(1, hm * (sh.ringW || 8) / 100 * 1.2), g0 = hm * 0.04;
-          const bands = [band(offsetLoop(PQ, g0 + w), offsetLoop(PQ, g0))];
-          if (sh.ring === 'double') bands.push(band(offsetLoop(PQ, g0 + w * 2.6), offsetLoop(PQ, g0 + w * 2)));
+          const PQ = P.map(v => v * Q), w = Math.max(1, hm * (sh.ringW || 8) / 100 * 1.2), g0 = hm * 0.04, off = FG ? offsetRound : offsetLoop;
+          const bands = [band(off(PQ, g0 + w), off(PQ, g0))];
+          if (sh.ring === 'double') bands.push(band(off(PQ, g0 + w * 2.6), off(PQ, g0 + w * 2)));
           for (const b of bands) { extra.push(b); if (ax != null) extra.push(mir(b)); }
         }
         // pièces de la figure (mât, queue, minarets…), à l'encre du texte
